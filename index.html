@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#0a0a0a">
 <title>Mein Restaurant</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
@@ -414,6 +415,39 @@ body {
 @media (min-width: 768px) { .toast { bottom: 24px; } }
 
 ::-webkit-scrollbar { display: none; }
+
+/* MONTH TABS */
+.month-tabs{display:flex;gap:6px;padding:14px 14px 0;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.month-tab{flex-shrink:0;padding:7px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.month-tab.active{background:rgba(34,197,94,0.15);border-color:var(--green);color:var(--green);}
+.week-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 14px 12px;}
+.week-card{background:var(--bg1);border:1px solid var(--border);border-radius:var(--rsm);padding:14px;}
+.week-lbl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+.week-val{font-size:20px;font-weight:800;letter-spacing:-0.8px;}
+.week-sub{font-size:11px;color:var(--text2);margin-top:3px;}
+.tages-hero{margin:14px 14px 0;background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(34,197,94,0.02));border:1px solid rgba(34,197,94,0.2);border-radius:var(--r);padding:20px;}
+.tages-date{font-size:12px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px;}
+.tages-total{font-size:36px;font-weight:800;letter-spacing:-2px;color:var(--green);line-height:1;}
+.tages-sub{font-size:12px;color:var(--text2);margin-top:8px;}
+.tages-breakdown{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 14px 0;}
+.tages-pill{background:var(--bg1);border:1px solid var(--border);border-radius:var(--rsm);padding:12px;text-align:center;}
+.tages-pill-lbl{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;}
+.tages-pill-val{font-size:16px;font-weight:800;letter-spacing:-0.5px;}
+.overdue-banner{margin:14px 14px 0;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:var(--rsm);padding:12px 14px;display:flex;align-items:center;gap:10px;}
+.overdue-banner svg{width:18px;height:18px;stroke:var(--red);flex-shrink:0;}
+.overdue-banner p{font-size:12px;color:var(--red);line-height:1.5;}
+.b-overdue{background:rgba(239,68,68,0.15);color:var(--red);}
+.b-soon{background:rgba(245,158,11,0.15);color:var(--amber);}
+.b-ok{background:rgba(34,197,94,0.12);color:var(--green);}
+.lief-card{background:var(--bg1);border:1px solid var(--border);border-radius:var(--rsm);margin:0 14px 8px;padding:14px;}
+.lief-name{font-size:15px;font-weight:700;margin-bottom:3px;}
+.lief-meta{font-size:12px;color:var(--text2);}
+.lief-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.lief-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--bg2);color:var(--text2);border:1px solid var(--border);}
+.btn-secondary{display:block;width:calc(100% - 28px);margin:0 14px 14px;padding:13px;background:var(--bg2);color:var(--text);font-size:14px;font-weight:600;font-family:inherit;border:1px solid var(--bord2);border-radius:var(--rsm);cursor:pointer;transition:all 0.15s;}
+.btn-secondary:active{opacity:0.8;}
+@media(min-width:768px){.snav-item svg{width:18px;height:18px;flex-shrink:0;stroke:currentColor;}}
+
 </style>
 </head>
 <body>
@@ -424,7 +458,10 @@ body {
   <aside class="sidebar">
     <div class="sidebar-logo">Mein <em>Restaurant</em></div>
     <nav class="sidebar-nav">
-      <button class="snav-item active" id="sni-dashboard" onclick="switchTab('dashboard')">
+      <button class="snav-item active" id="sni-dashboard" onclick="switchTab('dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Übersicht</button>
+      <button class="snav-item" id="sni-tagesabschluss" onclick="switchTab('tagesabschluss')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Tagesabschluss</button>
+      <button class="snav-item" id="sni-monat" onclick="switchTab('monat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Monatsauswertung</button>
+      <button class="snav-item" id="sni-einnahmen" onclick="switchTab('einnahmen')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
         Übersicht
       </button>
@@ -440,6 +477,8 @@ body {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Personal
       </button>
+      <button class="snav-item" id="sni-rechnungen" onclick="switchTab('rechnungen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Rechnungen</button>
+      <button class="snav-item" id="sni-lieferanten" onclick="switchTab('lieferanten')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Lieferanten</button>
       <button class="snav-item" id="sni-einstellungen" onclick="switchTab('einstellungen')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         Einstellungen
@@ -466,10 +505,8 @@ body {
       <div class="header-right">
         <div class="sync-dot" id="sync-dot"></div>
         <span id="sync-txt" style="font-size:11px;color:var(--text2);margin-right:4px;"></span>
-        <button class="hbtn" onclick="openModal('backup')">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Backup
-        </button>
+        <button class="hbtn" onclick="openModal('backup')">📤</button>
+        <button class="hbtn" onclick="exportPDF()">📄 PDF</button>
       </div>
     </header>
 
@@ -487,6 +524,7 @@ body {
       <!-- DASHBOARD -->
       <div class="panel active" id="p-dashboard">
         <div id="ios-wrap"></div>
+        <div id="overdue-wrap"></div>
         <div class="desk-grid" style="padding:0">
 
           <div class="desk-full">
@@ -504,8 +542,8 @@ body {
 
           <div class="desk-full">
             <div class="kpi-row" style="margin:10px 14px 0">
-              <div class="kpi"><div class="kpi-lbl">Food Cost %</div><div class="kpi-val kn" id="kpi-food">—</div><div class="kpi-sub">Ziel: unter 30%</div></div>
-              <div class="kpi"><div class="kpi-lbl">Labor Cost %</div><div class="kpi-val kn" id="kpi-labor">—</div><div class="kpi-sub">Ziel: unter 35%</div></div>
+              <div class="kpi"><div class="kpi-lbl">Warenkosten %</div><div class="kpi-val kn" id="kpi-food">—</div><div class="kpi-sub">Ziel: unter 30 %</div></div>
+              <div class="kpi"><div class="kpi-lbl">Personalkosten %</div><div class="kpi-val kn" id="kpi-labor">—</div><div class="kpi-sub">Ziel: unter 35 %</div></div>
               <div class="kpi"><div class="kpi-lbl">Ø pro Tag</div><div class="kpi-val kn" id="kpi-avg">—</div><div class="kpi-sub" id="kpi-avg-sub">Einnahmen</div></div>
               <div class="kpi"><div class="kpi-lbl">Bar / Karte</div><div class="kpi-val kn" id="kpi-ratio">—</div><div class="kpi-sub">Verhältnis</div></div>
             </div>
@@ -612,7 +650,49 @@ body {
         <div id="tot-mit"></div><div id="lst-mit"></div>
       </div>
 
-      <!-- EINSTELLUNGEN -->
+      
+      <!-- TAGESABSCHLUSS -->
+      <div class="panel" id="p-tagesabschluss">
+        <div class="tages-hero"><div class="tages-date" id="ta-date">Heute</div><div class="tages-total" id="ta-total">0,00 €</div><div class="tages-sub" id="ta-sub">Noch keine Einnahmen</div></div>
+        <div class="tages-breakdown"><div class="tages-pill"><div class="tages-pill-lbl">Bar</div><div class="tages-pill-val cg" id="ta-bar">0€</div></div><div class="tages-pill"><div class="tages-pill-lbl">Karte</div><div class="tages-pill-val cb" id="ta-karte">0€</div></div><div class="tages-pill"><div class="tages-pill-lbl">Trinkgeld</div><div class="tages-pill-val ca" id="ta-tip">0€</div></div></div>
+        <div class="sec-hd">Ausgaben heute</div><div id="ta-ausgaben-wrap"></div>
+        <div class="sec-hd">Personal heute</div><div id="ta-personal-wrap"></div>
+        <div class="totals-card" style="margin:14px 14px 0"><div class="t-row"><span style="font-weight:700">Tagesergebnis</span><strong id="ta-erg-val" class="amtg">0,00 €</strong></div></div>
+        <button class="btn-secondary" style="margin-top:10px;" onclick="exportTagesPDF()">📄 Tagesabschluss als PDF</button>
+      </div>
+      <!-- MONAT -->
+      <div class="panel" id="p-monat">
+        <div class="month-tabs" id="month-tabs"></div>
+        <div class="sec-hd">Wochenvergleich</div><div class="week-grid" id="week-grid"></div>
+        <div class="sec-hd">Monatsübersicht</div><div id="monat-cards"></div>
+        <div class="chart-section" style="margin-bottom:14px"><div class="chart-lbl">Einnahmen pro Tag</div><div id="monat-chart"></div></div>
+      </div>
+      <!-- RECHNUNGEN -->
+      <div class="panel" id="p-rechnungen">
+        <div style="padding:14px 14px 0"><div class="card">
+          <div class="card-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Rechnung eintragen</div>
+          <div class="field"><label>Lieferant / Beschreibung</label><input type="text" id="r-beschr" placeholder="z.B. Metro Lieferung"></div>
+          <div class="field-row"><div class="field"><label>Betrag (€)</label><input type="number" id="r-betrag" placeholder="0,00" inputmode="decimal" min="0" step="0.01"></div><div class="field"><label>Fällig am</label><input type="date" id="r-faellig"></div></div>
+          <div class="field"><label>Notiz</label><input type="text" id="r-notiz" placeholder="z.B. Rechnungsnr. 2024-001"></div>
+          <button class="btn-primary" onclick="addRechnung()">Speichern</button>
+        </div></div>
+        <div class="sec-hd">Offene Rechnungen</div><div id="lst-rechnungen-offen"></div>
+        <div class="sec-hd">Bezahlt</div><div id="lst-rechnungen-bezahlt"></div>
+      </div>
+      <!-- LIEFERANTEN -->
+      <div class="panel" id="p-lieferanten">
+        <div style="padding:14px 14px 0"><div class="card">
+          <div class="card-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Lieferant hinzufügen</div>
+          <div class="field"><label>Name</label><input type="text" id="l-name" placeholder="z.B. Metro Cash & Carry"></div>
+          <div class="field"><label>Kategorie</label><select id="l-kat"><option value="lebensmittel">🥩 Lebensmittel</option><option value="getraenke">🍷 Getränke</option><option value="reinigung">🧹 Reinigung</option><option value="sonstiges">📦 Sonstiges</option></select></div>
+          <div class="field"><label>Kontakt / Telefon</label><input type="text" id="l-kontakt" placeholder="z.B. 0711 123456"></div>
+          <div class="field"><label>Zahlungsziel (Tage)</label><input type="number" id="l-zahlungsziel" placeholder="z.B. 14" inputmode="numeric" min="0"></div>
+          <div class="field"><label>Notiz</label><input type="text" id="l-notiz" placeholder="z.B. Liefert Di + Fr"></div>
+          <button class="btn-primary" onclick="addLieferant()">Speichern</button>
+        </div></div>
+        <div class="sec-hd">Lieferanten</div><div id="lst-lieferanten"></div>
+      </div>
+<!-- EINSTELLUNGEN -->
       <div class="panel" id="p-einstellungen">
         <div class="sec-hd">Simulation</div>
         <div class="card">
@@ -620,7 +700,7 @@ body {
           <div class="setting-row"><div><div class="setting-lbl">Simulationsdauer</div><div class="setting-sub" id="set-tage">14 Tage</div></div><span class="goal-edit" onclick="openModal('tage')">Ändern</span></div>
           <div class="setting-row"><div><div class="setting-lbl">Sitzplätze</div><div class="setting-sub" id="set-plaetze">40 Plätze</div></div><span class="goal-edit" onclick="openModal('plaetze')">Ändern</span></div>
         </div>
-        <div class="sec-hd">Supabase Sync</div>
+        <div class="sec-hd">Supabase Synchronisation</div>
         <div class="card">
           <div class="setting-row"><div><div class="setting-lbl">Status</div><div class="setting-sub" id="set-sync-status">Nicht konfiguriert</div></div><div class="sync-dot" id="sync-dot3" style="margin-right:0"></div></div>
           <div class="setting-row"><div><div class="setting-lbl">URL & Key konfigurieren</div><div class="setting-sub">Supabase Projekt-URL und Anon-Key</div></div><span class="goal-edit" onclick="openModal('supabase')">Bearbeiten</span></div>
@@ -664,6 +744,10 @@ body {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Personal
       </button>
+      <button class="nav-item" id="ni-tagesabschluss" onclick="switchTab('tagesabschluss')"><div class="nav-bar"></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Heute</button>
+      <button class="nav-item" id="ni-monat" onclick="switchTab('monat')"><div class="nav-bar"></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Monat</button>
+      <button class="nav-item" id="ni-rechnungen" onclick="switchTab('rechnungen')"><div class="nav-bar"></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Rechnungen</button>
+      <button class="nav-item" id="ni-lieferanten" onclick="switchTab('lieferanten')"><div class="nav-bar"></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Lieferanten</button>
       <button class="nav-item" id="ni-einstellungen" onclick="switchTab('einstellungen')">
         <div class="nav-bar"></div>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -802,10 +886,10 @@ function openModal(type) {
   else if(type==='tage') h=`<div class="modal-hd"><div class="modal-title">Simulationsdauer</div></div><div class="modal-body"><div class="modal-field"><label>Tage</label><input type="number" id="mi-v" value="${D.settings.tage||14}" inputmode="numeric"></div></div><div class="modal-actions"><button class="m-btn primary" onclick="saveSetting('tage')">Speichern</button><button class="m-btn secondary" onclick="closeModal()">Abbrechen</button></div>`;
   else if(type==='plaetze') h=`<div class="modal-hd"><div class="modal-title">Sitzplätze</div></div><div class="modal-body"><div class="modal-field"><label>Anzahl</label><input type="number" id="mi-v" value="${D.settings.plaetze||40}" inputmode="numeric"></div></div><div class="modal-actions"><button class="m-btn primary" onclick="saveSetting('plaetze')">Speichern</button><button class="m-btn secondary" onclick="closeModal()">Abbrechen</button></div>`;
   else if(type==='supabase') h=`
-    <div class="modal-hd"><div class="modal-title">Supabase konfigurieren</div><div class="modal-sub">Einmalig einrichten – dann live Sync auf allen Geräten</div></div>
+    <div class="modal-hd"><div class="modal-title">Supabase konfigurieren</div><div class="modal-sub">Einmalig einrichten – dann Live-Sync auf allen Geräten</div></div>
     <div class="modal-body">
-      <div class="modal-field"><label>Project URL</label><input type="text" id="mi-sburl" placeholder="https://xyz.supabase.co" value="${SB_URL}"></div>
-      <div class="modal-field"><label>Anon Key</label><input type="text" id="mi-sbkey" placeholder="eyJ..." value="${SB_KEY}" style="font-size:12px"></div>
+      <div class="modal-field"><label>Projekt-URL</label><input type="text" id="mi-sburl" placeholder="https://xyz.supabase.co" value="${SB_URL}"></div>
+      <div class="modal-field"><label>Anon-Schlüssel</label><input type="text" id="mi-sbkey" placeholder="eyJ..." value="${SB_KEY}" style="font-size:12px"></div>
       <p style="font-size:12px;color:var(--text2);line-height:1.6;margin-top:4px;">Supabase.com → Neues Projekt → Settings → API → URL & anon key kopieren. Tabellen anlegen: <strong>einnahmen</strong>, <strong>ausgaben</strong>, <strong>schichten</strong> (jeweils mit id, datum und den Feldern laut Anleitung).</p>
     </div>
     <div class="modal-actions"><button class="m-btn primary" onclick="saveSupabase()">Verbinden</button><button class="m-btn secondary" onclick="clearSupabase()">Verbindung trennen</button><button class="m-btn secondary" onclick="closeModal()">Abbrechen</button></div>`;
@@ -1049,6 +1133,378 @@ function renderAll(){renderEin();renderAus();renderMit();renderDashboard();updat
 // ══════════════════════════════════════════════
 renderAll();
 initSupabase();
+
+// ══════════════════════════════════════════
+// EXTENDED DATA & LOCAL STORAGE
+// ══════════════════════════════════════════
+// Extend D object with new tables
+if (!D.rec) D.rec = JSON.parse(localStorage.getItem('rv3_rec') || '[]');
+if (!D.lief) D.lief = JSON.parse(localStorage.getItem('rv3_lief') || '[]');
+
+const _origSaveLocal = saveLocal;
+function saveLocal(k) {
+  const m2 = {ein:'rv3_ein',aus:'rv3_aus',mit:'rv3_mit',staff:'rv3_staff',settings:'rv3_set',rec:'rv3_rec',lief:'rv3_lief'};
+  if (k) localStorage.setItem(m2[k], JSON.stringify(D[k]));
+  else Object.keys(m2).forEach(kk => localStorage.setItem(m2[kk], JSON.stringify(D[kk])));
+}
+
+// Override switchTab to handle new tabs
+const _origSwitch = switchTab;
+function switchTab(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.snav-item').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById('p-'+id);
+  if (panel) panel.classList.add('active');
+  const ni = document.getElementById('ni-'+id); if(ni) ni.classList.add('active');
+  const si = document.getElementById('sni-'+id); if(si) si.classList.add('active');
+  if(id==='dashboard') renderDashboard();
+  else if(id==='tagesabschluss') renderTagesabschluss();
+  else if(id==='monat') renderMonat();
+  else if(id==='einnahmen') {}
+  else if(id==='ausgaben') {}
+  else if(id==='personal') renderChips();
+  else if(id==='rechnungen') renderRechnungen();
+  else if(id==='lieferanten') renderLieferanten();
+  else if(id==='einstellungen') renderSettings();
+}
+
+// Override loadFromSupabase to include new tables
+async function loadFromSupabase() {
+  if(!SB) return;
+  try {
+    const [e,a,m,r,l] = await Promise.all([
+      SB.from('einnahmen').select('*').order('datum',{ascending:false}),
+      SB.from('ausgaben').select('*').order('datum',{ascending:false}),
+      SB.from('schichten').select('*').order('datum',{ascending:false}),
+      SB.from('rechnungen').select('*').order('faellig',{ascending:true}).catch(()=>({data:[]})),
+      SB.from('lieferanten').select('*').order('name',{ascending:true}).catch(()=>({data:[]}))
+    ]);
+    if(e.data) D.ein=e.data;
+    if(a.data) D.aus=a.data;
+    if(m.data) D.mit=m.data;
+    if(r.data) D.rec=r.data;
+    if(l.data) D.lief=l.data;
+    renderAll();
+    setSyncStatus('synced');
+  } catch(err) { setSyncStatus('error'); }
+}
+
+// Init new date fields
+const rFaellig = document.getElementById('r-faellig');
+if (rFaellig) rFaellig.value = today();
+
+// ══════════════════════════════════════════
+// TAGESABSCHLUSS
+// ══════════════════════════════════════════
+function renderTagesabschluss() {
+  const t = today();
+  const einH = D.ein.filter(e => e.datum === t);
+  const ausH = D.aus.filter(a => a.datum === t);
+  const mitH = D.mit.filter(m => m.datum === t);
+  const tBar = einH.reduce((s,e) => s+e.bar, 0);
+  const tKarte = einH.reduce((s,e) => s+e.karte, 0);
+  const tTip = einH.reduce((s,e) => s+e.tip, 0);
+  const tEin = tBar+tKarte+tTip;
+  const tAus = ausH.reduce((s,a) => s+a.betrag, 0);
+  const tLohn = mitH.reduce((s,m) => s+m.ausgezahlt, 0);
+  const tErg = tEin-tAus-tLohn;
+  const now = new Date();
+  const el_date = document.getElementById('ta-date');
+  if(el_date) el_date.textContent = now.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  const el_total = document.getElementById('ta-total');
+  if(el_total) el_total.textContent = eur(tEin);
+  const el_sub = document.getElementById('ta-sub');
+  if(el_sub) el_sub.textContent = einH.length ? einH.length+' Eintrag'+( einH.length>1?'e':'')+( einH.reduce((s,e)=>s+e.gaeste,0)>0?' · '+einH.reduce((s,e)=>s+e.gaeste,0)+' Gäste':'') : 'Noch keine Einnahmen für heute';
+  const el_bar = document.getElementById('ta-bar'); if(el_bar) el_bar.textContent=eur(tBar,true);
+  const el_karte = document.getElementById('ta-karte'); if(el_karte) el_karte.textContent=eur(tKarte,true);
+  const el_tip = document.getElementById('ta-tip'); if(el_tip) el_tip.textContent=eur(tTip,true);
+  const aw = document.getElementById('ta-ausgaben-wrap');
+  if(aw) aw.innerHTML = ausH.length ? ausH.map(a => { const k=KAT[a.kat]||KAT.sonstiges; return `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${k.icon} ${a.beschr||k.label}</span><strong class="amtr">${eur(a.betrag)}</strong></div></div>`; }).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Ausgaben gesamt</span><strong class="amtr">${eur(tAus)}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Keine Ausgaben heute</div>';
+  const pw = document.getElementById('ta-personal-wrap');
+  if(pw) pw.innerHTML = mitH.length ? mitH.map(m => `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${m.name} (${m.von}–${m.bis})</span><strong class="amtr">${eur(m.ausgezahlt)}</strong></div></div>`).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Lohnkosten gesamt</span><strong class="amtr">${eur(tLohn)}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Kein Personal heute</div>';
+  const ev = document.getElementById('ta-erg-val');
+  if(ev) { ev.textContent=eur(tErg); ev.className=tErg>=0?'amtg':'amtr'; }
+}
+
+// ══════════════════════════════════════════
+// MONATSAUSWERTUNG
+// ══════════════════════════════════════════
+let selectedMonth = '';
+const monthName = m => ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'][parseInt(m)-1];
+const fmtFull = s => { if(!s)return'—'; const[y,mo,d]=s.split('-'); return d+'.'+mo+'.'+y; };
+
+function renderMonat() {
+  const months = new Set();
+  [...D.ein,...D.aus,...D.mit].forEach(x => { if(x.datum) months.add(x.datum.slice(0,7)); });
+  const now = new Date();
+  const currentM = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  months.add(currentM);
+  const sortedM = [...months].sort().reverse();
+  if(!selectedMonth || !months.has(selectedMonth)) selectedMonth = sortedM[0] || currentM;
+  const tabs = document.getElementById('month-tabs');
+  if(tabs) tabs.innerHTML = sortedM.map(m => `<div class="month-tab${m===selectedMonth?' active':''}" onclick="selectedMonth='${m}';renderMonat()">${monthName(m.split('-')[1])} ${m.split('-')[0]}</div>`).join('');
+  const [y,mo] = selectedMonth.split('-');
+  const einM = D.ein.filter(e => e.datum && e.datum.startsWith(selectedMonth));
+  const ausM = D.aus.filter(a => a.datum && a.datum.startsWith(selectedMonth));
+  const mitM = D.mit.filter(m => m.datum && m.datum.startsWith(selectedMonth));
+  const tE = einM.reduce((s,e) => s+e.bar+e.karte+e.tip, 0);
+  const tA = ausM.reduce((s,a) => s+a.betrag, 0);
+  const tL = mitM.reduce((s,m) => s+m.ausgezahlt, 0);
+  const gew = tE-tA-tL;
+  const weeks = [1,2,3,4,5];
+  const weekData = weeks.map(w => {
+    const start = new Date(parseInt(y),parseInt(mo)-1,(w-1)*7+1);
+    const end = new Date(parseInt(y),parseInt(mo)-1,w*7);
+    const wEin = einM.filter(e => { const d=new Date(e.datum); return d>=start&&d<=end; });
+    return {w, total:wEin.reduce((s,e)=>s+e.bar+e.karte+e.tip,0), count:wEin.length};
+  }).filter(w => w.total>0 || w.count>0);
+  const wg = document.getElementById('week-grid');
+  if(wg) wg.innerHTML = weekData.length ? weekData.map(w => `<div class="week-card"><div class="week-lbl">Woche ${w.w}</div><div class="week-val ${w.total>0?'cg':'ct'}">${eur(w.total,true)}</div><div class="week-sub">${w.count} Tage</div></div>`).join('') : '<div style="grid-column:1/-1;padding:14px 0;font-size:13px;color:var(--text2)">Keine Daten</div>';
+  const mc = document.getElementById('monat-cards');
+  if(mc) mc.innerHTML = `<div class="totals-card"><div class="t-row"><span>Gesamteinnahmen</span><strong class="amtg">${eur(tE)}</strong></div><div class="t-row"><span>Warenkosten</span><strong class="amtr">${eur(tA)}</strong></div><div class="t-row"><span>Lohnkosten</span><strong class="amtr">${eur(tL)}</strong></div><div class="t-row"><span style="font-weight:700">Monatsergebnis</span><strong class="${gew>=0?'amtg':'amtr'}" style="font-size:16px">${eur(gew)}</strong></div>${tE>0?`<div class="t-row"><span>Marge</span><strong>${Math.round(gew/tE*100)}%</strong></div>`:''}</div>`;
+  const byDay = {}; einM.forEach(e => { byDay[e.datum]=(byDay[e.datum]||0)+e.bar+e.karte+e.tip; });
+  const days = Object.keys(byDay).sort(); const maxD = Math.max(...days.map(d=>byDay[d]),1);
+  const mc2 = document.getElementById('monat-chart');
+  if(mc2) mc2.innerHTML = days.length ? days.map(d => { const p=Math.max(3,Math.round(byDay[d]/maxD*100)); return `<div class="bar-row"><div class="bar-day">${fmt(d)}</div><div class="bar-track"><div class="bar-fill" style="width:${p}%;background:var(--green)">${byDay[d]>=300?eur(byDay[d],true):''}</div></div><div class="bar-amt">${eur(byDay[d],true)}</div></div>`; }).join('') : '<div style="font-size:13px;color:var(--text2);padding:4px 0">Keine Daten</div>';
+}
+
+// ══════════════════════════════════════════
+// RECHNUNGEN
+// ══════════════════════════════════════════
+function addDays(dateStr, n) { const d=new Date(dateStr); d.setDate(d.getDate()+n); return d.toISOString().split('T')[0]; }
+
+async function addRechnung() {
+  const beschr = document.getElementById('r-beschr').value.trim();
+  const betrag = parseFloat(document.getElementById('r-betrag').value)||0;
+  const faellig = document.getElementById('r-faellig').value||today();
+  const notiz = document.getElementById('r-notiz').value.trim();
+  if(!beschr||!betrag) return;
+  const row = {id:Date.now(),beschr,betrag,faellig,notiz,bezahlt:false};
+  if(SB) { setSyncStatus('syncing'); const{error}=await SB.from('rechnungen').insert([row]).catch(e=>({error:e})); if(!error) setSyncStatus('synced'); else { setSyncStatus('error'); D.rec.push(row); saveLocal('rec'); } }
+  else { D.rec.push(row); saveLocal('rec'); }
+  ['r-beschr','r-betrag','r-notiz'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('r-faellig').value=today();
+  renderRechnungen(); checkOverdue(); toast('Rechnung gespeichert');
+}
+
+async function toggleBezahlt(id) {
+  const r = D.rec.find(x=>x.id===id); if(!r) return;
+  r.bezahlt = !r.bezahlt;
+  if(SB) { setSyncStatus('syncing'); await SB.from('rechnungen').update({bezahlt:r.bezahlt}).eq('id',id).catch(()=>{}); setSyncStatus('synced'); }
+  else saveLocal('rec');
+  renderRechnungen(); checkOverdue();
+  toast(r.bezahlt?'Als bezahlt markiert':'Wieder geöffnet');
+}
+
+function renderRechnungen() {
+  const offen = D.rec.filter(r=>!r.bezahlt).sort((a,b)=>a.faellig.localeCompare(b.faellig));
+  const bezahlt = D.rec.filter(r=>r.bezahlt).sort((a,b)=>b.faellig.localeCompare(a.faellig));
+  const now = today();
+  const lst1 = document.getElementById('lst-rechnungen-offen');
+  if(!lst1) return;
+  if(!offen.length) { lst1.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><p>Keine offenen Rechnungen</p></div>'; }
+  else {
+    const tO = offen.reduce((s,r)=>s+r.betrag,0);
+    lst1.innerHTML = `<div class="totals-card"><div class="t-row"><span>Offen gesamt</span><strong class="amtr">${eur(tO)}</strong></div></div>` +
+    offen.map(r => {
+      const isOverdue = r.faellig < now;
+      const isSoon = !isOverdue && r.faellig <= addDays(now,3);
+      const sb = isOverdue?'<span class="badge b-overdue">Überfällig</span>':isSoon?'<span class="badge b-soon">Bald fällig</span>':'<span class="badge b-ok">Offen</span>';
+      return `<div class="entry-wrap" id="ew${r.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${r.id})" ontouchmove="tm(event,${r.id})" ontouchend="te(event,${r.id},'rec')"><div class="entry-icon">🧾</div><div class="entry-body"><div class="entry-date">Fällig: ${fmtFull(r.faellig)}</div><div class="entry-main">${r.beschr}</div><div class="entry-sub">${sb}${r.notiz?' · '+r.notiz:''}</div></div><div class="entry-right"><div class="entry-amt amtr">${eur(r.betrag)}</div><button onclick="toggleBezahlt(${r.id})" style="background:var(--green);border:none;color:#000;font-size:10px;font-weight:700;padding:4px 8px;border-radius:20px;cursor:pointer;white-space:nowrap;margin-top:4px;">✓ Bezahlt</button></div></div></div>`;
+    }).join('');
+  }
+  const lst2 = document.getElementById('lst-rechnungen-bezahlt');
+  if(lst2) lst2.innerHTML = bezahlt.length ? bezahlt.map(r => `<div class="entry-wrap" id="ew${r.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" style="opacity:0.5" ontouchstart="ts(event,${r.id})" ontouchmove="tm(event,${r.id})" ontouchend="te(event,${r.id},'rec')"><div class="entry-icon">✅</div><div class="entry-body"><div class="entry-date">Fällig war: ${fmtFull(r.faellig)}</div><div class="entry-main">${r.beschr}</div>${r.notiz?`<div class="entry-sub">${r.notiz}</div>`:''}</div><div class="entry-right"><div class="entry-amt" style="color:var(--text2);text-decoration:line-through">${eur(r.betrag)}</div><button onclick="toggleBezahlt(${r.id})" style="background:var(--bg2);border:1px solid var(--bord2);color:var(--text2);font-size:10px;font-weight:700;padding:4px 8px;border-radius:20px;cursor:pointer;margin-top:4px;">Öffnen</button></div></div></div>`).join('') : '<div style="padding:14px;font-size:13px;color:var(--text2)">Keine bezahlten Rechnungen</div>';
+}
+
+function checkOverdue() {
+  const now = today();
+  const overdue = D.rec.filter(r=>!r.bezahlt&&r.faellig<now);
+  const soon = D.rec.filter(r=>!r.bezahlt&&r.faellig>=now&&r.faellig<=addDays(now,3));
+  const w = document.getElementById('overdue-wrap'); if(!w) return;
+  if(overdue.length||soon.length) {
+    const msgs=[];
+    if(overdue.length) msgs.push(`${overdue.length} Rechnung${overdue.length>1?'en':''} überfällig (${eur(overdue.reduce((s,r)=>s+r.betrag,0))})`);
+    if(soon.length) msgs.push(`${soon.length} Rechnung${soon.length>1?'en':''} bald fällig`);
+    w.innerHTML=`<div class="overdue-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p>${msgs.join(' · ')} <span style="cursor:pointer;text-decoration:underline" onclick="switchTab('rechnungen')">Ansehen →</span></p></div>`;
+  } else w.innerHTML='';
+}
+
+// Override _del for rechnungen
+const _orig_del = _del;
+async function _del(arr, id) {
+  const tableMap = {ein:'einnahmen',aus:'ausgaben',mit:'schichten',rec:'rechnungen'};
+  if(SB && tableMap[arr]) { setSyncStatus('syncing'); await SB.from(tableMap[arr]).delete().eq('id',id).catch(()=>{}); setSyncStatus('synced'); }
+  D[arr] = D[arr].filter(x=>x.id!==id); saveLocal(arr);
+  if(arr==='ein') renderEin();
+  if(arr==='aus') renderAus();
+  if(arr==='mit') renderMit();
+  if(arr==='rec') { renderRechnungen(); checkOverdue(); }
+  updateMetrics();
+  toast('Gelöscht','r');
+}
+
+// ══════════════════════════════════════════
+// LIEFERANTEN
+// ══════════════════════════════════════════
+async function addLieferant() {
+  const name = document.getElementById('l-name').value.trim();
+  const kat = document.getElementById('l-kat').value;
+  const kontakt = document.getElementById('l-kontakt').value.trim();
+  const zahlungsziel = parseInt(document.getElementById('l-zahlungsziel').value)||14;
+  const notiz = document.getElementById('l-notiz').value.trim();
+  if(!name) return;
+  const row = {id:Date.now(),name,kat,kontakt,zahlungsziel,notiz};
+  if(SB) { setSyncStatus('syncing'); const{error}=await SB.from('lieferanten').insert([row]).catch(e=>({error:e})); if(!error) setSyncStatus('synced'); else { setSyncStatus('error'); D.lief.push(row); saveLocal('lief'); } }
+  else { D.lief.push(row); saveLocal('lief'); }
+  ['l-name','l-kontakt','l-notiz','l-zahlungsziel'].forEach(id=>document.getElementById(id).value='');
+  renderLieferanten(); toast(name+' gespeichert');
+}
+
+function renderLieferanten() {
+  const lst = document.getElementById('lst-lieferanten'); if(!lst) return;
+  if(!D.lief.length) { lst.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg><p>Noch keine Lieferanten</p></div>'; return; }
+  lst.innerHTML = D.lief.map(l => { const k=KAT[l.kat]||KAT.sonstiges; return `<div class="lief-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div class="lief-name">${l.name}</div><div class="lief-meta">${k.icon} ${k.label}${l.kontakt?' · 📞 '+l.kontakt:''}</div></div><button class="del-btn" onclick="delLieferant(${l.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div><div class="lief-tags"><span class="lief-tag">Zahlungsziel: ${l.zahlungsziel} Tage</span>${l.notiz?`<span class="lief-tag">${l.notiz}</span>`:''}</div></div>`; }).join('');
+}
+
+async function delLieferant(id) {
+  if(SB) await SB.from('lieferanten').delete().eq('id',id).catch(()=>{});
+  D.lief = D.lief.filter(x=>x.id!==id); saveLocal('lief'); renderLieferanten(); toast('Gelöscht','r');
+}
+
+// ══════════════════════════════════════════
+// PDF EXPORTS
+// ══════════════════════════════════════════
+function exportTagesPDF() {
+  if(!window.jspdf){toast('PDF wird geladen...','a');return;}
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const rname = D.settings.rname||'Mein Restaurant';
+  const t = today();
+  const einH=D.ein.filter(e=>e.datum===t), ausH=D.aus.filter(a=>a.datum===t), mitH=D.mit.filter(m=>m.datum===t);
+  const tBar=einH.reduce((s,e)=>s+e.bar,0), tKarte=einH.reduce((s,e)=>s+e.karte,0), tTip=einH.reduce((s,e)=>s+e.tip,0);
+  const tEin=tBar+tKarte+tTip, tAus=ausH.reduce((s,a)=>s+a.betrag,0), tLohn=mitH.reduce((s,m)=>s+m.ausgezahlt,0), tErg=tEin-tAus-tLohn;
+  doc.setFillColor(10,10,10); doc.rect(0,0,210,40,'F');
+  doc.setTextColor(34,197,94); doc.setFontSize(18); doc.setFont('helvetica','bold');
+  doc.text('Tagesabschluss · '+rname,20,18);
+  doc.setTextColor(180,180,180); doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text(new Date().toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}),20,28);
+  let y=52;
+  const rows=[['Einnahmen Bar',eur(tBar),[34,197,94]],['Einnahmen Karte',eur(tKarte),[59,130,246]],['Trinkgeld',eur(tTip),[245,158,11]],['Einnahmen gesamt',eur(tEin),[34,197,94]],['Ausgaben',eur(tAus),[239,68,68]],['Lohnkosten',eur(tLohn),[239,68,68]],['Tagesergebnis',eur(tErg),tErg>=0?[34,197,94]:[239,68,68]]];
+  rows.forEach((r,i) => {
+    doc.setFillColor(i===3||i===6?15:20,20,20); doc.rect(14,y-4,182,10,'F');
+    doc.setTextColor(200,200,200); doc.setFontSize(i===6?10:9); doc.setFont('helvetica',i===3||i===6?'bold':'normal');
+    doc.text(r[0],16,y+2);
+    doc.setTextColor(...r[2]); doc.setFont('helvetica','bold');
+    doc.text(r[1],190,y+2,{align:'right'}); y+=12;
+  });
+  doc.setTextColor(80,80,80); doc.setFontSize(8);
+  doc.text(rname+' · '+t,105,290,{align:'center'});
+  doc.save(rname.replace(/\s/g,'_')+'_Tagesabschluss_'+t+'.pdf');
+  toast('Tages-PDF exportiert');
+}
+
+function exportPDF() {
+  if(!window.jspdf){toast('PDF wird geladen...','a');return;}
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const rname = D.settings.rname||'Mein Restaurant';
+  const tE=D.ein.reduce((s,e)=>s+e.bar+e.karte+e.tip,0);
+  const tA=D.aus.reduce((s,a)=>s+a.betrag,0);
+  const tL=D.mit.reduce((s,m)=>s+m.ausgezahlt,0);
+  const gew=tE-tA-tL;
+  const fP=tE>0?Math.round(D.aus.filter(a=>a.kat==='lebensmittel').reduce((s,a)=>s+a.betrag,0)/tE*100):0;
+  const lP=tE>0?Math.round(tL/tE*100):0;
+  const mg=tE>0?Math.round(gew/tE*100):0;
+  let y=20;
+  doc.setFillColor(10,10,10); doc.rect(0,0,210,40,'F');
+  doc.setTextColor(34,197,94); doc.setFontSize(20); doc.setFont('helvetica','bold');
+  doc.text(rname,20,18);
+  doc.setTextColor(180,180,180); doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text('Buchhaltungsauswertung · Erstellt am '+new Date().toLocaleDateString('de-DE'),20,28);
+  y=52;
+  doc.setFillColor(20,20,20); doc.roundedRect(14,y-6,182,32,3,3,'F');
+  doc.setTextColor(120,120,120); doc.setFontSize(8); doc.setFont('helvetica','bold');
+  doc.text('GESAMTERGEBNIS',20,y+2);
+  doc.setTextColor(gew>=0?34:239,gew>=0?197:68,gew>=0?94:68);
+  doc.setFontSize(22); doc.setFont('helvetica','bold');
+  doc.text(eur(gew),20,y+14);
+  doc.setTextColor(120,120,120); doc.setFontSize(9);
+  doc.text('Marge: '+mg+'%  |  Warenkosten: '+fP+'%  |  Personalkosten: '+lP+'%',110,y+14);
+  y+=42;
+  const kpis=[['Gesamteinnahmen',eur(tE),'g'],['Warenkosten',eur(tA),'r'],['Lohnkosten',eur(tL),'r'],['Gewinn',eur(gew),gew>=0?'g':'r'],['Warenkosten %',fP+'%',fP<=30?'g':fP<=40?'a':'r'],['Personalkosten %',lP+'%',lP<=35?'g':lP<=45?'a':'r']];
+  doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(180,180,180);
+  doc.text('KENNZAHLEN',14,y); y+=6;
+  kpis.forEach((kpi,i) => {
+    const col=i%2, row=Math.floor(i/2); const x=14+col*95, yy=y+row*14;
+    doc.setFillColor(24,24,24); doc.roundedRect(x,yy-4,88,12,2,2,'F');
+    doc.setTextColor(150,150,150); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text(kpi[0],x+4,yy+2);
+    const c=kpi[2]==='g'?[34,197,94]:kpi[2]==='r'?[239,68,68]:[245,158,11];
+    doc.setTextColor(...c); doc.setFontSize(10); doc.setFont('helvetica','bold');
+    doc.text(kpi[1],x+84,yy+2,{align:'right'});
+  });
+  y+=Math.ceil(kpis.length/2)*14+10;
+  if(y>230){doc.addPage();y=20;}
+  doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(180,180,180);
+  doc.text('EINNAHMEN',14,y); y+=6;
+  D.ein.slice(0,25).forEach(e => {
+    if(y>265){doc.addPage();y=20;}
+    doc.setFillColor(20,20,20); doc.rect(14,y-4,182,10,'F');
+    doc.setTextColor(200,200,200); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text(fmtFull(e.datum),16,y+2);
+    if(e.notiz) doc.text(e.notiz.slice(0,28),50,y+2);
+    doc.setTextColor(34,197,94); doc.setFont('helvetica','bold');
+    doc.text(eur(e.bar+e.karte+e.tip),190,y+2,{align:'right'}); y+=11;
+  });
+  y+=4;
+  if(y>230){doc.addPage();y=20;}
+  doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(180,180,180);
+  doc.text('AUSGABEN',14,y); y+=6;
+  D.aus.slice(0,25).forEach(a => {
+    if(y>265){doc.addPage();y=20;}
+    const k=KAT[a.kat]||KAT.sonstiges;
+    doc.setFillColor(20,20,20); doc.rect(14,y-4,182,10,'F');
+    doc.setTextColor(200,200,200); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text(fmtFull(a.datum),16,y+2);
+    doc.text(k.label,50,y+2);
+    if(a.beschr) doc.text(a.beschr.slice(0,22),85,y+2);
+    doc.setTextColor(239,68,68); doc.setFont('helvetica','bold');
+    doc.text(eur(a.betrag),190,y+2,{align:'right'}); y+=11;
+  });
+  const pageCount=doc.getNumberOfPages();
+  for(let i=1;i<=pageCount;i++){doc.setPage(i);doc.setTextColor(80,80,80);doc.setFontSize(8);doc.text(rname+' · Seite '+i+' von '+pageCount,105,290,{align:'center'});}
+  doc.save(rname.replace(/\s/g,'_')+'_Auswertung_'+today()+'.pdf');
+  toast('PDF exportiert');
+}
+
+// Override renderAll to include new renders
+function renderAll() {
+  renderEin(); renderAus(); renderMit(); renderDashboard(); updateMetrics(); renderSettings();
+  renderRechnungen(); renderLieferanten(); checkOverdue();
+}
+
+// Override exportJSON to include new data
+function exportJSON() {
+  const b=new Blob([JSON.stringify({ein:D.ein,aus:D.aus,mit:D.mit,rec:D.rec,lief:D.lief,staff:D.staff,settings:D.settings,v:4,ts:new Date().toISOString()},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(D.settings.rname||'restaurant')+'-backup-'+today()+'.json';a.click();toast('Backup exportiert');
+}
+
+// Override importJSON
+function importJSON(e) {
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=ev=>{try{const x=JSON.parse(ev.target.result);if(x.ein)D.ein=x.ein;if(x.aus)D.aus=x.aus;if(x.mit)D.mit=x.mit;if(x.rec)D.rec=x.rec;if(x.lief)D.lief=x.lief;if(x.staff)D.staff=x.staff;if(x.settings)D.settings=x.settings;saveLocal();renderAll();toast('Backup importiert');}catch{toast('Ungültige Datei','r');}};r.readAsText(f);
+}
+
+// Add Supabase tables for new data
+const _origLoadSB = loadFromSupabase;
+
+// Run initial renders for new sections
+renderRechnungen();
+renderLieferanten();
+checkOverdue();
+
 </script>
 </body>
 </html>
