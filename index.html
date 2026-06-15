@@ -836,11 +836,13 @@ const D = {
   ein:      JSON.parse(localStorage.getItem('rv3_ein')   || '[]'),
   aus:      JSON.parse(localStorage.getItem('rv3_aus')   || '[]'),
   mit:      JSON.parse(localStorage.getItem('rv3_mit')   || '[]'),
+  rec:      JSON.parse(localStorage.getItem('rv3_rec')   || '[]'),
+  lief:     JSON.parse(localStorage.getItem('rv3_lief')  || '[]'),
   staff:    JSON.parse(localStorage.getItem('rv3_staff') || '[]'),
   settings: JSON.parse(localStorage.getItem('rv3_set')   || '{"ziel":0,"tage":14,"plaetze":40}')
 };
 const saveLocal = k => {
-  const m={ein:'rv3_ein',aus:'rv3_aus',mit:'rv3_mit',staff:'rv3_staff',settings:'rv3_set'};
+  const m={ein:'rv3_ein',aus:'rv3_aus',mit:'rv3_mit',staff:'rv3_staff',settings:'rv3_set',rec:'rv3_rec',lief:'rv3_lief'};
   if(k) localStorage.setItem(m[k],JSON.stringify(D[k]));
   else Object.keys(m).forEach(kk=>localStorage.setItem(m[kk],JSON.stringify(D[kk])));
 };
@@ -865,17 +867,7 @@ function toast(msg,type='g') {
 // ══════════════════════════════════════════════
 //  TABS
 // ══════════════════════════════════════════════
-function switchTab(id) {
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.snav-item').forEach(b=>b.classList.remove('active'));
-  document.getElementById('p-'+id).classList.add('active');
-  const ni=document.getElementById('ni-'+id); if(ni) ni.classList.add('active');
-  const si=document.getElementById('sni-'+id); if(si) si.classList.add('active');
-  if(id==='dashboard') renderDashboard();
-  if(id==='personal') renderChips();
-  if(id==='einstellungen') renderSettings();
-}
+
 
 // ══════════════════════════════════════════════
 //  MODAL
@@ -1137,19 +1129,11 @@ initSupabase();
 // ══════════════════════════════════════════
 // EXTENDED DATA & LOCAL STORAGE
 // ══════════════════════════════════════════
-// Extend D object with new tables
-if (!D.rec) D.rec = JSON.parse(localStorage.getItem('rv3_rec') || '[]');
-if (!D.lief) D.lief = JSON.parse(localStorage.getItem('rv3_lief') || '[]');
+// D.rec and D.lief already initialized above
 
-const _origSaveLocal = saveLocal;
-function saveLocal(k) {
-  const m2 = {ein:'rv3_ein',aus:'rv3_aus',mit:'rv3_mit',staff:'rv3_staff',settings:'rv3_set',rec:'rv3_rec',lief:'rv3_lief'};
-  if (k) localStorage.setItem(m2[k], JSON.stringify(D[k]));
-  else Object.keys(m2).forEach(kk => localStorage.setItem(m2[kk], JSON.stringify(D[kk])));
-}
+
 
 // Override switchTab to handle new tabs
-const _origSwitch = switchTab;
 function switchTab(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
@@ -1332,7 +1316,6 @@ function checkOverdue() {
 }
 
 // Override _del for rechnungen
-const _orig_del = _del;
 async function _del(arr, id) {
   const tableMap = {ein:'einnahmen',aus:'ausgaben',mit:'schichten',rec:'rechnungen'};
   if(SB && tableMap[arr]) { setSyncStatus('syncing'); await SB.from(tableMap[arr]).delete().eq('id',id).catch(()=>{}); setSyncStatus('synced'); }
@@ -1480,25 +1463,15 @@ function exportPDF() {
 }
 
 // Override renderAll to include new renders
-function renderAll() {
-  renderEin(); renderAus(); renderMit(); renderDashboard(); updateMetrics(); renderSettings();
-  renderRechnungen(); renderLieferanten(); checkOverdue();
-}
+
 
 // Override exportJSON to include new data
-function exportJSON() {
-  const b=new Blob([JSON.stringify({ein:D.ein,aus:D.aus,mit:D.mit,rec:D.rec,lief:D.lief,staff:D.staff,settings:D.settings,v:4,ts:new Date().toISOString()},null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(D.settings.rname||'restaurant')+'-backup-'+today()+'.json';a.click();toast('Backup exportiert');
-}
+
 
 // Override importJSON
-function importJSON(e) {
-  const f=e.target.files[0];if(!f)return;
-  const r=new FileReader();r.onload=ev=>{try{const x=JSON.parse(ev.target.result);if(x.ein)D.ein=x.ein;if(x.aus)D.aus=x.aus;if(x.mit)D.mit=x.mit;if(x.rec)D.rec=x.rec;if(x.lief)D.lief=x.lief;if(x.staff)D.staff=x.staff;if(x.settings)D.settings=x.settings;saveLocal();renderAll();toast('Backup importiert');}catch{toast('Ungültige Datei','r');}};r.readAsText(f);
-}
+
 
 // Add Supabase tables for new data
-const _origLoadSB = loadFromSupabase;
 
 // Run initial renders for new sections
 renderRechnungen();
