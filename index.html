@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0a0a0a">
 <title>Mein Restaurant</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -84,6 +84,7 @@ body {
 .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); transition: background 0.3s; flex-shrink: 0; }
 .sync-dot.syncing { background: var(--amber); animation: pulse 1s infinite; }
 .sync-dot.synced  { background: var(--green); }
+.sync-dot.offline,.sync-dot.waiting { background: var(--amber); }
 .sync-dot.error   { background: var(--red); }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 .hbtn {
@@ -703,7 +704,13 @@ body {
         <div class="sec-hd">Supabase Synchronisation</div>
         <div class="card">
           <div class="setting-row"><div><div class="setting-lbl">Status</div><div class="setting-sub" id="set-sync-status">Nicht konfiguriert</div></div><div class="sync-dot" id="sync-dot3" style="margin-right:0"></div></div>
-          <div class="setting-row"><div><div class="setting-lbl">URL & Key konfigurieren</div><div class="setting-sub">Supabase Projekt-URL und Anon-Key</div></div><span class="goal-edit" onclick="openModal('supabase')">Bearbeiten</span></div>
+          <div class="setting-row"><div><div class="setting-lbl">URL & Key konfigurieren</div><div class="setting-sub">Supabase Projekt-URL und öffentlicher Schlüssel</div></div><span class="goal-edit" onclick="openModal('supabase')">Bearbeiten</span></div>
+        </div>
+        <div class="card" style="padding:14px">
+          <p id="sync-detail" role="status" style="font-size:12px;overflow-wrap:anywhere"></p>
+          <button class="m-btn secondary" onclick="loadFromSupabase()">Jetzt synchronisieren</button>
+          <button class="m-btn secondary" onclick="recoverLocal()">Frühere lokale Daten ergänzen</button>
+          <p style="font-size:12px;color:var(--text2)">Einnahmen, Ausgaben, Schichten, Rechnungen und Lieferanten werden gemeinsam synchronisiert. Personal-Vorlagen und Simulationseinstellungen bleiben auf diesem Gerät. Lokale Altdaten lassen sich bei Bedarf ergänzen; bestehende Cloud-Einträge werden dabei nicht überschrieben.</p>
         </div>
         <div class="sec-hd">Personal-Stammdaten</div>
         <div class="card">
@@ -768,66 +775,59 @@ body {
 
 <div class="toast" id="toast"></div>
 
+<script src="sync.js?v=4"></script>
 <script>
 // ══════════════════════════════════════════════
 //  SUPABASE CONFIG  (filled via Settings UI)
 // ══════════════════════════════════════════════
-let SB = null;
-let SB_URL = localStorage.getItem('rv_sb_url') || '';
-let SB_KEY = localStorage.getItem('rv_sb_key') || '';
+let SB = null, syncEngine = null;
+let SB_URL = localStorage.getItem('rv_sb_url') ?? 'https://ofrowanjbedqbmpgtkkv.supabase.co';
+let SB_KEY = localStorage.getItem('rv_sb_key') ?? 'sb_publishable_LHuJndu2b6HOopA2OId3hg_WssZ5wDe';
 
 function initSupabase() {
+  if(syncEngine) syncEngine.stop();
+  syncEngine=null; SB=null;
   if (!SB_URL || !SB_KEY) { setSyncStatus('none'); return; }
   try {
-    SB = supabase.createClient(SB_URL, SB_KEY);
-    setSyncStatus('syncing');
-    loadFromSupabase();
-    subscribeRealtime();
-  } catch(e) { setSyncStatus('error'); }
+    SB = supabase.createClient(SB_URL, SB_KEY, {global:{fetch:(url,options)=>fetch(url,{...options,signal:AbortSignal.timeout(15000)})}});
+    // Keep pre-upgrade local data recoverable; never blindly upload stale device caches.
+    if(!localStorage.getItem('rv4_recovery')) localStorage.setItem('rv4_recovery',JSON.stringify(D));
+    syncEngine=new LokalSync(SB,D,localStorage,SB_URL,()=>{saveLocal();renderAll();},setSyncStatus);
+    syncEngine.start();
+  } catch(e) { setSyncStatus('error',e.message); }
 }
-
-function setSyncStatus(s) {
-  const dots = ['sync-dot','sync-dot2','sync-dot3'];
-  const labels = { none:'Nicht verbunden', syncing:'Synchronisiert…', synced:'Verbunden & live', error:'Verbindungsfehler' };
-  dots.forEach(id=>{ const el=document.getElementById(id); if(el){el.className='sync-dot '+s;} });
-  ['sync-txt','sync-txt2'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=labels[s]||''; });
-  const ss=document.getElementById('set-sync-status'); if(ss) ss.textContent=labels[s]||'';
+function setSyncStatus(s,detail='') {
+  const labels={none:'Nur auf diesem Gerät',syncing:'Synchronisiert…',synced:'Verbunden & live',waiting:'Cloud-Abgleich aktiv · Live-Verbindung wartet',offline:'Offline · Änderungen warten',error:'Synchronisierung gestört'};
+  ['sync-dot','sync-dot2','sync-dot3'].forEach(id=>{const el=document.getElementById(id);if(el)el.className='sync-dot '+s;});
+  ['sync-txt','sync-txt2','set-sync-status'].forEach(id=>{const el=document.getElementById(id);if(el){el.textContent=labels[s]||s;el.title=detail;}});
+  const el=document.getElementById('sync-detail');if(el)el.textContent=detail;
 }
-
-async function loadFromSupabase() {
-  if(!SB) return;
+async function loadFromSupabase(){if(syncEngine)await syncEngine.sync();}
+const newId=()=>{const n=crypto.getRandomValues(new Uint32Array(2));return (n[0]&0x1fffff)*4294967296+n[1];};
+async function persistChange(type,key,row) {
   try {
-    const [e,a,m] = await Promise.all([
-      SB.from('einnahmen').select('*').order('datum',{ascending:false}),
-      SB.from('ausgaben').select('*').order('datum',{ascending:false}),
-      SB.from('schichten').select('*').order('datum',{ascending:false})
-    ]);
-    if(e.data) D.ein = e.data;
-    if(a.data) D.aus = a.data;
-    if(m.data) D.mit = m.data;
-    renderAll();
-    setSyncStatus('synced');
-  } catch(err) { setSyncStatus('error'); }
+    if(syncEngine) {
+      syncEngine.enqueue(type,key,row);
+      // Local durability is immediate; cloud retries continue independently.
+      syncEngine.sync();
+    } else if(SB_URL && SB_KEY) throw new Error('Cloud-Verbindung nicht initialisiert. Bitte erneut verbinden.');
+    else {
+      if(type==='insert')D[key].push(row);
+      else if(type==='delete')D[key]=D[key].filter(x=>x.id!==row.id);
+      else {const r=D[key].find(x=>x.id===row.id);if(r)Object.assign(r,row);}
+      saveLocal(key);renderAll();
+    }
+    return true;
+  } catch(e) {toast('Nicht gespeichert: '+e.message,'r');return false;}
 }
-
-function subscribeRealtime() {
-  if(!SB) return;
-  SB.channel('restaurant-changes')
-    .on('postgres_changes',{event:'*',schema:'public',table:'einnahmen'},()=>reloadTable('einnahmen'))
-    .on('postgres_changes',{event:'*',schema:'public',table:'ausgaben'},()=>reloadTable('ausgaben'))
-    .on('postgres_changes',{event:'*',schema:'public',table:'schichten'},()=>reloadTable('schichten'))
-    .subscribe();
+function savedToast(label='Gespeichert') {
+  toast(syncEngine?.pending().length?'Auf Gerät gespeichert · Cloud-Übertragung ausstehend':label);
 }
-
-async function reloadTable(table) {
-  if(!SB) return;
-  const {data} = await SB.from(table).select('*').order('datum',{ascending:false});
-  if(table==='einnahmen'&&data){D.ein=data;renderEin();}
-  if(table==='ausgaben'&&data){D.aus=data;renderAus();}
-  if(table==='schichten'&&data){D.mit=data;renderMit();}
-  updateMetrics();
-  setSyncStatus('synced');
-}
+window.addEventListener('online',()=>loadFromSupabase());
+window.addEventListener('offline',()=>syncEngine?.status());
+window.addEventListener('focus',()=>loadFromSupabase());
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadFromSupabase();});
+window.addEventListener('storage',e=>{if(syncEngine && e.key?.startsWith(syncEngine.prefix))syncEngine.sync();});
 
 // ══════════════════════════════════════════════
 //  LOCAL DATA (fallback when no Supabase)
@@ -850,7 +850,7 @@ const saveLocal = k => {
 // ══════════════════════════════════════════════
 //  UTILS
 // ══════════════════════════════════════════════
-const today = () => new Date().toISOString().split('T')[0];
+const today = () => {const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
 const eur = (n,s=false) => { const v=Math.round(n*100)/100; return s?Math.round(v).toLocaleString('de-DE')+'€':v.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; };
 const fmt = s => { if(!s)return'—'; const[y,mo,d]=s.split('-'); return ['So','Mo','Di','Mi','Do','Fr','Sa'][new Date(s).getDay()]+' '+d+'.'+mo+'.'; };
 const staffCol = name => ['#a855f7','#22c55e','#3b82f6','#f59e0b','#14b8a6','#ef4444','#f97316','#06b6d4'][(name||'A').charCodeAt(0)%8];
@@ -881,8 +881,8 @@ function openModal(type) {
     <div class="modal-hd"><div class="modal-title">Supabase konfigurieren</div><div class="modal-sub">Einmalig einrichten – dann Live-Sync auf allen Geräten</div></div>
     <div class="modal-body">
       <div class="modal-field"><label>Projekt-URL</label><input type="text" id="mi-sburl" placeholder="https://xyz.supabase.co" value="${SB_URL}"></div>
-      <div class="modal-field"><label>Anon-Schlüssel</label><input type="text" id="mi-sbkey" placeholder="eyJ..." value="${SB_KEY}" style="font-size:12px"></div>
-      <p style="font-size:12px;color:var(--text2);line-height:1.6;margin-top:4px;">Supabase.com → Neues Projekt → Settings → API → URL & anon key kopieren. Tabellen anlegen: <strong>einnahmen</strong>, <strong>ausgaben</strong>, <strong>schichten</strong> (jeweils mit id, datum und den Feldern laut Anleitung).</p>
+      <div class="modal-field"><label>Öffentlicher Schlüssel (publishable / anon)</label><input type="text" id="mi-sbkey" placeholder="sb_publishable_…" value="${SB_KEY}" style="font-size:12px"></div>
+      <p style="font-size:12px;color:var(--text2);line-height:1.6;margin-top:4px;">Bestehende Tabellen: einnahmen, ausgaben, schichten, rechnungen und lieferanten. Niemals einen Secret- oder Service-Role-Schlüssel eintragen.</p>
     </div>
     <div class="modal-actions"><button class="m-btn primary" onclick="saveSupabase()">Verbinden</button><button class="m-btn secondary" onclick="clearSupabase()">Verbindung trennen</button><button class="m-btn secondary" onclick="closeModal()">Abbrechen</button></div>`;
   else if(type==='addstaff') h=`<div class="modal-hd"><div class="modal-title">Mitarbeiter speichern</div></div><div class="modal-body"><div class="modal-field"><label>Name</label><input type="text" id="mi-sname" placeholder="z.B. Anna"></div><div class="modal-field"><label>Stundenlohn (€)</label><input type="number" id="mi-slohn" value="14" inputmode="decimal" step="0.5"></div><div class="modal-field"><label>Position</label><select id="mi-spos" style="width:100%;background:var(--bg2);border:1px solid var(--bord2);border-radius:var(--rsm);color:var(--text);font-size:16px;font-family:inherit;padding:12px 14px;outline:none;-webkit-appearance:none"><option>Koch</option><option>Köchin</option><option>Kellner</option><option>Kellnerin</option><option>Barkeeper</option><option>Spüler</option><option>Manager</option></select></div></div><div class="modal-actions"><button class="m-btn primary" onclick="addStaff()">Speichern</button><button class="m-btn secondary" onclick="closeModal()">Abbrechen</button></div>`;
@@ -900,21 +900,29 @@ function saveSetting(key) {
   saveLocal('settings'); closeModal(); renderDashboard(); updateMetrics(); renderSettings(); toast('Gespeichert');
 }
 function saveSupabase() {
+  if(syncEngine?.pending().length){toast('Zuerst ausstehende Änderungen synchronisieren.','r');return;}
   SB_URL=(document.getElementById('mi-sburl').value||'').trim();
   SB_KEY=(document.getElementById('mi-sbkey').value||'').trim();
   localStorage.setItem('rv_sb_url',SB_URL); localStorage.setItem('rv_sb_key',SB_KEY);
-  closeModal(); SB=null; initSupabase(); toast('Supabase verbunden');
+  closeModal(); initSupabase();
 }
-function clearSupabase() { SB_URL=''; SB_KEY=''; SB=null; localStorage.removeItem('rv_sb_url'); localStorage.removeItem('rv_sb_key'); setSyncStatus('none'); closeModal(); toast('Verbindung getrennt','r'); }
+function clearSupabase() {
+  if(syncEngine?.pending().length){toast('Zuerst ausstehende Änderungen synchronisieren.','r');return;}
+  syncEngine?.stop();syncEngine=null;SB=null;SB_URL='';SB_KEY='';
+  localStorage.setItem('rv_sb_url','');localStorage.setItem('rv_sb_key','');
+  setSyncStatus('none');closeModal();
+}
 function addStaff() {
   const name=document.getElementById('mi-sname').value.trim(), lohn=parseFloat(document.getElementById('mi-slohn').value)||14, pos=document.getElementById('mi-spos').value;
   if(!name)return; if(!D.staff.find(s=>s.name===name)) D.staff.push({name,lohn,pos});
   saveLocal('staff'); closeModal(); renderSettings(); renderChips(); toast(name+' gespeichert');
 }
-function doReset() {
-  D.ein=[]; D.aus=[]; D.mit=[]; saveLocal('ein'); saveLocal('aus'); saveLocal('mit');
-  if(SB) Promise.all([SB.from('einnahmen').delete().neq('id',0),SB.from('ausgaben').delete().neq('id',0),SB.from('schichten').delete().neq('id',0)]);
-  renderAll(); closeModal(); toast('Alles gelöscht','r');
+async function doReset() {
+  closeModal();
+  for(const key of Object.keys(LOKAL_TABLES)) {
+    for(const row of [...D[key]])if(!await persistChange('delete',key,{id:row.id}))return;
+  }
+  savedToast('Daten gelöscht');
 }
 
 // ══════════════════════════════════════════════
@@ -955,16 +963,10 @@ async function addEinnahme() {
   const gaeste=parseInt(document.getElementById('e-gaeste').value)||0;
   const notiz=document.getElementById('e-notiz').value.trim();
   if(!bar&&!karte&&!tip) return;
-  const row={id:Date.now(),datum,bar,karte,tip,gaeste,notiz};
-  if(SB) {
-    setSyncStatus('syncing');
-    const {error}=await SB.from('einnahmen').insert([row]);
-    if(!error){setSyncStatus('synced');}else{setSyncStatus('error');}
-  } else {
-    D.ein.unshift(row); saveLocal('ein'); renderEin(); updateMetrics();
-  }
+  const row={id:newId(),datum,bar,karte,tip,gaeste,notiz};
+  if(!await persistChange('insert','ein',row))return;
   ['e-bar','e-karte','e-tip','e-gaeste','e-notiz'].forEach(id=>document.getElementById(id).value='');
-  toast('Einnahme gespeichert');
+  savedToast('Einnahme gespeichert');
 }
 
 function renderEin() {
@@ -984,11 +986,10 @@ async function addAusgabe() {
   const beschr=document.getElementById('a-beschr').value.trim();
   const betrag=parseFloat(document.getElementById('a-betrag').value)||0;
   if(!betrag)return;
-  const row={id:Date.now(),datum,kat,beschr,betrag};
-  if(SB){setSyncStatus('syncing');const{error}=await SB.from('ausgaben').insert([row]);if(!error)setSyncStatus('synced');else setSyncStatus('error');}
-  else{D.aus.unshift(row);saveLocal('aus');renderAus();updateMetrics();}
+  const row={id:newId(),datum,kat,beschr,betrag};
+  if(!await persistChange('insert','aus',row))return;
   ['a-beschr','a-betrag'].forEach(id=>document.getElementById(id).value='');
-  toast('Ausgabe gespeichert');
+  savedToast('Ausgabe gespeichert');
 }
 
 function renderAus() {
@@ -1018,13 +1019,16 @@ async function addSchicht() {
   const bis=document.getElementById('m-bis').value;
   const lohn=parseFloat(document.getElementById('m-lohn').value)||14;
   if(!name)return;
+  if(!von||!bis){toast('Bitte Beginn und Ende angeben.','r');return;}
   const[vh,vm]=von.split(':').map(Number),[bh,bm]=bis.split(':').map(Number);
-  const st=Math.max(0,((bh*60+bm)-(vh*60+vm))/60);
-  const row={id:Date.now(),name,pos,datum,von,bis,stunden:st,lohn,ausgezahlt:Math.round(st*lohn*100)/100};
-  if(SB){setSyncStatus('syncing');const{error}=await SB.from('schichten').insert([row]);if(!error)setSyncStatus('synced');else setSyncStatus('error');}
-  else{D.mit.unshift(row);saveLocal('mit');renderMit();updateMetrics();}
+  let minutes=(bh*60+bm)-(vh*60+vm);
+  if(minutes<0)minutes+=1440;
+  if(!minutes||!Number.isFinite(minutes)){toast('Bitte unterschiedliche gültige Zeiten angeben.','r');return;}
+  const st=minutes/60;
+  const row={id:newId(),name,pos,datum,von,bis,stunden:st,lohn,ausgezahlt:Math.round(st*lohn*100)/100};
+  if(!await persistChange('insert','mit',row))return;
   document.getElementById('m-name').value='';
-  toast(name+' eingetragen');
+  savedToast(name+' eingetragen');
 }
 
 function renderMit() {
@@ -1049,10 +1053,7 @@ async function delEntry(arr,id) {
   if(entry){entry.classList.add('removing');setTimeout(()=>_del(arr,id),280);}else _del(arr,id);
 }
 async function _del(arr,id) {
-  const tableMap={ein:'einnahmen',aus:'ausgaben',mit:'schichten'};
-  if(SB){setSyncStatus('syncing');await SB.from(tableMap[arr]).delete().eq('id',id);setSyncStatus('synced');}
-  else{D[arr]=D[arr].filter(x=>x.id!==id);saveLocal(arr);if(arr==='ein')renderEin();if(arr==='aus')renderAus();if(arr==='mit')renderMit();updateMetrics();}
-  toast('Gelöscht','r');
+  if(await persistChange('delete',arr,{id}))savedToast('Gelöscht');
 }
 
 // ══════════════════════════════════════════════
@@ -1114,17 +1115,35 @@ function renderDashboard() {
 // ══════════════════════════════════════════════
 //  EXPORT / IMPORT
 // ══════════════════════════════════════════════
-function exportJSON(){const b=new Blob([JSON.stringify({ein:D.ein,aus:D.aus,mit:D.mit,staff:D.staff,settings:D.settings,v:3,ts:new Date().toISOString()},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='restaurant-backup-'+today()+'.json';a.click();toast('Backup exportiert');}
-function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const x=JSON.parse(ev.target.result);if(x.ein)D.ein=x.ein;if(x.aus)D.aus=x.aus;if(x.mit)D.mit=x.mit;if(x.staff)D.staff=x.staff;if(x.settings)D.settings=x.settings;saveLocal();renderAll();toast('Backup importiert');}catch{toast('Ungültige Datei','r');}};r.readAsText(f);}
+function exportJSON(){const b=new Blob([JSON.stringify({ein:D.ein,aus:D.aus,mit:D.mit,rec:D.rec,lief:D.lief,pending:syncEngine?.pending()||[],recovery:JSON.parse(localStorage.getItem('rv4_recovery')||'null'),staff:D.staff,settings:D.settings,v:3,ts:new Date().toISOString()},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='restaurant-backup-'+today()+'.json';a.click();toast('Backup exportiert');}
+async function importData(x) {
+  for(const key of Object.keys(LOKAL_TABLES)) {
+    if(x[key] && (!Array.isArray(x[key]) || x[key].some(r=>!r || !Number.isSafeInteger(r.id))))throw new Error('Ungültige Einträge: '+key);
+  }
+  for(const key of Object.keys(LOKAL_TABLES))for(const row of x[key]||[]) {
+    if(!D[key].some(r=>r.id===row.id) && !await persistChange('insert',key,row))throw new Error('Import unterbrochen');
+  }
+  if(Array.isArray(x.staff))D.staff=x.staff;
+  if(x.settings && typeof x.settings==='object')D.settings={...D.settings,...x.settings};
+  saveLocal();renderAll();savedToast('Backup ergänzt');
+}
+function importJSON(e) {
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=async ev=>{try{await importData(JSON.parse(ev.target.result));}catch(err){toast('Import: '+err.message,'r');}finally{e.target.value='';}};r.readAsText(f);
+}
+async function recoverLocal() {
+  try {const x=JSON.parse(localStorage.getItem('rv4_recovery')||'{}');await importData(x);}
+  catch(e){toast('Wiederherstellung: '+e.message,'r');}
+}
+
 function exportCSV(){let c='Typ,Datum,Beschreibung,Bar,Karte,TG,Betrag,Kat,Name,Stunden\n';D.ein.forEach(e=>{c+=`Einnahme,${e.datum},"${e.notiz||''}",${e.bar},${e.karte},${e.tip},${e.bar+e.karte+e.tip},,\n`;});D.aus.forEach(a=>{c+=`Ausgabe,${a.datum},"${a.beschr||''}",,,, ${a.betrag},${a.kat},\n`;});D.mit.forEach(m=>{c+=`Schicht,${m.datum},"${m.pos}",,,, ${m.ausgezahlt},,${m.name},${m.stunden.toFixed(1)}\n`;});const b=new Blob([c],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='restaurant-'+today()+'.csv';a.click();toast('CSV exportiert');}
 
-function renderAll(){renderEin();renderAus();renderMit();renderDashboard();updateMetrics();renderSettings();}
+function renderAll(){renderEin();renderAus();renderMit();renderDashboard();updateMetrics();renderSettings();renderRechnungen();renderLieferanten();checkOverdue();renderTagesabschluss();renderMonat();}
 
 // ══════════════════════════════════════════════
 //  BOOT
 // ══════════════════════════════════════════════
-renderAll();
-initSupabase();
+
 
 // ══════════════════════════════════════════
 // EXTENDED DATA & LOCAL STORAGE
@@ -1153,26 +1172,6 @@ function switchTab(id) {
   else if(id==='einstellungen') renderSettings();
 }
 
-// Override loadFromSupabase to include new tables
-async function loadFromSupabase() {
-  if(!SB) return;
-  try {
-    const [e,a,m,r,l] = await Promise.all([
-      SB.from('einnahmen').select('*').order('datum',{ascending:false}),
-      SB.from('ausgaben').select('*').order('datum',{ascending:false}),
-      SB.from('schichten').select('*').order('datum',{ascending:false}),
-      SB.from('rechnungen').select('*').order('faellig',{ascending:true}).catch(()=>({data:[]})),
-      SB.from('lieferanten').select('*').order('name',{ascending:true}).catch(()=>({data:[]}))
-    ]);
-    if(e.data) D.ein=e.data;
-    if(a.data) D.aus=a.data;
-    if(m.data) D.mit=m.data;
-    if(r.data) D.rec=r.data;
-    if(l.data) D.lief=l.data;
-    renderAll();
-    setSyncStatus('synced');
-  } catch(err) { setSyncStatus('error'); }
-}
 
 // Init new date fields
 const rFaellig = document.getElementById('r-faellig');
@@ -1264,21 +1263,17 @@ async function addRechnung() {
   const faellig = document.getElementById('r-faellig').value||today();
   const notiz = document.getElementById('r-notiz').value.trim();
   if(!beschr||!betrag) return;
-  const row = {id:Date.now(),beschr,betrag,faellig,notiz,bezahlt:false};
-  if(SB) { setSyncStatus('syncing'); const{error}=await SB.from('rechnungen').insert([row]).catch(e=>({error:e})); if(!error) setSyncStatus('synced'); else { setSyncStatus('error'); D.rec.push(row); saveLocal('rec'); } }
-  else { D.rec.push(row); saveLocal('rec'); }
+  const row = {id:newId(),beschr,betrag,faellig,notiz,bezahlt:false};
+  if(!await persistChange('insert','rec',row))return;
   ['r-beschr','r-betrag','r-notiz'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('r-faellig').value=today();
-  renderRechnungen(); checkOverdue(); toast('Rechnung gespeichert');
+  renderRechnungen(); checkOverdue(); savedToast('Rechnung gespeichert');
 }
 
 async function toggleBezahlt(id) {
-  const r = D.rec.find(x=>x.id===id); if(!r) return;
-  r.bezahlt = !r.bezahlt;
-  if(SB) { setSyncStatus('syncing'); await SB.from('rechnungen').update({bezahlt:r.bezahlt}).eq('id',id).catch(()=>{}); setSyncStatus('synced'); }
-  else saveLocal('rec');
-  renderRechnungen(); checkOverdue();
-  toast(r.bezahlt?'Als bezahlt markiert':'Wieder geöffnet');
+  const r=D.rec.find(x=>x.id===id);if(!r)return;
+  const bezahlt=!r.bezahlt;
+  if(await persistChange('update','rec',{id,bezahlt}))savedToast(bezahlt?'Als bezahlt markiert':'Wieder geöffnet');
 }
 
 function renderRechnungen() {
@@ -1315,18 +1310,7 @@ function checkOverdue() {
   } else w.innerHTML='';
 }
 
-// Override _del for rechnungen
-async function _del(arr, id) {
-  const tableMap = {ein:'einnahmen',aus:'ausgaben',mit:'schichten',rec:'rechnungen'};
-  if(SB && tableMap[arr]) { setSyncStatus('syncing'); await SB.from(tableMap[arr]).delete().eq('id',id).catch(()=>{}); setSyncStatus('synced'); }
-  D[arr] = D[arr].filter(x=>x.id!==id); saveLocal(arr);
-  if(arr==='ein') renderEin();
-  if(arr==='aus') renderAus();
-  if(arr==='mit') renderMit();
-  if(arr==='rec') { renderRechnungen(); checkOverdue(); }
-  updateMetrics();
-  toast('Gelöscht','r');
-}
+
 
 // ══════════════════════════════════════════
 // LIEFERANTEN
@@ -1338,11 +1322,10 @@ async function addLieferant() {
   const zahlungsziel = parseInt(document.getElementById('l-zahlungsziel').value)||14;
   const notiz = document.getElementById('l-notiz').value.trim();
   if(!name) return;
-  const row = {id:Date.now(),name,kat,kontakt,zahlungsziel,notiz};
-  if(SB) { setSyncStatus('syncing'); const{error}=await SB.from('lieferanten').insert([row]).catch(e=>({error:e})); if(!error) setSyncStatus('synced'); else { setSyncStatus('error'); D.lief.push(row); saveLocal('lief'); } }
-  else { D.lief.push(row); saveLocal('lief'); }
+  const row = {id:newId(),name,kat,kontakt,zahlungsziel,notiz};
+  if(!await persistChange('insert','lief',row))return;
   ['l-name','l-kontakt','l-notiz','l-zahlungsziel'].forEach(id=>document.getElementById(id).value='');
-  renderLieferanten(); toast(name+' gespeichert');
+  renderLieferanten(); savedToast(name+' gespeichert');
 }
 
 function renderLieferanten() {
@@ -1351,10 +1334,7 @@ function renderLieferanten() {
   lst.innerHTML = D.lief.map(l => { const k=KAT[l.kat]||KAT.sonstiges; return `<div class="lief-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div class="lief-name">${l.name}</div><div class="lief-meta">${k.icon} ${k.label}${l.kontakt?' · 📞 '+l.kontakt:''}</div></div><button class="del-btn" onclick="delLieferant(${l.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div><div class="lief-tags"><span class="lief-tag">Zahlungsziel: ${l.zahlungsziel} Tage</span>${l.notiz?`<span class="lief-tag">${l.notiz}</span>`:''}</div></div>`; }).join('');
 }
 
-async function delLieferant(id) {
-  if(SB) await SB.from('lieferanten').delete().eq('id',id).catch(()=>{});
-  D.lief = D.lief.filter(x=>x.id!==id); saveLocal('lief'); renderLieferanten(); toast('Gelöscht','r');
-}
+async function delLieferant(id) {await _del('lief',id);}
 
 // ══════════════════════════════════════════
 // PDF EXPORTS
@@ -1474,9 +1454,8 @@ function exportPDF() {
 // Add Supabase tables for new data
 
 // Run initial renders for new sections
-renderRechnungen();
-renderLieferanten();
-checkOverdue();
+renderAll();
+initSupabase();
 
 </script>
 </body>
