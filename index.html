@@ -449,9 +449,43 @@ body {
 .btn-secondary:active{opacity:0.8;}
 @media(min-width:768px){.snav-item svg{width:18px;height:18px;flex-shrink:0;stroke:currentColor;}}
 
+
+.auth-locked > :not(#auth-gate):not(script) { display:none !important; }
+#auth-gate {display:none;min-height:100dvh;padding:32px 20px;align-items:center;justify-content:center;}
+.auth-locked #auth-gate {display:flex;}
+.auth-box {width:100%;max-width:420px;line-height:1.6;}
+.auth-box h1 {font-size:30px;margin:8px 0;letter-spacing:-1px;}
+.auth-box p {color:var(--text2);margin:10px 0 20px;}
+.auth-box .auth-eyebrow {color:var(--green);font-weight:800;letter-spacing:3px;font-size:12px;}
+.auth-box input {display:block;width:100%;box-sizing:border-box;background:var(--bg2);color:var(--text);border:1px solid var(--bord2);border-radius:10px;padding:12px;margin:5px 0 14px;font:inherit;font-size:16px;}
+.auth-box label {font-size:13px;}
+.auth-box button {margin:6px 0;width:100%;}
+.auth-hint {font-size:12px;}
+#auth-message {font-size:13px;overflow-wrap:anywhere;}
 </style>
 </head>
-<body>
+<body class="auth-locked">
+<section id="auth-gate" aria-label="Anmeldung">
+  <div class="auth-box">
+    <p class="auth-eyebrow">MEIN LOKAL</p><h1>Willkommen zurück.</h1>
+    <p>Deine Zahlen. Sicher angemeldet.</p>
+    <button class="m-btn primary" onclick="lokalAuth?.signInPasskey()">Mit Face ID / Passkey anmelden</button>
+    <p class="auth-hint">Face ID auf dem iPhone, Touch ID oder Gerätesperre auf anderen Geräten. Für die erste Anmeldung nutze deine E-Mail.</p>
+    <form onsubmit="event.preventDefault();passwordLogin()">
+      <label for="auth-email">E-Mail</label><input id="auth-email" type="email" autocomplete="username webauthn" required placeholder="Deine E-Mail-Adresse">
+      <label for="auth-password">Passwort</label><input id="auth-password" type="password" autocomplete="current-password" required>
+      <button class="m-btn secondary" type="submit">Mit E-Mail und Passwort anmelden</button>
+    </form>
+    <button class="m-btn secondary" onclick="lokalAuth?.email(document.getElementById('auth-email').value.trim())">Anmeldelink per E-Mail erhalten</button>
+    <details><summary>Code aus einer E-Mail eingeben</summary>
+      <label for="auth-code">Anmeldecode</label><input id="auth-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10">
+      <button class="m-btn secondary" onclick="lokalAuth?.verify(document.getElementById('auth-email').value.trim(),document.getElementById('auth-code').value.trim())">Code bestätigen</button>
+    </details>
+    <p class="auth-hint"><a href="connect.html">Cloud-Verbindung wiederherstellen</a></p>
+    <p id="auth-message" role="status" aria-live="polite">Anmeldung wird geprüft …</p>
+    <button class="m-btn secondary" onclick="lokalAuth?.check()">Anmeldung erneut prüfen</button>
+  </div>
+</section>
 
 <div class="app-shell">
 
@@ -701,7 +735,15 @@ body {
           <div class="setting-row"><div><div class="setting-lbl">Simulationsdauer</div><div class="setting-sub" id="set-tage">14 Tage</div></div><span class="goal-edit" onclick="openModal('tage')">Ändern</span></div>
           <div class="setting-row"><div><div class="setting-lbl">Sitzplätze</div><div class="setting-sub" id="set-plaetze">40 Plätze</div></div><span class="goal-edit" onclick="openModal('plaetze')">Ändern</span></div>
         </div>
-        <div class="sec-hd">Supabase Synchronisation · v4</div>
+        <div class="sec-hd">Anmeldung & Sicherheit</div>
+        <div class="card" style="padding:16px">
+          <p id="account-email" style="overflow-wrap:anywhere"></p>
+          <button class="m-btn primary" onclick="lokalAuth?.registerPasskey()">Face ID / Passkey einrichten</button>
+          <p style="font-size:12px;color:var(--text2);margin:12px 0">Dein Gesicht bleibt auf deinem Gerät. Als Alternative kannst du dich mit Passwort oder E-Mail-Link anmelden.</p>
+          <p id="account-message" role="status" style="font-size:12px;overflow-wrap:anywhere"></p>
+          <button class="m-btn secondary" onclick="logoutApp()">Auf diesem Gerät abmelden</button>
+        </div>
+        <div class="sec-hd">Supabase Synchronisation · v5</div>
         <div class="card">
           <div class="setting-row"><div><div class="setting-lbl">Status</div><div class="setting-sub" id="set-sync-status">Nicht konfiguriert</div></div><div class="sync-dot" id="sync-dot3" style="margin-right:0"></div></div>
           <div class="setting-row"><div><div class="setting-lbl">URL & Key konfigurieren</div><div class="setting-sub">Supabase Projekt-URL und öffentlicher Schlüssel</div></div><span class="goal-edit" onclick="openModal('supabase')">Bearbeiten</span></div>
@@ -775,29 +817,68 @@ body {
 
 <div class="toast" id="toast"></div>
 
-<script src="sync.js?v=4"></script>
+<script src="sync.js?v=5"></script>
+<script src="auth.js?v=1"></script>
 <script>
 // ══════════════════════════════════════════════
 //  SUPABASE CONFIG  (filled via Settings UI)
 // ══════════════════════════════════════════════
-let SB = null, syncEngine = null;
+let SB = null, syncEngine = null, lokalAuth = null, authUser = null;
 let SB_URL = localStorage.getItem('rv_sb_url') ?? 'https://ofrowanjbedqbmpgtkkv.supabase.co';
 let SB_KEY = localStorage.getItem('rv_sb_key') ?? 'sb_publishable_LHuJndu2b6HOopA2OId3hg_WssZ5wDe';
 
+function authMessage(message) {
+  ['auth-message','account-message'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=message;});
+}
+function lockApp() {
+  authUser=null;syncEngine?.stop();syncEngine=null;
+  document.body.classList.add('auth-locked');
+  setSyncStatus('none','Bitte anmelden.');
+}
+async function unlockApp(user) {
+  authUser=user;
+  if(!localStorage.getItem('rv4_recovery')) {
+    const legacy={};for(const key of Object.keys(LOKAL_TABLES))legacy[key]=readLocal('rv3_'+key,[]);
+    localStorage.setItem('rv4_recovery',JSON.stringify(legacy));
+  }
+  for(const key of Object.keys(LOKAL_TABLES))D[key]=readLocal('rv5:'+SB_URL+':'+user.id+':'+key,[]).map(row=>LokalSync.normalize(key,row));
+  syncEngine=new LokalSync(SB,D,localStorage,SB_URL+':'+user.id,()=>{if(authUser?.id===user.id){saveLocal();renderAll();}},setSyncStatus);
+  // Adopt old pending operations only after the server verifies the owner account.
+  const oldPrefix='rv4_pending:'+SB_URL+':';
+  for(const key of Object.keys(localStorage)) {
+    const suffix=key.startsWith(oldPrefix)?key.slice(oldPrefix.length):'';
+    if(suffix && !suffix.includes(':')) {
+      const value=localStorage.getItem(key);JSON.parse(value);
+      localStorage.setItem(syncEngine.prefix+suffix,value);localStorage.removeItem(key);
+    }
+  }
+  document.getElementById('account-email').textContent=user.email;
+  renderAll();syncEngine.start();document.body.classList.remove('auth-locked');
+}
 function initSupabase() {
-  if(syncEngine) syncEngine.stop();
-  syncEngine=null; SB=null;
-  if (!SB_URL || !SB_KEY) { setSyncStatus('none'); return; }
+  lokalAuth?.stop();lockApp();SB=null;
+  if(!SB_URL||!SB_KEY){authMessage('Cloud-Konfiguration fehlt. Bitte die Verbindungsseite öffnen und anschließend neu laden.');return;}
   try {
-    SB = supabase.createClient(SB_URL, SB_KEY, {global:{fetch:(url,options)=>fetch(url,{...options,signal:AbortSignal.timeout(15000)})}});
-    // Keep pre-upgrade local data recoverable; never blindly upload stale device caches.
-    if(!localStorage.getItem('rv4_recovery')) localStorage.setItem('rv4_recovery',JSON.stringify(D));
-    syncEngine=new LokalSync(SB,D,localStorage,SB_URL,()=>{saveLocal();renderAll();},setSyncStatus);
-    syncEngine.start();
-  } catch(e) { setSyncStatus('error',e.message); }
+    SB=supabase.createClient(SB_URL,SB_KEY,{auth:{experimental:{passkey:true}},global:{fetch:(url,options)=>fetch(url,{...options,signal:AbortSignal.timeout(15000)})}});
+    lokalAuth=new LokalAuth(SB,{onUnlock:unlockApp,onLock:lockApp,onMessage:authMessage});
+    lokalAuth.start().catch(e=>authMessage(e.message));
+  } catch(e){authMessage(e.message);}
+}
+async function passwordLogin() {
+  const el=document.getElementById('auth-password');
+  const password=el.value;el.value='';
+  await lokalAuth?.password(document.getElementById('auth-email').value.trim(),password);
+}
+async function logoutApp() {
+  if(syncEngine?.pending().length){authMessage('Bitte zuerst ausstehende Änderungen synchronisieren, bevor du dich abmeldest.');return;}
+  const user=authUser;
+  if(await lokalAuth?.signOut()) {
+    for(const key of Object.keys(LOKAL_TABLES)){D[key]=[];if(user)localStorage.removeItem('rv5:'+SB_URL+':'+user.id+':'+key);}
+    lockApp();
+  }
 }
 function setSyncStatus(s,detail='') {
-  const labels={none:'Nur auf diesem Gerät',syncing:'Synchronisiert…',synced:'Verbunden & live',waiting:'Cloud-Abgleich aktiv · Live-Verbindung wartet',offline:'Offline · Änderungen warten',error:'Synchronisierung gestört'};
+  const labels={none:'Bitte anmelden',syncing:'Synchronisiert…',synced:'Verbunden & live',waiting:'Cloud-Abgleich aktiv · Live-Verbindung wartet',offline:'Offline · Änderungen warten',error:'Synchronisierung gestört'};
   ['sync-dot','sync-dot2','sync-dot3'].forEach(id=>{const el=document.getElementById(id);if(el)el.className='sync-dot '+s;});
   ['sync-txt','sync-txt2','set-sync-status'].forEach(id=>{const el=document.getElementById(id);if(el){el.textContent=labels[s]||s;el.title=detail;}});
   const el=document.getElementById('sync-detail');if(el)el.textContent=detail;
@@ -806,6 +887,7 @@ async function loadFromSupabase(){if(syncEngine)await syncEngine.sync();}
 const newId=()=>{const n=crypto.getRandomValues(new Uint32Array(2));return (n[0]&0x1fffff)*4294967296+n[1];};
 async function persistChange(type,key,row) {
   try {
+    if(!authUser)throw new Error("Bitte zuerst anmelden.");
     if(syncEngine) {
       syncEngine.enqueue(type,key,row);
       // Local durability is immediate; cloud retries continue independently.
@@ -832,27 +914,26 @@ window.addEventListener('storage',e=>{if(syncEngine && e.key?.startsWith(syncEng
 // ══════════════════════════════════════════════
 //  LOCAL DATA (fallback when no Supabase)
 // ══════════════════════════════════════════════
-const D = {
-  ein:      JSON.parse(localStorage.getItem('rv3_ein')   || '[]'),
-  aus:      JSON.parse(localStorage.getItem('rv3_aus')   || '[]'),
-  mit:      JSON.parse(localStorage.getItem('rv3_mit')   || '[]'),
-  rec:      JSON.parse(localStorage.getItem('rv3_rec')   || '[]'),
-  lief:     JSON.parse(localStorage.getItem('rv3_lief')  || '[]'),
-  staff:    JSON.parse(localStorage.getItem('rv3_staff') || '[]'),
-  settings: JSON.parse(localStorage.getItem('rv3_set')   || '{"ziel":0,"tage":14,"plaetze":40}')
-};
+function readLocal(key,fallback) {
+  try {const value=JSON.parse(localStorage.getItem(key)||'null');if(Array.isArray(fallback))return Array.isArray(value)?value:fallback;
+    return value&&typeof value==='object'&&!Array.isArray(value)?value:fallback;}
+  catch {authMessage('Lokale Daten konnten nicht gelesen werden. Die Originaldatei bleibt erhalten; Cloud-Daten werden geladen.');return fallback;}
+}
+const D = {ein:[],aus:[],mit:[],rec:[],lief:[],staff:readLocal('rv3_staff',[]),settings:readLocal('rv3_set',{ziel:0,tage:14,plaetze:40})};
 const saveLocal = k => {
   const m={ein:'rv3_ein',aus:'rv3_aus',mit:'rv3_mit',staff:'rv3_staff',settings:'rv3_set',rec:'rv3_rec',lief:'rv3_lief'};
-  if(k) localStorage.setItem(m[k],JSON.stringify(D[k]));
-  else Object.keys(m).forEach(kk=>localStorage.setItem(m[kk],JSON.stringify(D[kk])));
+  const storageKey=key=>LOKAL_TABLES[key]&&authUser?'rv5:'+SB_URL+':'+authUser.id+':'+key:m[key];
+  if(k) localStorage.setItem(storageKey(k),JSON.stringify(D[k]));
+  else Object.keys(m).forEach(kk=>localStorage.setItem(storageKey(kk),JSON.stringify(D[kk])));
 };
 
 // ══════════════════════════════════════════════
 //  UTILS
 // ══════════════════════════════════════════════
+const esc = value => String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const today = () => {const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
 const eur = (n,s=false) => { const v=Math.round(n*100)/100; return s?Math.round(v).toLocaleString('de-DE')+'€':v.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; };
-const fmt = s => { if(!s)return'—'; const[y,mo,d]=s.split('-'); return ['So','Mo','Di','Mi','Do','Fr','Sa'][new Date(s).getDay()]+' '+d+'.'+mo+'.'; };
+const fmt = s => { if(!s)return'—'; const[y,mo,d]=s.split('-'); return esc(['So','Mo','Di','Mi','Do','Fr','Sa'][new Date(s).getDay()]+' '+d+'.'+mo+'.'); };
 const staffCol = name => ['#a855f7','#22c55e','#3b82f6','#f59e0b','#14b8a6','#ef4444','#f97316','#06b6d4'][(name||'A').charCodeAt(0)%8];
 
 let toastT;
@@ -880,8 +961,8 @@ function openModal(type) {
   else if(type==='supabase') h=`
     <div class="modal-hd"><div class="modal-title">Supabase konfigurieren</div><div class="modal-sub">Einmalig einrichten – dann Live-Sync auf allen Geräten</div></div>
     <div class="modal-body">
-      <div class="modal-field"><label>Projekt-URL</label><input type="text" id="mi-sburl" placeholder="https://xyz.supabase.co" value="${SB_URL}"></div>
-      <div class="modal-field"><label>Öffentlicher Schlüssel (publishable / anon)</label><input type="text" id="mi-sbkey" placeholder="sb_publishable_…" value="${SB_KEY}" style="font-size:12px"></div>
+      <div class="modal-field"><label>Projekt-URL</label><input type="text" id="mi-sburl" placeholder="https://xyz.supabase.co" value="${esc(SB_URL)}"></div>
+      <div class="modal-field"><label>Öffentlicher Schlüssel (publishable / anon)</label><input type="text" id="mi-sbkey" placeholder="sb_publishable_…" value="${esc(SB_KEY)}" style="font-size:12px"></div>
       <p style="font-size:12px;color:var(--text2);line-height:1.6;margin-top:4px;">Bestehende Tabellen: einnahmen, ausgaben, schichten, rechnungen und lieferanten. Niemals einen Secret- oder Service-Role-Schlüssel eintragen.</p>
     </div>
     <div class="modal-actions"><button class="m-btn primary" onclick="saveSupabase()">Verbinden</button><button class="m-btn secondary" onclick="clearSupabase()">Verbindung trennen</button><button class="m-btn secondary" onclick="closeModal()">Abbrechen</button></div>`;
@@ -908,7 +989,7 @@ function saveSupabase() {
 }
 function clearSupabase() {
   if(syncEngine?.pending().length){toast('Zuerst ausstehende Änderungen synchronisieren.','r');return;}
-  syncEngine?.stop();syncEngine=null;SB=null;SB_URL='';SB_KEY='';
+  lokalAuth?.stop();lockApp();SB=null;SB_URL='';SB_KEY='';
   localStorage.setItem('rv_sb_url','');localStorage.setItem('rv_sb_key','');
   setSyncStatus('none');closeModal();
 }
@@ -974,7 +1055,7 @@ function renderEin() {
   if(!D.ein.length){lst.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><p>Noch keine Einnahmen</p></div>';tot.innerHTML='';return;}
   const tE=D.ein.reduce((s,e)=>s+e.bar+e.karte+e.tip,0),tB=D.ein.reduce((s,e)=>s+e.bar,0),tK=D.ein.reduce((s,e)=>s+e.karte,0),tT=D.ein.reduce((s,e)=>s+e.tip,0);
   tot.innerHTML=`<div class="totals-card"><div class="t-row"><span>Gesamt</span><strong class="amtg">${eur(tE)}</strong></div><div class="t-row"><span>Bar / Karte / TG</span><strong style="font-size:12px;color:var(--text2)">${eur(tB,true)} / ${eur(tK,true)} / ${eur(tT,true)}</strong></div></div>`;
-  lst.innerHTML=D.ein.map(e=>`<div class="entry-wrap" id="ew${e.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${e.id})" ontouchmove="tm(event,${e.id})" ontouchend="te(event,${e.id},'ein')"><div class="entry-icon" style="background:rgba(34,197,94,0.1)">💶</div><div class="entry-body"><div class="entry-date">${fmt(e.datum)}${e.gaeste?' · '+e.gaeste+' Gäste':''}</div><div class="entry-main">${e.bar?`<span class="badge b-bar">Bar ${eur(e.bar)}</span> `:''}${e.karte?`<span class="badge b-karte">Karte ${eur(e.karte)}</span>`:''}${e.tip?` <span style="font-size:10px;color:var(--amber)">+${eur(e.tip)} TG</span>`:''}</div>${e.notiz?`<div class="entry-sub">${e.notiz}</div>`:''}</div><div class="entry-right"><div class="entry-amt amtg">${eur(e.bar+e.karte+e.tip)}</div><button class="del-btn" onclick="delEntry('ein',${e.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>`).join('');
+  lst.innerHTML=D.ein.map(e=>`<div class="entry-wrap" id="ew${e.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${e.id})" ontouchmove="tm(event,${e.id})" ontouchend="te(event,${e.id},'ein')"><div class="entry-icon" style="background:rgba(34,197,94,0.1)">💶</div><div class="entry-body"><div class="entry-date">${fmt(e.datum)}${e.gaeste?' · '+e.gaeste+' Gäste':''}</div><div class="entry-main">${e.bar?`<span class="badge b-bar">Bar ${eur(e.bar)}</span> `:''}${e.karte?`<span class="badge b-karte">Karte ${eur(e.karte)}</span>`:''}${e.tip?` <span style="font-size:10px;color:var(--amber)">+${eur(e.tip)} TG</span>`:''}</div>${e.notiz?`<div class="entry-sub">${esc(e.notiz)}</div>`:''}</div><div class="entry-right"><div class="entry-amt amtg">${eur(e.bar+e.karte+e.tip)}</div><button class="del-btn" onclick="delEntry('ein',${e.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>`).join('');
 }
 
 // ══════════════════════════════════════════════
@@ -997,7 +1078,7 @@ function renderAus() {
   if(!D.aus.length){lst.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><p>Noch keine Ausgaben</p></div>';tot.innerHTML='';return;}
   const tA=D.aus.reduce((s,a)=>s+a.betrag,0);
   tot.innerHTML=`<div class="totals-card"><div class="t-row"><span>Gesamt Ausgaben</span><strong class="amtr">${eur(tA)}</strong></div></div>`;
-  lst.innerHTML=D.aus.map(a=>{const k=KAT[a.kat]||KAT.sonstiges;return`<div class="entry-wrap" id="ew${a.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${a.id})" ontouchmove="tm(event,${a.id})" ontouchend="te(event,${a.id},'aus')"><div class="entry-icon">${k.icon}</div><div class="entry-body"><div class="entry-date">${fmt(a.datum)} · <span style="color:${k.color}">${k.label}</span></div><div class="entry-main">${a.beschr||'—'}</div></div><div class="entry-right"><div class="entry-amt amtr">${eur(a.betrag)}</div><button class="del-btn" onclick="delEntry('aus',${a.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>`}).join('');
+  lst.innerHTML=D.aus.map(a=>{const k=KAT[a.kat]||KAT.sonstiges;return`<div class="entry-wrap" id="ew${a.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${a.id})" ontouchmove="tm(event,${a.id})" ontouchend="te(event,${a.id},'aus')"><div class="entry-icon">${k.icon}</div><div class="entry-body"><div class="entry-date">${fmt(a.datum)} · <span style="color:${k.color}">${k.label}</span></div><div class="entry-main">${esc(a.beschr||'—')}</div></div><div class="entry-right"><div class="entry-amt amtr">${eur(a.betrag)}</div><button class="del-btn" onclick="delEntry('aus',${a.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>`}).join('');
 }
 
 // ══════════════════════════════════════════════
@@ -1007,7 +1088,7 @@ function renderChips() {
   const w=document.getElementById('chip-wrap'),c=document.getElementById('chips');
   if(!D.staff.length){w.style.display='none';return;}
   w.style.display='block';
-  c.innerHTML=D.staff.map(s=>`<div class="chip" onclick="fillStaff('${s.name}','${s.pos}',${s.lohn})"><div class="chip-dot" style="background:${staffCol(s.name)}"></div>${s.name}</div>`).join('');
+  c.innerHTML=D.staff.map(s=>`<div class="chip" onclick="fillStaff(${esc(JSON.stringify(s.name))},${esc(JSON.stringify(s.pos))},${Number(s.lohn)||0})"><div class="chip-dot" style="background:${staffCol(s.name)}"></div>${esc(s.name)}</div>`).join('');
 }
 function fillStaff(name,pos,lohn){document.getElementById('m-name').value=name;document.getElementById('m-lohn').value=lohn;const sel=document.getElementById('m-pos');for(let i=0;i<sel.options.length;i++)if(sel.options[i].text===pos){sel.selectedIndex=i;break;}toast(name+' ausgewählt');}
 
@@ -1036,7 +1117,7 @@ function renderMit() {
   if(!D.mit.length){lst.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>Noch keine Schichten</p></div>';tot.innerHTML='';return;}
   const tL=D.mit.reduce((s,m)=>s+m.ausgezahlt,0),tH=D.mit.reduce((s,m)=>s+m.stunden,0);
   tot.innerHTML=`<div class="totals-card"><div class="t-row"><span>Lohnkosten gesamt</span><strong class="amtr">${eur(tL)}</strong></div><div class="t-row"><span>Gesamtstunden</span><strong>${tH.toFixed(1)} h</strong></div></div>`;
-  lst.innerHTML=D.mit.map(m=>{const c=staffCol(m.name),ini=m.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);return`<div class="entry-wrap" id="ew${m.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${m.id})" ontouchmove="tm(event,${m.id})" ontouchend="te(event,${m.id},'mit')"><div class="entry-icon" style="background:${c}18;color:${c};font-size:12px;font-weight:800">${ini}</div><div class="entry-body"><div class="entry-date">${fmt(m.datum)} · ${m.pos}</div><div class="entry-main">${m.name}</div><div class="entry-sub">${m.von}–${m.bis} · ${m.stunden.toFixed(1)} h · ${eur(m.lohn)}/h</div></div><div class="entry-right"><div class="entry-amt amtr">${eur(m.ausgezahlt)}</div><button class="del-btn" onclick="delEntry('mit',${m.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>`}).join('');
+  lst.innerHTML=D.mit.map(m=>{const c=staffCol(m.name),ini=m.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);return`<div class="entry-wrap" id="ew${m.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${m.id})" ontouchmove="tm(event,${m.id})" ontouchend="te(event,${m.id},'mit')"><div class="entry-icon" style="background:${c}18;color:${c};font-size:12px;font-weight:800">${esc(ini)}</div><div class="entry-body"><div class="entry-date">${fmt(m.datum)} · ${esc(m.pos)}</div><div class="entry-main">${esc(m.name)}</div><div class="entry-sub">${esc(m.von)}–${esc(m.bis)} · ${m.stunden.toFixed(1)} h · ${eur(m.lohn)}/h</div></div><div class="entry-right"><div class="entry-amt amtr">${eur(m.ausgezahlt)}</div><button class="del-btn" onclick="delEntry('mit',${m.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>`}).join('');
 }
 
 // ══════════════════════════════════════════════
@@ -1065,7 +1146,7 @@ function renderSettings() {
   const st=document.getElementById('set-tage');if(st)st.textContent=t+' Tage';
   const sp=document.getElementById('set-plaetze');if(sp)sp.textContent=p+' Plätze';
   const sl=document.getElementById('staff-list');
-  if(sl)sl.innerHTML=D.staff.length?D.staff.map(s=>`<div class="staff-item"><div class="staff-avatar" style="background:${staffCol(s.name)}18;color:${staffCol(s.name)}">${s.name.slice(0,2).toUpperCase()}</div><div class="staff-info"><div class="staff-name">${s.name}</div><div class="staff-meta">${s.pos} · ${eur(s.lohn)}/h</div></div><button style="background:none;border:none;color:var(--text3);cursor:pointer;padding:6px" onclick="delStaff('${s.name}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`).join(''):'<div style="padding:13px 16px;font-size:13px;color:var(--text2)">Noch kein Personal angelegt</div>';
+  if(sl)sl.innerHTML=D.staff.length?D.staff.map(s=>`<div class="staff-item"><div class="staff-avatar" style="background:${staffCol(s.name)}18;color:${staffCol(s.name)}">${esc(s.name.slice(0,2).toUpperCase())}</div><div class="staff-info"><div class="staff-name">${esc(s.name)}</div><div class="staff-meta">${esc(s.pos)} · ${eur(s.lohn)}/h</div></div><button style="background:none;border:none;color:var(--text3);cursor:pointer;padding:6px" onclick="delStaff(${esc(JSON.stringify(s.name))})"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`).join(''):'<div style="padding:13px 16px;font-size:13px;color:var(--text2)">Noch kein Personal angelegt</div>';
 }
 function delStaff(name){D.staff=D.staff.filter(s=>s.name!==name);saveLocal('staff');renderSettings();renderChips();toast('Gelöscht','r');}
 
@@ -1117,10 +1198,13 @@ function renderDashboard() {
 // ══════════════════════════════════════════════
 function exportJSON(){const b=new Blob([JSON.stringify({ein:D.ein,aus:D.aus,mit:D.mit,rec:D.rec,lief:D.lief,pending:syncEngine?.pending()||[],recovery:JSON.parse(localStorage.getItem('rv4_recovery')||'null'),staff:D.staff,settings:D.settings,v:3,ts:new Date().toISOString()},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='restaurant-backup-'+today()+'.json';a.click();toast('Backup exportiert');}
 async function importData(x) {
+  if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Ungültiges Backup');
+  const normalized={};
   for(const key of Object.keys(LOKAL_TABLES)) {
     if(x[key] && (!Array.isArray(x[key]) || x[key].some(r=>!r || !Number.isSafeInteger(r.id))))throw new Error('Ungültige Einträge: '+key);
+    normalized[key]=(x[key]||[]).map(row=>LokalSync.normalize(key,row));
   }
-  for(const key of Object.keys(LOKAL_TABLES))for(const row of x[key]||[]) {
+  for(const key of Object.keys(LOKAL_TABLES))for(const row of normalized[key]) {
     if(!D[key].some(r=>r.id===row.id) && !await persistChange('insert',key,row))throw new Error('Import unterbrochen');
   }
   if(Array.isArray(x.staff))D.staff=x.staff;
@@ -1203,9 +1287,9 @@ function renderTagesabschluss() {
   const el_karte = document.getElementById('ta-karte'); if(el_karte) el_karte.textContent=eur(tKarte,true);
   const el_tip = document.getElementById('ta-tip'); if(el_tip) el_tip.textContent=eur(tTip,true);
   const aw = document.getElementById('ta-ausgaben-wrap');
-  if(aw) aw.innerHTML = ausH.length ? ausH.map(a => { const k=KAT[a.kat]||KAT.sonstiges; return `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${k.icon} ${a.beschr||k.label}</span><strong class="amtr">${eur(a.betrag)}</strong></div></div>`; }).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Ausgaben gesamt</span><strong class="amtr">${eur(tAus)}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Keine Ausgaben heute</div>';
+  if(aw) aw.innerHTML = ausH.length ? ausH.map(a => { const k=KAT[a.kat]||KAT.sonstiges; return `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${k.icon} ${esc(a.beschr||k.label)}</span><strong class="amtr">${eur(a.betrag)}</strong></div></div>`; }).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Ausgaben gesamt</span><strong class="amtr">${eur(tAus)}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Keine Ausgaben heute</div>';
   const pw = document.getElementById('ta-personal-wrap');
-  if(pw) pw.innerHTML = mitH.length ? mitH.map(m => `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${m.name} (${m.von}–${m.bis})</span><strong class="amtr">${eur(m.ausgezahlt)}</strong></div></div>`).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Lohnkosten gesamt</span><strong class="amtr">${eur(tLohn)}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Kein Personal heute</div>';
+  if(pw) pw.innerHTML = mitH.length ? mitH.map(m => `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${esc(m.name)} (${esc(m.von)}–${esc(m.bis)})</span><strong class="amtr">${eur(m.ausgezahlt)}</strong></div></div>`).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Lohnkosten gesamt</span><strong class="amtr">${eur(tLohn)}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Kein Personal heute</div>';
   const ev = document.getElementById('ta-erg-val');
   if(ev) { ev.textContent=eur(tErg); ev.className=tErg>=0?'amtg':'amtr'; }
 }
@@ -1215,7 +1299,7 @@ function renderTagesabschluss() {
 // ══════════════════════════════════════════
 let selectedMonth = '';
 const monthName = m => ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'][parseInt(m)-1];
-const fmtFull = s => { if(!s)return'—'; const[y,mo,d]=s.split('-'); return d+'.'+mo+'.'+y; };
+const fmtFull = s => { if(!s)return'—'; const[y,mo,d]=s.split('-'); return esc(d+'.'+mo+'.'+y); };
 
 function renderMonat() {
   const months = new Set();
@@ -1226,7 +1310,7 @@ function renderMonat() {
   const sortedM = [...months].sort().reverse();
   if(!selectedMonth || !months.has(selectedMonth)) selectedMonth = sortedM[0] || currentM;
   const tabs = document.getElementById('month-tabs');
-  if(tabs) tabs.innerHTML = sortedM.map(m => `<div class="month-tab${m===selectedMonth?' active':''}" onclick="selectedMonth='${m}';renderMonat()">${monthName(m.split('-')[1])} ${m.split('-')[0]}</div>`).join('');
+  if(tabs) tabs.innerHTML = sortedM.map(m => `<div class="month-tab${m===selectedMonth?' active':''}" onclick="selectedMonth=${esc(JSON.stringify(m))};renderMonat()">${monthName(m.split('-')[1])} ${m.split('-')[0]}</div>`).join('');
   const [y,mo] = selectedMonth.split('-');
   const einM = D.ein.filter(e => e.datum && e.datum.startsWith(selectedMonth));
   const ausM = D.aus.filter(a => a.datum && a.datum.startsWith(selectedMonth));
@@ -1290,11 +1374,11 @@ function renderRechnungen() {
       const isOverdue = r.faellig < now;
       const isSoon = !isOverdue && r.faellig <= addDays(now,3);
       const sb = isOverdue?'<span class="badge b-overdue">Überfällig</span>':isSoon?'<span class="badge b-soon">Bald fällig</span>':'<span class="badge b-ok">Offen</span>';
-      return `<div class="entry-wrap" id="ew${r.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${r.id})" ontouchmove="tm(event,${r.id})" ontouchend="te(event,${r.id},'rec')"><div class="entry-icon">🧾</div><div class="entry-body"><div class="entry-date">Fällig: ${fmtFull(r.faellig)}</div><div class="entry-main">${r.beschr}</div><div class="entry-sub">${sb}${r.notiz?' · '+r.notiz:''}</div></div><div class="entry-right"><div class="entry-amt amtr">${eur(r.betrag)}</div><button onclick="toggleBezahlt(${r.id})" style="background:var(--green);border:none;color:#000;font-size:10px;font-weight:700;padding:4px 8px;border-radius:20px;cursor:pointer;white-space:nowrap;margin-top:4px;">✓ Bezahlt</button></div></div></div>`;
+      return `<div class="entry-wrap" id="ew${r.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${r.id})" ontouchmove="tm(event,${r.id})" ontouchend="te(event,${r.id},'rec')"><div class="entry-icon">🧾</div><div class="entry-body"><div class="entry-date">Fällig: ${fmtFull(r.faellig)}</div><div class="entry-main">${esc(r.beschr)}</div><div class="entry-sub">${sb}${r.notiz?' · '+esc(r.notiz):''}</div></div><div class="entry-right"><div class="entry-amt amtr">${eur(r.betrag)}</div><button onclick="toggleBezahlt(${r.id})" style="background:var(--green);border:none;color:#000;font-size:10px;font-weight:700;padding:4px 8px;border-radius:20px;cursor:pointer;white-space:nowrap;margin-top:4px;">✓ Bezahlt</button></div></div></div>`;
     }).join('');
   }
   const lst2 = document.getElementById('lst-rechnungen-bezahlt');
-  if(lst2) lst2.innerHTML = bezahlt.length ? bezahlt.map(r => `<div class="entry-wrap" id="ew${r.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" style="opacity:0.5" ontouchstart="ts(event,${r.id})" ontouchmove="tm(event,${r.id})" ontouchend="te(event,${r.id},'rec')"><div class="entry-icon">✅</div><div class="entry-body"><div class="entry-date">Fällig war: ${fmtFull(r.faellig)}</div><div class="entry-main">${r.beschr}</div>${r.notiz?`<div class="entry-sub">${r.notiz}</div>`:''}</div><div class="entry-right"><div class="entry-amt" style="color:var(--text2);text-decoration:line-through">${eur(r.betrag)}</div><button onclick="toggleBezahlt(${r.id})" style="background:var(--bg2);border:1px solid var(--bord2);color:var(--text2);font-size:10px;font-weight:700;padding:4px 8px;border-radius:20px;cursor:pointer;margin-top:4px;">Öffnen</button></div></div></div>`).join('') : '<div style="padding:14px;font-size:13px;color:var(--text2)">Keine bezahlten Rechnungen</div>';
+  if(lst2) lst2.innerHTML = bezahlt.length ? bezahlt.map(r => `<div class="entry-wrap" id="ew${r.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" style="opacity:0.5" ontouchstart="ts(event,${r.id})" ontouchmove="tm(event,${r.id})" ontouchend="te(event,${r.id},'rec')"><div class="entry-icon">✅</div><div class="entry-body"><div class="entry-date">Fällig war: ${fmtFull(r.faellig)}</div><div class="entry-main">${esc(r.beschr)}</div>${r.notiz?`<div class="entry-sub">${esc(r.notiz)}</div>`:''}</div><div class="entry-right"><div class="entry-amt" style="color:var(--text2);text-decoration:line-through">${eur(r.betrag)}</div><button onclick="toggleBezahlt(${r.id})" style="background:var(--bg2);border:1px solid var(--bord2);color:var(--text2);font-size:10px;font-weight:700;padding:4px 8px;border-radius:20px;cursor:pointer;margin-top:4px;">Öffnen</button></div></div></div>`).join('') : '<div style="padding:14px;font-size:13px;color:var(--text2)">Keine bezahlten Rechnungen</div>';
 }
 
 function checkOverdue() {
@@ -1331,7 +1415,7 @@ async function addLieferant() {
 function renderLieferanten() {
   const lst = document.getElementById('lst-lieferanten'); if(!lst) return;
   if(!D.lief.length) { lst.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg><p>Noch keine Lieferanten</p></div>'; return; }
-  lst.innerHTML = D.lief.map(l => { const k=KAT[l.kat]||KAT.sonstiges; return `<div class="lief-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div class="lief-name">${l.name}</div><div class="lief-meta">${k.icon} ${k.label}${l.kontakt?' · 📞 '+l.kontakt:''}</div></div><button class="del-btn" onclick="delLieferant(${l.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div><div class="lief-tags"><span class="lief-tag">Zahlungsziel: ${l.zahlungsziel} Tage</span>${l.notiz?`<span class="lief-tag">${l.notiz}</span>`:''}</div></div>`; }).join('');
+  lst.innerHTML = D.lief.map(l => { const k=KAT[l.kat]||KAT.sonstiges; return `<div class="lief-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div class="lief-name">${esc(l.name)}</div><div class="lief-meta">${k.icon} ${k.label}${l.kontakt?' · 📞 '+esc(l.kontakt):''}</div></div><button class="del-btn" onclick="delLieferant(${l.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div><div class="lief-tags"><span class="lief-tag">Zahlungsziel: ${l.zahlungsziel} Tage</span>${l.notiz?`<span class="lief-tag">${esc(l.notiz)}</span>`:''}</div></div>`; }).join('');
 }
 
 async function delLieferant(id) {await _del('lief',id);}
@@ -1454,7 +1538,6 @@ function exportPDF() {
 // Add Supabase tables for new data
 
 // Run initial renders for new sections
-renderAll();
 initSupabase();
 
 </script>

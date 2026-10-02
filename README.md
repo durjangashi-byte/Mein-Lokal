@@ -1,33 +1,37 @@
 # Mein Lokal
 
-Static restaurant tracker served by GitHub Pages. Open `index.html` through a web server. Supabase JS is pinned to 2.117.2; `sync.js` contains the shared synchronization engine.
+Restaurant-App auf GitHub Pages mit Supabase-Synchronisierung. `index.html` enthält die vorhandenen Ansichten, `sync.js` synchronisiert die fünf bestehenden Geschäftstabellen, `auth.js` verwaltet die Anmeldung. Supabase JS ist auf **2.117.2** festgelegt.
 
-## Synchronization
+## Nutzung
 
-Existing tables: `einnahmen`, `ausgaben`, `schichten`, `rechnungen`, `lieferanten`. No database schema, policies or existing business records were changed by this fix.
+Mit dem bestätigten Besitzerkonto anmelden. Einnahmen, Ausgaben, Schichten, Rechnungen und Lieferanten werden gemeinsam geladen und live aktualisiert. Ausstehende Änderungen bleiben in einer lokal gespeicherten Warteschlange und werden nach Wiederverbindung übertragen. Projekt und Konto begrenzen Cache und Warteschlange. Eine erneute Anmeldung oder Sitzungsverlängerung darf die Warteschlange nicht verlieren.
 
-- Initial reads and Realtime subscriptions cover all five tables.
-- Writes are persisted in a project-scoped local outbox before submission. Failed requests remain queued. Insert retries do not overwrite newer rows.
-- Each write checks returned errors. Updates verify affected rows; deletes check the row is gone. UI success is distinguished from pending cloud delivery.
-- Realtime updates refresh lists, totals, dashboard, daily and monthly reports. Reconnection, foregrounding and a 30-second fallback reconcile missed events.
-- Reads paginate beyond the default 1,000-row API limit. Web Locks serialize outbox processing across same-origin tabs where supported.
-- Settings show actual connection state, pending count, last successful reconciliation and detailed errors.
-- Existing local data is preserved once in `rv4_recovery`. **Settings → Frühere lokale Daten ergänzen** adds missing IDs without replacing existing cloud rows. Export a backup before recovery. This is explicit to avoid automatically resurrecting stale deleted records from another device.
-- JSON backups include invoices, suppliers, pending operations and the recovery snapshot. Import merges absent IDs; it does not restore pending deletions or overwrite existing cloud records.
-- Personal templates and simulation settings remain device-local.
+Einstellungen zeigen Verbindungszustand, ausstehende Änderungen und Fehler. **Jetzt synchronisieren** startet einen zusätzlichen Abgleich. Realtime-Rückkehr, Vordergrundwechsel und ein 30-Sekunden-Abgleich schließen verpasste Ereignisse. Daten werden auch oberhalb des API-Limits von 1.000 Zeilen vollständig geladen. Personal-Vorlagen und Simulationseinstellungen bleiben lokal.
 
-Offline edits require an already loaded app and persistent browser storage. This is not a service-worker offline installation. Different edits to the same invoice field use the last write accepted by the server; there is no collaborative field-conflict UI. Invalid/denied operations remain visible in the queue and need their cause corrected. Clear browser storage only after exporting a backup and completing synchronization.
+**Frühere lokale Daten ergänzen** importiert gespeicherte Altdaten ausdrücklich, ohne bestehende Cloud-IDs zu überschreiben. Vorher JSON-Backup exportieren. Backups enthalten alle fünf Tabellen sowie Warteschlange und Wiederherstellungskopie. Der Import ergänzt fehlende IDs; ausstehende Löschaufträge werden nicht automatisch aus einem Backup ausgeführt.
 
-## Existing access model
+## Anmeldung und Zugriff
 
-The project currently has anonymous ALL policies (`USING true`, `WITH CHECK true`) on all five public tables. Its publishable key is intentionally a public client key, not a password. Therefore anyone with the public app configuration can read and modify these tables. The existing policies were not widened or silently replaced; adding real Supabase Auth plus owner/team authorization is required before treating this as private financial storage. A clean advisor result is not proof that this public access model is appropriate.
+Ein erfolgreicher Login genügt nicht: Der Auth-Server muss das Konto bestätigen und administrative `app_metadata.lokal_access = owner` liefern. Alle fünf Tabellen verwenden die passenden RLS-Regeln; der öffentliche Publishable Key gewährt allein keinen Datenzugriff. Benutzer können keine Zugriffsrechte durch eigene `user_metadata` erzeugen.
+
+Die aktivierte Datenbankänderung ist in `security/enable-owner-access.sql` dokumentiert. Sie nutzt die vorhandenen Tabellen und bricht ohne bestätigten Besitzer ab. Kontorechte ausschließlich durch den Administrator vergeben. Passkeys benötigen zusätzlich die Auth-Konfiguration im Dashboard und die Registrierung auf dem eigenen Gerät. Einrichtung und Grenzen: [CHANGELOG.md](CHANGELOG.md).
 
 ## Tests
 
-`node tests/app-smoke.cjs` checks boot and all five input/render/delete flows with DOM doubles, invoice payment status, overnight shifts and additive imports. This is not a real-browser layout or Safari test.
+Ohne externe Schreibzugriffe:
 
-`SUPABASE_TEST_SDK=/absolute/path/to/supabase-2.117.2-umd.js node tests/live-sync.cjs` runs an explicitly invoked live integration test with two independent clients. It creates clearly labelled records with negative IDs and removes only those IDs in `finally`. Use a test project when available. It covers five-table INSERT/DELETE propagation, reverse-direction invoice UPDATE, idempotent insert retry, and durable offline recovery. The SDK can be fetched from the same pinned official jsDelivr package used by the app. Optional `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` override the target.
+```sh
+node tests/auth.cjs
+node tests/app-smoke.cjs
+```
 
-## Original failure
+Live-Test nur ausdrücklich mit einem berechtigten Testkonto ausführen. Er schreibt klar markierte negative Test-IDs und entfernt nur diese. Wenn möglich ein Testprojekt verwenden. Nicht in eine bestehende gemeinsam genutzte Warteschlange schreiben.
 
-PostgREST query builders are thenables, not native Promises, and do not expose `.catch()`. The overridden initial loader called `.catch()` directly on invoice and supplier query builders. This threw before loading completed while the independent WebSocket remained connected. Additional duplicate functions, omitted table subscriptions and ignored mutation errors compounded the problem.
+```sh
+SUPABASE_TEST_SDK=/absolute/path/to/supabase-2.117.2-umd.js \
+SUPABASE_TEST_EMAIL=owner@example.com \
+SUPABASE_TEST_PASSWORD='set-locally' \
+node tests/live-sync.cjs
+```
+
+Die UMD-Datei stammt aus dem gleichen festgelegten jsDelivr-Paket wie die App. `SUPABASE_URL` und `SUPABASE_PUBLISHABLE_KEY` können das Testziel überschreiben. Keine Zugangsdaten oder Sitzungstokens im Repository speichern. Der DOM-Test ersetzt keinen Layout- oder Safari-Test; der Live-Test prüft die echten Daten- und Realtime-Schnittstellen.
