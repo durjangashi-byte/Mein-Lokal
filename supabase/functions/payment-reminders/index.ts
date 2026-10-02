@@ -31,7 +31,7 @@ Deno.serve(async req=>{
     if(claim.error){if(claim.error.code==='23505')continue;throw claim.error;}
     try{
      const total=due.reduce((n,r)=>n+Number(r.betrag||0),0);
-     await deliver(sub,{title:due.length===1?'Heute zahlen: '+due[0].beschr.slice(0,65):`${due.length} Zahlungen offen`,body:(due.length===1?'':due.slice(0,3).map(r=>r.beschr.slice(0,30)).join(', ')+' · ')+new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(total),tag:'lokal-payments-'+now.day,url:'https://durjangashi-byte.github.io/Mein-Lokal/?view=rechnungen'},config);
+     await deliver(sub,{title:due.length===1?'Heute zahlen: '+String(due[0].beschr||'Zahlung').slice(0,65):`${due.length} Zahlungen offen`,body:(due.length===1?'':due.slice(0,3).map(r=>String(r.beschr||'Zahlung').slice(0,30)).join(', ')+' · ')+new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(total),tag:'lokal-payments-'+now.day,url:'https://durjangashi-byte.github.io/Mein-Lokal/?view=rechnungen'},config);
      const saved=await admin.from('push_deliveries').update({sent_at:new Date().toISOString()}).eq('subscription_id',sub.id).eq('day',now.day);if(saved.error)throw saved.error;delivered++;
     }catch{failed++;await admin.from('push_deliveries').delete().eq('subscription_id',sub.id).eq('day',now.day);}
    }
@@ -40,7 +40,7 @@ Deno.serve(async req=>{
   const token=req.headers.get('authorization')?.replace(/^Bearer /i,'');if(!token)return response({error:'Bitte anmelden'},401);
   const {data,error}=await admin.auth.getUser(token);const user=data?.user;
   if(error||!user?.email_confirmed_at||user?.is_anonymous||user?.app_metadata?.lokal_access!=='owner')return response({error:'Nicht erlaubt'},403);
-  const endpoint=String(body.endpoint||body.subscription?.endpoint||'');if(endpoint.length>2048||!endpointAllowed(endpoint))return response({error:'Ungültiger Push-Endpunkt'},400);
+  const endpoint=String(body.action==='subscribe'?body.subscription?.endpoint||'':body.endpoint||'');if(endpoint.length>2048||!endpointAllowed(endpoint))return response({error:'Ungültiger Push-Endpunkt'},400);
   if(body.action==='subscribe'){
    const sub=body.subscription;
    if(!sub?.keys||!/^[-_A-Za-z0-9]{80,100}$/.test(sub.keys.p256dh)||!/^[-_A-Za-z0-9]{20,30}$/.test(sub.keys.auth))return response({error:'Ungültige Push-Schlüssel'},400);
