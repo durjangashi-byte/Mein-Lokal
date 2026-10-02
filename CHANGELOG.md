@@ -1,3 +1,11 @@
+# Mobile Navigation – 2. Oktober 2026
+
+`index.html`: untere Navigation von neun auf vier Einträge reduziert: Übersicht, Einnahmen, Ausgaben, Mehr. Neue Ansicht `p-mehr` mit großen Zeilen für Personal/Schichten, Tagesabschluss, Monatsauswertung, Rechnungen, Lieferanten und Einstellungen. `switchTab` markiert Mehr auch beim Öffnen dieser Unterbereiche; `aria-current` folgt dem aktiven Navigationsbereich. Größere Beschriftung und Berücksichtigung der iPhone-Safe-Area. Die Desktop-Seitenleiste und sämtliche Funktionen bleiben erhalten. `README.md`: Navigation dokumentiert.
+
+Vorhandene lokale Ablauf- und Login-Tests bestanden; keine Datenbank- oder Auth-Änderungen, keine zusätzlichen Supabase-Abfragen. Die Darstellung auf dem tatsächlichen iPhone bleibt vom Nutzer zu prüfen.
+
+---
+
 # Alltagspaket – 2. Oktober 2026 (v6)
 
 Das gemeinsam freigegebene Paket verbessert die bestehende Oberfläche. Keine neuen Tabellen, keine Änderungen an Supabase-Auth, RLS, dem Synchronisierungsmodul oder Exportformaten.

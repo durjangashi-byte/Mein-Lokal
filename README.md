@@ -10,6 +10,10 @@ Einstellungen zeigen Verbindungszustand, ausstehende Änderungen und Fehler. **J
 
 **Frühere lokale Daten ergänzen** importiert gespeicherte Altdaten ausdrücklich, ohne bestehende Cloud-IDs zu überschreiben. Vorher JSON-Backup exportieren. Backups enthalten alle fünf Tabellen sowie Warteschlange und Wiederherstellungskopie. Der Import ergänzt fehlende IDs; ausstehende Löschaufträge werden nicht automatisch aus einem Backup ausgeführt.
 
+## Mobile Navigation
+
+Unten stehen **Übersicht**, **Einnahmen**, **Ausgaben** und **Mehr**. Unter Mehr bleiben Personal/Schichten, Tagesabschluss, Monatsauswertung, Rechnungen, Lieferanten und Einstellungen erreichbar. Auf dem PC gibt es weiterhin die Seitenleiste.
+
 ## Alltagspaket (v6)
 
 Die Startseite zeigt zunächst den aktuellen Monat. Über **Zeitraum der Übersicht** lassen sich vorhandene Monate oder der gesamte Zeitraum wählen; die Kennzahlen oben und Dashboard-Auswertungen folgen dieser Auswahl. Das Ergebnis ist Einnahmen inklusive erfasstem Trinkgeld minus Ausgaben minus erfasste Schichtkosten. Vor Personalkosten wird es separat gezeigt. Offene Rechnungen beziehen sich auf alle Zeiträume und werden nicht nochmals vom Ergebnis abgezogen.
