@@ -10,6 +10,14 @@ Einstellungen zeigen Verbindungszustand, ausstehende Änderungen und Fehler. **J
 
 **Frühere lokale Daten ergänzen** importiert gespeicherte Altdaten ausdrücklich, ohne bestehende Cloud-IDs zu überschreiben. Vorher JSON-Backup exportieren. Backups enthalten alle fünf Tabellen sowie Warteschlange und Wiederherstellungskopie. Der Import ergänzt fehlende IDs; ausstehende Löschaufträge werden nicht automatisch aus einem Backup ausgeführt.
 
+## Alltagspaket (v6)
+
+Die Startseite zeigt zunächst den aktuellen Monat. Über **Zeitraum der Übersicht** lassen sich vorhandene Monate oder der gesamte Zeitraum wählen; die Kennzahlen oben und Dashboard-Auswertungen folgen dieser Auswahl. Das Ergebnis ist Einnahmen inklusive erfasstem Trinkgeld minus Ausgaben minus erfasste Schichtkosten. Vor Personalkosten wird es separat gezeigt. Offene Rechnungen beziehen sich auf alle Zeiträume und werden nicht nochmals vom Ergebnis abgezogen.
+
+**Bearbeiten** öffnet einen vorhandenen Eintrag im ursprünglichen Formular. **Änderungen speichern** behält seine ID und nutzt die bestehende Cloud-Warteschlange. **Bearbeiten abbrechen** lässt die Daten unverändert. Bei Schichten werden Stunden und Kosten neu berechnet, bei Rechnungen bleibt der Zahlungsstatus erhalten. Bereits erkannte Änderungen von einem anderen Gerät verhindern das Speichern eines veralteten Entwurfs; es gibt weiterhin keinen atomaren Konfliktschutz bei exakt gleichzeitigem Speichern.
+
+Datum ist vorausgefüllt; die zuletzt gespeicherte Ausgaben-/Lieferantenkategorie wird auf demselben Gerät beim ersten Öffnen angeboten. Eingabefehler und doppelte Speicheraktionen werden abgefangen. Die Startseite zeigt, ob Änderungen auf diesem Gerät gesichert sind, auf Übertragung warten oder mit Supabase abgeglichen wurden. **Jetzt abgleichen** startet manuell einen Abgleich. Der iPhone/PC-Praxistest bleibt wie vereinbart offen.
+
 ## Anmeldung und Zugriff
 
 Ein erfolgreicher Login genügt nicht: Der Auth-Server muss das Konto bestätigen und administrative `app_metadata.lokal_access = owner` liefern. Alle fünf Tabellen verwenden die passenden RLS-Regeln; der öffentliche Publishable Key gewährt allein keinen Datenzugriff. Benutzer können keine Zugriffsrechte durch eigene `user_metadata` erzeugen.

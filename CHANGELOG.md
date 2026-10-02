@@ -1,3 +1,20 @@
+# Alltagspaket – 2. Oktober 2026 (v6)
+
+Das gemeinsam freigegebene Paket verbessert die bestehende Oberfläche. Keine neuen Tabellen, keine Änderungen an Supabase-Auth, RLS, dem Synchronisierungsmodul oder Exportformaten.
+
+| Datei | Geänderte Funktionen / Verhalten |
+|---|---|
+| `index.html` | Startseite: `dashboardPeriod`, `periodData`, `renderDashboard`, `updateMetrics` mit aktuellem Monat als Standard, vorhandenen Monaten und Gesamtzeitraum. Headerkennzahlen, Charts, Tagesdurchschnitt und Hochrechnung nutzen denselben Zeitraum. `metrics-period` benennt ihn auch auf anderen Seiten. Einnahmen enthalten wie bisher Trinkgeld. Ergebnis vor und nach erfassten Personalkosten getrennt, offener Rechnungsbetrag über alle Zeiträume separat; keine doppelte Kostenanrechnung aus Rechnungen. |
+| `index.html` | `formSpecs`, `editEntry`, `cancelEdit`, `commitForm`, `editButton`: alle fünf Bereiche bearbeiten über vorhandene Formulare, gleiche ID, UPDATE über bestehende dauerhafte Warteschlange. Schichtstunden/-kosten neu berechnet, Rechnungsstatus beim Bearbeiten erhalten. Im geladenen Datenstand inzwischen geänderte/gelöschte Einträge blockieren veraltete Entwürfe. Das ist kein atomarer serverseitiger Konfliktschutz; zeitgleiche Schreibvorgänge können weiterhin zuletzt akzeptierte Werte übernehmen. |
+| `index.html` | `prepareQuickForm`, alle fünf `add…`-Funktionen: leere Datumsfelder vorausfüllen, zuletzt gespeicherte Kategorie auf diesem Gerät bei erster Öffnung anbieten, Eingaben bei Fehlern behalten. Doppeltes Absenden blockiert. Nicht negative endliche Zahlen, ganze Gästezahl/Zahlungsziele; Stundenlohn und Zahlungsziel 0 bleiben gültig. Unbekannte Kategorien/Positionen aus Altbeständen bleiben bearbeitbar. |
+| `index.html` | `setSyncStatus`, `lockApp`, `_del`: sichtbarer Speicherstatus mit Zahl ausstehender Änderungen, Fehler/letztem Abgleich und manuellem Abgleich auf Startseite. Header weiterhin auf allen Seiten. Abmeldung verwirft Formulare, erfolgreiches Löschen beendet zugehöriges Bearbeiten. CSS: 44-px-Bearbeiten-Buttons, 16-px-Formulartext auf Mobilgeräten, umbrechende Hinweise/Toast, verlässlich ausgeblendete Abbrechen-Buttons. |
+| `tests/app-smoke.cjs` | Erweitert: fünf Bearbeitenabläufe ohne neue ID/Duplikate, Neuberechnung Nachtschicht, bezahlte Rechnung bleibt bezahlt, Abbrechen, bekannte Bearbeitungskonflikte, Monats-/Gesamtsummen, tatsächliche UPDATE-Warteschlange, Doppelabsenden, Offline-/Fehlerstatus, ungültiger Betrag und unbekannte Alt-Kategorie. DOM-Testobjekte einschließlich Select-Optionen und Storage-API. |
+| `README.md`, `CHANGELOG.md` | Bedienung, Dateizuordnung, Prüfungen und Grenzen des Pakets. |
+
+Prüfung: `node tests/app-smoke.cjs`, `node tests/auth.cjs` und `git diff --check` bestanden. Der neue Bearbeitenablauf wurde lokal mit der echten Warteschlangenlogik geprüft, ohne zusätzliche Datenbankabfragen oder Änderungen an Geschäftsdaten. Der vorherige Zwei-Client-Realtime-Test ist dokumentiert; in diesem Paket wurde er nicht erneut ausgeführt. Der Nutzer hat den praktischen iPhone/PC-Test verschoben. Kein neuer visueller Safari-Test und keine Face-ID-Aktivierung in diesem Paket.
+
+---
+
 # Technische Änderungen – 2. Oktober 2026
 
 Dieses Paket vervollständigt die begonnene Anmeldung und stabilisiert die vorhandene Synchronisierung. Es enthält keine größere Neugestaltung. Die bestehenden fünf Geschäftstabellen und Exporte bleiben erhalten.
