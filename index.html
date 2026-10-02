@@ -535,6 +535,7 @@ body {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
         Ausgaben
       </button>
+      <button class="snav-item" id="sni-schulden" onclick="switchTab('schulden')">💳 Schuldenzahlungen</button>
       <button class="snav-item" id="sni-personal" onclick="switchTab('personal')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Personal
@@ -575,8 +576,8 @@ body {
     <!-- Metrics -->
     <div class="metrics">
       <div class="metric"><div class="metric-lbl">Einnahmen</div><div class="metric-val cg" id="m-ein">0€</div></div>
-      <div class="metric"><div class="metric-lbl">Ausgaben + Personal</div><div class="metric-val cr" id="m-kos">0€</div></div>
-      <div class="metric"><div class="metric-lbl">Ergebnis</div><div class="metric-val ct" id="m-erg">0€</div></div>
+      <div class="metric"><div class="metric-lbl">Kosten + Schulden</div><div class="metric-val cr" id="m-kos">0€</div></div>
+      <div class="metric"><div class="metric-lbl">Nach Schulden</div><div class="metric-val ct" id="m-erg">0€</div></div>
       <div class="metric"><div class="metric-lbl">Ziel</div><div class="metric-val ca" id="m-ziel">—</div></div>
     </div>
 
@@ -595,7 +596,7 @@ body {
             <div class="dash-hero">
               <div class="dash-hero-lbl" id="dashboard-result-label">Ergebnis inklusive Personalkosten</div>
               <div class="dash-hero-val pos" id="dh-val">0,00 €</div>
-              <div class="summary-note">Vor Personalkosten: <strong id="dh-before-labor">0,00 €</strong> · Erfasste Personalkosten: <strong id="dh-labor">0,00 €</strong></div>
+              <div class="summary-note">Vor Personalkosten: <strong id="dh-before-labor">0,00 €</strong> · Erfasste Personalkosten: <strong id="dh-labor">0,00 €</strong></div><div id="debt-breakdown" class="summary-note"></div>
               <div class="summary-note">Offene Rechnungen (alle Zeiträume): <strong id="dh-open">0,00 €</strong></div>
               <div class="goal-row">
                 <span style="font-size:11px;color:var(--text3)">Ziel: <span id="dh-goal-lbl">nicht gesetzt</span></span>
@@ -644,7 +645,7 @@ body {
         </div>
       </div>
 
-<div class="panel" id="p-mehr"><div class="sec-hd">Weitere Bereiche</div><div class="more-menu"><button type="button" class="more-link" onclick="switchTab('personal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><strong>Personal & Schichten</strong><small>Arbeitszeiten und Personalkosten</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('tagesabschluss')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span><strong>Tagesabschluss</strong><small>Einnahmen und Kosten von heute</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('monat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span><strong>Monatsauswertung</strong><small>Wochenvergleich und Monatsdetails</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('rechnungen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span><strong>Rechnungen & Zahlungen</strong><small>Offene, fällige und bezahlte Rechnungen</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('einstellungen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span><strong>Einstellungen</strong><small>Konto, Face ID, Verbindung und Vorgaben</small></span><span class="more-arrow" aria-hidden="true">›</span></button></div></div>
+<div class="panel" id="p-mehr"><div class="sec-hd">Weitere Bereiche</div><div class="more-menu"><button class="more-link" onclick="switchTab('schulden')"><span>💳</span><span><strong>Schuldenzahlungen</strong><small>Rückzahlungen separat erfassen</small></span><span class="more-arrow">›</span></button><button type="button" class="more-link" onclick="switchTab('personal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><strong>Personal & Schichten</strong><small>Arbeitszeiten und Personalkosten</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('tagesabschluss')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span><strong>Tagesabschluss</strong><small>Einnahmen und Kosten von heute</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('monat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span><strong>Monatsauswertung</strong><small>Wochenvergleich und Monatsdetails</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('rechnungen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span><strong>Rechnungen & Zahlungen</strong><small>Offene, fällige und bezahlte Rechnungen</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('einstellungen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span><strong>Einstellungen</strong><small>Konto, Face ID, Verbindung und Vorgaben</small></span><span class="more-arrow" aria-hidden="true">›</span></button></div></div>
       <!-- EINNAHMEN -->
       <div class="panel" id="p-einnahmen">
         <div style="padding:14px 14px 0">
@@ -691,6 +692,18 @@ body {
         <div id="tot-aus"></div><div id="lst-aus"></div>
       </div>
 
+      <div class="panel" id="p-schulden">
+        <div class="sec-hd">Schuldenzahlungen</div>
+        <div class="card"><div class="card-hd">Schuldenzahlung erfassen</div>
+          <div class="field"><label>Zahlungsdatum</label><input type="date" id="s-datum"></div>
+          <div class="field"><label>Gläubiger / Beschreibung</label><input id="s-beschr" placeholder="z.B. Rückzahlung Darlehen"></div>
+          <div class="field"><label>Gezahlter Betrag (€)</label><input type="number" id="s-betrag" min="0.01" step="0.01" inputmode="decimal"></div>
+          <button class="btn-primary" id="save-schulden" onclick="saveDebt()">Zahlung speichern</button>
+          <button class="btn-secondary" onclick="cancelDebt()">Eingabe zurücksetzen</button>
+        </div>
+        <div class="summary-note" style="margin:14px">Hier nur tatsächlich gezahlte Rückzahlungen erfassen. Bereits als Ausgabe erfasste Beträge nicht erneut eintragen. Das Ergebnis nach Schuldenzahlungen zeigt den verbleibenden Betrag.</div>
+        <div id="debt-total"></div><div id="debt-list"></div>
+      </div>
       <!-- PERSONAL -->
       <div class="panel" id="p-personal">
         <div style="padding:14px 14px 0">
@@ -724,7 +737,7 @@ body {
         <div class="tages-breakdown"><div class="tages-pill"><div class="tages-pill-lbl">Bar</div><div class="tages-pill-val cg" id="ta-bar">0€</div></div><div class="tages-pill"><div class="tages-pill-lbl">Karte</div><div class="tages-pill-val cb" id="ta-karte">0€</div></div><div class="tages-pill"><div class="tages-pill-lbl">Trinkgeld</div><div class="tages-pill-val ca" id="ta-tip">0€</div></div></div>
         <div class="sec-hd">Ausgaben heute</div><div id="ta-ausgaben-wrap"></div>
         <div class="sec-hd">Personal heute</div><div id="ta-personal-wrap"></div>
-        <div class="totals-card" style="margin:14px 14px 0"><div class="t-row"><span style="font-weight:700">Tagesergebnis</span><strong id="ta-erg-val" class="amtg">0,00 €</strong></div></div>
+        <div class="totals-card" style="margin:14px 14px 0"><div class="t-row"><span style="font-weight:700">Ergebnis nach Schuldenzahlungen</span><strong id="ta-erg-val" class="amtg">0,00 €</strong></div></div>
         <button class="btn-secondary" style="margin-top:10px;" onclick="exportTagesPDF()">📄 Tagesabschluss als PDF</button>
       </div>
       <!-- MONAT -->
@@ -984,6 +997,7 @@ const edits={},formBusy=new Set(),quickInitialized=new Set();
 function editButton(key,id){return `<button type="button" class="edit-btn" onclick="editEntry('${key}',${id})">Bearbeiten</button>`;}
 function editEntry(key,id){
  if(key==='aus'&&D.aus.find(r=>r.id===id)?.rechnung_id){switchTab('rechnungen');toast('Bitte Zahlung dort korrigieren.');return;}
+ if(key==='aus'&&D.aus.find(r=>r.id===id)?.kat==='schulden'){editDebt(id);return;}
  const row=D[key]?.find(r=>r.id===id),spec=formSpecs[key];if(!row||!spec)return;
  edits[key]={id,original:{...row}};
  for(const field of spec.fields){const el=document.getElementById(spec.prefix+'-'+field);if(el){if(el.tagName==='SELECT'&&!Array.from(el.options).some(o=>o.value===String(row[field]??''))){const opt=document.createElement('option');opt.value=row[field]??'';opt.textContent=row[field]??'';el.appendChild(opt);}el.value=row[field]??'';}}
@@ -1075,7 +1089,23 @@ function saveSupabase() {
   SB_URL=(document.getElementById('mi-sburl').value||'').trim();
   SB_KEY=(document.getElementById('mi-sbkey').value||'').trim();
   localStorage.setItem('rv_sb_url',SB_URL); localStorage.setItem('rv_sb_key',SB_KEY);
-  closeModal(); initSupabase();
+  closeModal(); 
+const debtSum=rows=>rows.filter(a=>a.kat==='schulden').reduce((sum,a)=>sum+a.betrag,0);
+function debtSummary(income,out,labor,rows){const debt=debtSum(rows);return `<div class="t-row"><span>Betriebsausgaben</span><strong>${eur(out-debt)}</strong></div><div class="t-row"><span>Betriebsergebnis vor Schulden</span><strong>${eur(income-out-labor+debt)}</strong></div><div class="t-row"><span>Schuldenzahlungen</span><strong class="amtr">${eur(debt)}</strong></div>`;}
+let debtEdit=null,debtBusy=false;
+function cancelDebt(){debtEdit=null;document.getElementById('s-datum').value=today();document.getElementById('s-beschr').value='';document.getElementById('s-betrag').value='';document.getElementById('save-schulden').textContent='Zahlung speichern';}
+function editDebt(id){const row=D.aus.find(a=>a.id===id&&a.kat==='schulden');if(!row)return;debtEdit={...row};switchTab('schulden');document.getElementById('s-datum').value=row.datum;document.getElementById('s-beschr').value=row.beschr;document.getElementById('s-betrag').value=row.betrag;document.getElementById('save-schulden').textContent='Änderungen speichern';}
+async function saveDebt(){
+ if(debtBusy)return;
+ const datum=document.getElementById('s-datum').value,beschr=document.getElementById('s-beschr').value.trim(),betrag=Number(document.getElementById('s-betrag').value);
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(datum)||!beschr||!Number.isFinite(betrag)||betrag<=0){toast('Bitte Datum, Beschreibung und einen positiven Betrag eingeben.','r');return;}
+ if(debtEdit){const current=D.aus.find(a=>a.id===debtEdit.id);if(!current||['datum','beschr','betrag','kat'].some(k=>current[k]!==debtEdit[k])){toast('Eintrag inzwischen geändert. Bitte erneut öffnen.','r');return;}}
+ debtBusy=true;const btn=document.getElementById('save-schulden');btn.disabled=true;
+ try{if(await persistChange(debtEdit?'update':'insert','aus',{id:debtEdit?.id??newId(),datum,beschr,betrag,kat:'schulden'})){cancelDebt();savedToast('Schuldenzahlung gespeichert');}}finally{debtBusy=false;btn.disabled=false;}
+}
+function renderDebt(){const rows=D.aus.filter(a=>a.kat==='schulden');document.getElementById('debt-total').innerHTML=`<div class="totals-card"><div class="t-row"><span>Schuldenzahlungen gesamt</span><strong class="amtr">${eur(debtSum(rows))}</strong></div></div>`;document.getElementById('debt-list').innerHTML=rows.map(a=>`<div class="entry-wrap" id="ew${a.id}"><div class="entry"><div class="entry-body"><div class="entry-date">${fmt(a.datum)}</div><div class="entry-main">${esc(a.beschr)}</div></div><div class="entry-right"><strong class="amtr">${eur(a.betrag)}</strong><button class="edit-btn" onclick="editDebt(${a.id})">Bearbeiten</button><button class="edit-btn" onclick="delEntry('aus',${a.id})">Löschen</button></div></div></div>`).join('')||'<div class="empty"><p>Noch keine Schuldenzahlungen</p></div>';}
+
+initSupabase();
 }
 function clearSupabase() {
   if(syncEngine?.pending().length){toast('Zuerst ausstehende Änderungen synchronisieren.','r');return;}
@@ -1123,7 +1153,7 @@ function updateMetrics() {
 // ══════════════════════════════════════════════
 //  KAT MAP
 // ══════════════════════════════════════════════
-const KAT={lebensmittel:{label:'Lebensmittel',color:'#a855f7',icon:'🥩'},getraenke:{label:'Getränke',color:'#14b8a6',icon:'🍷'},miete:{label:'Miete/NK',color:'#f59e0b',icon:'🏠'},reinigung:{label:'Reinigung',color:'#3b82f6',icon:'🧹'},sonstiges:{label:'Sonstiges',color:'#888',icon:'📦'},personal:{label:'Personal',color:'#ef4444',icon:'👥'}};
+const KAT={schulden:{label:'Schuldenzahlung',color:'#f59e0b',icon:'💳'},lebensmittel:{label:'Lebensmittel',color:'#a855f7',icon:'🥩'},getraenke:{label:'Getränke',color:'#14b8a6',icon:'🍷'},miete:{label:'Miete/NK',color:'#f59e0b',icon:'🏠'},reinigung:{label:'Reinigung',color:'#3b82f6',icon:'🧹'},sonstiges:{label:'Sonstiges',color:'#888',icon:'📦'},personal:{label:'Personal',color:'#ef4444',icon:'👥'}};
 
 // ══════════════════════════════════════════════
 //  EINNAHMEN
@@ -1169,11 +1199,12 @@ async function addAusgabe() {
 }
 
 function renderAus() {
+  const expenses=D.aus.filter(a=>a.kat!=='schulden');
   const lst=document.getElementById('lst-aus'),tot=document.getElementById('tot-aus');
-  if(!D.aus.length){lst.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><p>Noch keine Ausgaben</p></div>';tot.innerHTML='';return;}
-  const tA=D.aus.reduce((s,a)=>s+a.betrag,0);
+  if(!expenses.length){lst.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><p>Noch keine Ausgaben</p></div>';tot.innerHTML='';return;}
+  const tA=expenses.reduce((s,a)=>s+a.betrag,0);
   tot.innerHTML=`<div class="totals-card"><div class="t-row"><span>Gesamt Ausgaben</span><strong class="amtr">${eur(tA)}</strong></div></div>`;
-  lst.innerHTML=D.aus.map(a=>{const k=KAT[a.kat]||KAT.sonstiges;return`<div class="entry-wrap" id="ew${a.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${a.id})" ontouchmove="tm(event,${a.id})" ontouchend="te(event,${a.id},'aus')"><div class="entry-icon">${k.icon}</div><div class="entry-body"><div class="entry-date">${fmt(a.datum)} · <span style="color:${k.color}">${k.label}</span></div><div class="entry-main">${esc(a.beschr||'—')}</div></div><div class="entry-right"><div class="entry-amt amtr">${eur(a.betrag)}</div>${a.rechnung_id?`<button class="edit-btn" onclick="switchTab('rechnungen')">Zur Zahlung</button>`:editButton('aus',a.id)}<button class="del-btn" onclick="delEntry('aus',${a.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>`}).join('');
+  lst.innerHTML=expenses.map(a=>{const k=KAT[a.kat]||KAT.sonstiges;return`<div class="entry-wrap" id="ew${a.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${a.id})" ontouchmove="tm(event,${a.id})" ontouchend="te(event,${a.id},'aus')"><div class="entry-icon">${k.icon}</div><div class="entry-body"><div class="entry-date">${fmt(a.datum)} · <span style="color:${k.color}">${k.label}</span></div><div class="entry-main">${esc(a.beschr||'—')}</div></div><div class="entry-right"><div class="entry-amt amtr">${eur(a.betrag)}</div>${a.rechnung_id?`<button class="edit-btn" onclick="switchTab('rechnungen')">Zur Zahlung</button>`:editButton('aus',a.id)}<button class="del-btn" onclick="delEntry('aus',${a.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>`}).join('');
 }
 
 // ══════════════════════════════════════════════
@@ -1256,14 +1287,15 @@ function renderDashboard() {
   const data=periodData();
   const months=[...new Set([today().slice(0,7),dashboardPeriod,...D.ein.map(r=>r.datum?.slice(0,7)),...D.aus.map(r=>r.datum?.slice(0,7)),...D.mit.map(r=>r.datum?.slice(0,7))].filter(m=>/^\d{4}-\d{2}$/.test(m)))].sort().reverse();
   document.getElementById('dashboard-period').innerHTML=months.map(m=>`<option value="${m}"${m===dashboardPeriod?' selected':''}>${monthName(m.slice(5))} ${m.slice(0,4)}</option>`).join('')+`<option value=""${!dashboardPeriod?' selected':''}>Gesamter Zeitraum</option>`;
-  document.getElementById('dashboard-result-label').textContent='Ergebnis inklusive Personalkosten · '+(dashboardPeriod?monthName(dashboardPeriod.slice(5))+' '+dashboardPeriod.slice(0,4):'gesamt');
+  document.getElementById('dashboard-result-label').textContent='Ergebnis nach Schuldenzahlungen · '+(dashboardPeriod?monthName(dashboardPeriod.slice(5))+' '+dashboardPeriod.slice(0,4):'gesamt');
   const tE=data.ein.reduce((s,e)=>s+e.bar+e.karte+e.tip,0);
   const tA=data.aus.reduce((s,a)=>s+a.betrag,0);
   const tL=data.mit.reduce((s,m)=>s+m.ausgezahlt,0);
   const tF=data.aus.filter(a=>a.kat==='lebensmittel').reduce((s,a)=>s+a.betrag,0);
   const g=tE-tA-tL, mg=tE>0?Math.round(g/tE*100):0, z=D.settings.ziel||0, tage=D.settings.tage||14;
 
-  document.getElementById('dh-before-labor').textContent=eur(tE-tA);
+  document.getElementById('dh-before-labor').textContent=eur(tE-tA+debtSum(data.aus));
+  document.getElementById('debt-breakdown').innerHTML=debtSummary(tE,tA,tL,data.aus);
   document.getElementById('dh-labor').textContent=eur(tL);
   document.getElementById('dh-open').textContent=eur(D.rec.filter(r=>!r.bezahlt).reduce((sum,r)=>sum+r.betrag,0));
   const dv=document.getElementById('dh-val'); dv.textContent=eur(g); dv.className='dash-hero-val '+(g>=0?'pos':'neg');
@@ -1294,7 +1326,7 @@ function renderDashboard() {
   const days=dk.sort(), maxD=Math.max(...days.map(d=>byDay[d]),1);
   const ct=document.getElementById('ch-tage');if(ct)ct.innerHTML=days.length?days.map(d=>{const p=Math.max(3,Math.round(byDay[d]/maxD*100));return`<div class="bar-row"><div class="bar-day">${fmt(d)}</div><div class="bar-track"><div class="bar-fill" style="width:${p}%;background:var(--green)">${byDay[d]>=300?eur(byDay[d],true):''}</div></div><div class="bar-amt">${eur(byDay[d],true)}</div></div>`;}).join(''):'<div style="font-size:13px;color:var(--text2);padding:4px 0">Keine Daten</div>';
 
-  const byCat={};data.aus.forEach(a=>{byCat[a.kat]=(byCat[a.kat]||0)+a.betrag;});if(tL>0)byCat['personal']=(byCat['personal']||0)+tL;
+  const byCat={};data.aus.filter(a=>a.kat!=='schulden').forEach(a=>{byCat[a.kat]=(byCat[a.kat]||0)+a.betrag;});if(tL>0)byCat['personal']=(byCat['personal']||0)+tL;
   const cats=Object.keys(byCat).sort((a,b)=>byCat[b]-byCat[a]), tKat=Object.values(byCat).reduce((s,v)=>s+v,0);
   const ck=document.getElementById('ch-kats');if(ck)ck.innerHTML=cats.length?cats.map(c=>{const k=KAT[c]||KAT.sonstiges,p=tKat>0?Math.round(byCat[c]/tKat*100):0;return`<div class="kat-row"><div class="kat-dot" style="background:${k.color}"></div><div class="kat-name">${k.label}</div><div class="kat-pct">${p}%</div><div class="kat-amt">${eur(byCat[c])}</div></div>`;}).join(''):'<div style="padding:14px;font-size:13px;color:var(--text2)">Keine Daten</div>';
 }
@@ -1326,9 +1358,9 @@ async function recoverLocal() {
   catch(e){toast('Wiederherstellung: '+e.message,'r');}
 }
 
-function exportCSV(){let c='Typ,Datum,Beschreibung,Bar,Karte,TG,Betrag,Kat,Name,Stunden\n';D.ein.forEach(e=>{c+=`Einnahme,${e.datum},"${e.notiz||''}",${e.bar},${e.karte},${e.tip},${e.bar+e.karte+e.tip},,\n`;});D.aus.forEach(a=>{c+=`Ausgabe,${a.datum},"${a.beschr||''}",,,, ${a.betrag},${a.kat},\n`;});D.mit.forEach(m=>{c+=`Schicht,${m.datum},"${m.pos}",,,, ${m.ausgezahlt},,${m.name},${m.stunden.toFixed(1)}\n`;});const b=new Blob([c],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='restaurant-'+today()+'.csv';a.click();toast('CSV exportiert');}
+function exportCSV(){let c='Typ,Datum,Beschreibung,Bar,Karte,TG,Betrag,Kat,Name,Stunden\n';D.ein.forEach(e=>{c+=`Einnahme,${e.datum},"${e.notiz||''}",${e.bar},${e.karte},${e.tip},${e.bar+e.karte+e.tip},,\n`;});D.aus.forEach(a=>{c+=`${a.kat==='schulden'?'Schuldenzahlung':'Ausgabe'},${a.datum},"${a.beschr||''}",,,, ${a.betrag},${a.kat},\n`;});D.mit.forEach(m=>{c+=`Schicht,${m.datum},"${m.pos}",,,, ${m.ausgezahlt},,${m.name},${m.stunden.toFixed(1)}\n`;});const b=new Blob([c],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='restaurant-'+today()+'.csv';a.click();toast('CSV exportiert');}
 
-function renderAll(){renderEin();renderAus();renderMit();renderDashboard();updateMetrics();renderSettings();renderRechnungen();renderLieferanten();checkOverdue();renderTagesabschluss();renderMonat();}
+function renderAll(){renderEin();renderAus();renderDebt();renderMit();renderDashboard();updateMetrics();renderSettings();renderRechnungen();renderLieferanten();checkOverdue();renderTagesabschluss();renderMonat();}
 
 // ══════════════════════════════════════════════
 //  BOOT
@@ -1349,6 +1381,7 @@ function switchTab(id) {
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.snav-item').forEach(b => b.classList.remove('active'));
   prepareQuickForm(id);
+  if(id==='schulden'){if(!document.getElementById('s-datum').value)document.getElementById('s-datum').value=today();renderDebt();}
   const panel = document.getElementById('p-'+id);
   if (panel) panel.classList.add('active');
   const ni = document.getElementById('ni-'+id) || document.getElementById('ni-mehr'); if(ni) ni.classList.add('active');
@@ -1396,7 +1429,8 @@ function renderTagesabschluss() {
   const el_karte = document.getElementById('ta-karte'); if(el_karte) el_karte.textContent=eur(tKarte,true);
   const el_tip = document.getElementById('ta-tip'); if(el_tip) el_tip.textContent=eur(tTip,true);
   const aw = document.getElementById('ta-ausgaben-wrap');
-  if(aw) aw.innerHTML = ausH.length ? ausH.map(a => { const k=KAT[a.kat]||KAT.sonstiges; return `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${k.icon} ${esc(a.beschr||k.label)}</span><strong class="amtr">${eur(a.betrag)}</strong></div></div>`; }).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Ausgaben gesamt</span><strong class="amtr">${eur(tAus)}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Keine Ausgaben heute</div>';
+  if(aw) aw.innerHTML = ausH.some(a=>a.kat!=='schulden') ? ausH.filter(a=>a.kat!=='schulden').map(a => { const k=KAT[a.kat]||KAT.sonstiges; return `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${k.icon} ${esc(a.beschr||k.label)}</span><strong class="amtr">${eur(a.betrag)}</strong></div></div>`; }).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Ausgaben gesamt</span><strong class="amtr">${eur(tAus-debtSum(ausH))}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Keine Ausgaben heute</div>';
+  if(aw) aw.innerHTML+=`<div class="totals-card">${debtSummary(tEin,tAus,tLohn,ausH)}</div>`;
   const pw = document.getElementById('ta-personal-wrap');
   if(pw) pw.innerHTML = mitH.length ? mitH.map(m => `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${esc(m.name)} (${esc(m.von)}–${esc(m.bis)})</span><strong class="amtr">${eur(m.ausgezahlt)}</strong></div></div>`).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Lohnkosten gesamt</span><strong class="amtr">${eur(tLohn)}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Kein Personal heute</div>';
   const ev = document.getElementById('ta-erg-val');
@@ -1438,7 +1472,7 @@ function renderMonat() {
   const wg = document.getElementById('week-grid');
   if(wg) wg.innerHTML = weekData.length ? weekData.map(w => `<div class="week-card"><div class="week-lbl">Woche ${w.w}</div><div class="week-val ${w.total>0?'cg':'ct'}">${eur(w.total,true)}</div><div class="week-sub">${w.count} Tage</div></div>`).join('') : '<div style="grid-column:1/-1;padding:14px 0;font-size:13px;color:var(--text2)">Keine Daten</div>';
   const mc = document.getElementById('monat-cards');
-  if(mc) mc.innerHTML = `<div class="totals-card"><div class="t-row"><span>Gesamteinnahmen</span><strong class="amtg">${eur(tE)}</strong></div><div class="t-row"><span>Warenkosten</span><strong class="amtr">${eur(tA)}</strong></div><div class="t-row"><span>Lohnkosten</span><strong class="amtr">${eur(tL)}</strong></div><div class="t-row"><span style="font-weight:700">Monatsergebnis</span><strong class="${gew>=0?'amtg':'amtr'}" style="font-size:16px">${eur(gew)}</strong></div>${tE>0?`<div class="t-row"><span>Marge</span><strong>${Math.round(gew/tE*100)}%</strong></div>`:''}</div>`;
+  if(mc) mc.innerHTML = `<div class="totals-card"><div class="t-row"><span>Gesamteinnahmen</span><strong class="amtg">${eur(tE)}</strong></div><div class="t-row"><span>Betriebsausgaben</span><strong class="amtr">${eur(tA-debtSum(ausM))}</strong></div><div class="t-row"><span>Lohnkosten</span><strong class="amtr">${eur(tL)}</strong></div><div class="t-row"><span>Betriebsergebnis vor Schulden</span><strong>${eur(gew+debtSum(ausM))}</strong></div><div class="t-row"><span>Schuldenzahlungen</span><strong class="amtr">${eur(debtSum(ausM))}</strong></div><div class="t-row"><span style="font-weight:700">Ergebnis nach Schuldenzahlungen</span><strong class="${gew>=0?'amtg':'amtr'}" style="font-size:16px">${eur(gew)}</strong></div>${tE>0?`<div class="t-row"><span>Marge</span><strong>${Math.round(gew/tE*100)}%</strong></div>`:''}</div>`;
   const byDay = {}; einM.forEach(e => { byDay[e.datum]=(byDay[e.datum]||0)+e.bar+e.karte+e.tip; });
   const days = Object.keys(byDay).sort(); const maxD = Math.max(...days.map(d=>byDay[d]),1);
   const mc2 = document.getElementById('monat-chart');
@@ -1555,10 +1589,10 @@ function exportTagesPDF() {
   doc.setTextColor(180,180,180); doc.setFontSize(9); doc.setFont('helvetica','normal');
   doc.text(new Date().toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}),20,28);
   let y=52;
-  const rows=[['Einnahmen Bar',eur(tBar),[34,197,94]],['Einnahmen Karte',eur(tKarte),[59,130,246]],['Trinkgeld',eur(tTip),[245,158,11]],['Einnahmen gesamt',eur(tEin),[34,197,94]],['Ausgaben',eur(tAus),[239,68,68]],['Lohnkosten',eur(tLohn),[239,68,68]],['Tagesergebnis',eur(tErg),tErg>=0?[34,197,94]:[239,68,68]]];
+  const rows=[['Einnahmen Bar',eur(tBar),[34,197,94]],['Einnahmen Karte',eur(tKarte),[59,130,246]],['Trinkgeld',eur(tTip),[245,158,11]],['Einnahmen gesamt',eur(tEin),[34,197,94]],['Betriebsausgaben',eur(tAus-debtSum(ausH)),[239,68,68]],['Schuldenzahlungen',eur(debtSum(ausH)),[245,158,11]],['Lohnkosten',eur(tLohn),[239,68,68]],['Ergebnis nach Schuldenzahlungen',eur(tErg),tErg>=0?[34,197,94]:[239,68,68]]];
   rows.forEach((r,i) => {
-    doc.setFillColor(i===3||i===6?15:20,20,20); doc.rect(14,y-4,182,10,'F');
-    doc.setTextColor(200,200,200); doc.setFontSize(i===6?10:9); doc.setFont('helvetica',i===3||i===6?'bold':'normal');
+    doc.setFillColor(i===3||i===rows.length-1?15:20,20,20); doc.rect(14,y-4,182,10,'F');
+    doc.setTextColor(200,200,200); doc.setFontSize(i===rows.length-1?10:9); doc.setFont('helvetica',i===3||i===rows.length-1?'bold':'normal');
     doc.text(r[0],16,y+2);
     doc.setTextColor(...r[2]); doc.setFont('helvetica','bold');
     doc.text(r[1],190,y+2,{align:'right'}); y+=12;
@@ -1597,7 +1631,7 @@ function exportPDF() {
   doc.setTextColor(120,120,120); doc.setFontSize(9);
   doc.text('Marge: '+mg+'%  |  Warenkosten: '+fP+'%  |  Personalkosten: '+lP+'%',110,y+14);
   y+=42;
-  const kpis=[['Gesamteinnahmen',eur(tE),'g'],['Warenkosten',eur(tA),'r'],['Lohnkosten',eur(tL),'r'],['Gewinn',eur(gew),gew>=0?'g':'r'],['Warenkosten %',fP+'%',fP<=30?'g':fP<=40?'a':'r'],['Personalkosten %',lP+'%',lP<=35?'g':lP<=45?'a':'r']];
+  const kpis=[['Gesamteinnahmen',eur(tE),'g'],['Betriebsausgaben',eur(tA-debtSum(D.aus)),'r'],['Schuldenzahlungen',eur(debtSum(D.aus)),'r'],['Vor Schuldenzahlungen',eur(gew+debtSum(D.aus)),'g'],['Lohnkosten',eur(tL),'r'],['Nach Schuldenzahlungen',eur(gew),gew>=0?'g':'r'],['Warenkosten %',fP+'%',fP<=30?'g':fP<=40?'a':'r'],['Personalkosten %',lP+'%',lP<=35?'g':lP<=45?'a':'r']];
   doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(180,180,180);
   doc.text('KENNZAHLEN',14,y); y+=6;
   kpis.forEach((kpi,i) => {
@@ -1625,7 +1659,7 @@ function exportPDF() {
   y+=4;
   if(y>230){doc.addPage();y=20;}
   doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(180,180,180);
-  doc.text('AUSGABEN',14,y); y+=6;
+  doc.text('BETRIEBSAUSGABEN / SCHULDENZAHLUNGEN',14,y); y+=6;
   D.aus.slice(0,25).forEach(a => {
     if(y>265){doc.addPage();y=20;}
     const k=KAT[a.kat]||KAT.sonstiges;
@@ -1676,8 +1710,25 @@ async function testPaymentPush(){try{const sub=await currentPaymentSubscription(
 async function disablePaymentPush(){try{const sub=await currentPaymentSubscription();if(sub){await pushCall({action:'unsubscribe',endpoint:sub.endpoint});await sub.unsubscribe();}pushStatus('Zahlungserinnerungen auf diesem Gerät ausgeschaltet.');}catch(e){pushStatus(e.message);}}
 if(typeof navigator!=='undefined'&&navigator.serviceWorker)navigator.serviceWorker.addEventListener('message',event=>{if(event.data?.type==='open-payments'){requestedPaymentView=true;if(authUser)switchTab('rechnungen');}});
 
+
+const debtSum=rows=>rows.filter(a=>a.kat==='schulden').reduce((sum,a)=>sum+a.betrag,0);
+function debtSummary(income,out,labor,rows){const debt=debtSum(rows);return `<div class="t-row"><span>Betriebsausgaben</span><strong>${eur(out-debt)}</strong></div><div class="t-row"><span>Betriebsergebnis vor Schulden</span><strong>${eur(income-out-labor+debt)}</strong></div><div class="t-row"><span>Schuldenzahlungen</span><strong class="amtr">${eur(debt)}</strong></div>`;}
+let debtEdit=null,debtBusy=false;
+function cancelDebt(){debtEdit=null;document.getElementById('s-datum').value=today();document.getElementById('s-beschr').value='';document.getElementById('s-betrag').value='';document.getElementById('save-schulden').textContent='Zahlung speichern';}
+function editDebt(id){const row=D.aus.find(a=>a.id===id&&a.kat==='schulden');if(!row)return;debtEdit={...row};switchTab('schulden');document.getElementById('s-datum').value=row.datum;document.getElementById('s-beschr').value=row.beschr;document.getElementById('s-betrag').value=row.betrag;document.getElementById('save-schulden').textContent='Änderungen speichern';}
+async function saveDebt(){
+ if(debtBusy)return;
+ const datum=document.getElementById('s-datum').value,beschr=document.getElementById('s-beschr').value.trim(),betrag=Number(document.getElementById('s-betrag').value);
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(datum)||!beschr||!Number.isFinite(betrag)||betrag<=0){toast('Bitte Datum, Beschreibung und einen positiven Betrag eingeben.','r');return;}
+ if(debtEdit){const current=D.aus.find(a=>a.id===debtEdit.id);if(!current||['datum','beschr','betrag','kat'].some(k=>current[k]!==debtEdit[k])){toast('Eintrag inzwischen geändert. Bitte erneut öffnen.','r');return;}}
+ debtBusy=true;const btn=document.getElementById('save-schulden');btn.disabled=true;
+ try{if(await persistChange(debtEdit?'update':'insert','aus',{id:debtEdit?.id??newId(),datum,beschr,betrag,kat:'schulden'})){cancelDebt();savedToast('Schuldenzahlung gespeichert');}}finally{debtBusy=false;btn.disabled=false;}
+}
+function renderDebt(){const rows=D.aus.filter(a=>a.kat==='schulden');document.getElementById('debt-total').innerHTML=`<div class="totals-card"><div class="t-row"><span>Schuldenzahlungen gesamt</span><strong class="amtr">${eur(debtSum(rows))}</strong></div></div>`;document.getElementById('debt-list').innerHTML=rows.map(a=>`<div class="entry-wrap" id="ew${a.id}"><div class="entry"><div class="entry-body"><div class="entry-date">${fmt(a.datum)}</div><div class="entry-main">${esc(a.beschr)}</div></div><div class="entry-right"><strong class="amtr">${eur(a.betrag)}</strong><button class="edit-btn" onclick="editDebt(${a.id})">Bearbeiten</button><button class="edit-btn" onclick="delEntry('aus',${a.id})">Löschen</button></div></div></div>`).join('')||'<div class="empty"><p>Noch keine Schuldenzahlungen</p></div>';}
+
 initSupabase();
 
 </script>
 </body>
 </html>
+
