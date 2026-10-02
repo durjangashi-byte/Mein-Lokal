@@ -484,7 +484,12 @@ body {
 .more-link svg{width:23px;height:23px;flex-shrink:0;color:var(--accent)}
 .more-link strong{display:block;font-size:14px}.more-link small{display:block;margin-top:5px;font-size:12px;line-height:1.4;color:var(--text2)}
 .more-arrow{margin-left:auto;font-size:24px;color:var(--text3)}
+.payment-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.payment-actions .edit-btn{font-size:12px}
+.payment-card{margin:0 14px 10px;padding:14px;background:var(--bg1);border:1px solid var(--bord2);border-radius:var(--rsm)}
+.payment-card h3{font-size:14px;overflow-wrap:anywhere}.payment-card p{font-size:12px;color:var(--text2);line-height:1.5;margin-top:7px;overflow-wrap:anywhere}
+.payment-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.payment-top strong{white-space:nowrap}
 </style>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body class="auth-locked">
 <section id="auth-gate" aria-label="Anmeldung">
@@ -534,8 +539,7 @@ body {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Personal
       </button>
-      <button class="snav-item" id="sni-rechnungen" onclick="switchTab('rechnungen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Rechnungen</button>
-      <button class="snav-item" id="sni-lieferanten" onclick="switchTab('lieferanten')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Lieferanten</button>
+      <button class="snav-item" id="sni-rechnungen" onclick="switchTab('rechnungen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Rechnungen & Zahlungen</button>
       <button class="snav-item" id="sni-einstellungen" onclick="switchTab('einstellungen')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         Einstellungen
@@ -640,7 +644,7 @@ body {
         </div>
       </div>
 
-<div class="panel" id="p-mehr"><div class="sec-hd">Weitere Bereiche</div><div class="more-menu"><button type="button" class="more-link" onclick="switchTab('personal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><strong>Personal & Schichten</strong><small>Arbeitszeiten und Personalkosten</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('tagesabschluss')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span><strong>Tagesabschluss</strong><small>Einnahmen und Kosten von heute</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('monat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span><strong>Monatsauswertung</strong><small>Wochenvergleich und Monatsdetails</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('rechnungen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span><strong>Rechnungen</strong><small>Offene, fällige und bezahlte Rechnungen</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('lieferanten')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg><span><strong>Lieferanten</strong><small>Kontakte und Zahlungsziele</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('einstellungen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span><strong>Einstellungen</strong><small>Konto, Face ID, Verbindung und Vorgaben</small></span><span class="more-arrow" aria-hidden="true">›</span></button></div></div>
+<div class="panel" id="p-mehr"><div class="sec-hd">Weitere Bereiche</div><div class="more-menu"><button type="button" class="more-link" onclick="switchTab('personal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><strong>Personal & Schichten</strong><small>Arbeitszeiten und Personalkosten</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('tagesabschluss')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span><strong>Tagesabschluss</strong><small>Einnahmen und Kosten von heute</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('monat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span><strong>Monatsauswertung</strong><small>Wochenvergleich und Monatsdetails</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('rechnungen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span><strong>Rechnungen & Zahlungen</strong><small>Offene, fällige und bezahlte Rechnungen</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('einstellungen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span><strong>Einstellungen</strong><small>Konto, Face ID, Verbindung und Vorgaben</small></span><span class="more-arrow" aria-hidden="true">›</span></button></div></div>
       <!-- EINNAHMEN -->
       <div class="panel" id="p-einnahmen">
         <div style="padding:14px 14px 0">
@@ -733,19 +737,29 @@ body {
       <!-- RECHNUNGEN -->
       <div class="panel" id="p-rechnungen">
         <div style="padding:14px 14px 0"><div class="card">
-          <div class="card-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Rechnung eintragen</div>
-          <div class="field"><label>Lieferant / Beschreibung</label><input type="text" id="r-beschr" placeholder="z.B. Metro Lieferung"></div>
+          <div class="card-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Zahlung eintragen</div>
+          <div class="field"><label>Beschreibung</label><input type="text" id="r-beschr" placeholder="z.B. Metro Lieferung"></div>
           <div class="field-row"><div class="field"><label>Betrag (€)</label><input type="number" id="r-betrag" placeholder="0,00" inputmode="decimal" min="0" step="0.01"></div><div class="field"><label>Fällig am</label><input type="date" id="r-faellig"></div></div>
+<div class="field"><label>Ausgabenkategorie</label><select id="r-kat"><option value="lebensmittel">Lebensmittel</option><option value="getraenke">Getränke</option><option value="miete">Miete / Nebenkosten</option><option value="reinigung">Reinigung / Verbrauch</option><option value="sonstiges" selected>Sonstiges</option></select></div>
+          <div class="field"><label>Wiederholung</label><select id="r-wiederholung"><option value="einmalig">Einmalig</option><option value="woechentlich">Wöchentlich</option><option value="monatlich">Monatlich</option><option value="vierteljaehrlich">Vierteljährlich</option><option value="jaehrlich">Jährlich</option></select></div>
+          <div class="field"><label>Betrag für Folgetermine (€, optional)</label><input type="number" id="r-folgebetrag" inputmode="decimal" min="0" step="0.01" placeholder="Wie diese Zahlung"></div>
+          <details style="margin:0 16px 14px"><summary style="padding:10px 0;cursor:pointer">Anbieter & Zusatzinfos (optional)</summary>
+            <div class="field"><label>Anbieter-Vorlage verwenden</label><select id="r-provider" onchange="useProvider(this.value)"><option value="">Keine Vorlage</option></select></div>
+            <div class="field"><label>Anbieter</label><input id="r-anbieter" type="text" placeholder="z.B. Internetanbieter"></div><div class="field"><label>Kontakt</label><input id="r-kontakt" type="text"></div><div class="field"><label>Kunden- / Vertragsnummer</label><input id="r-kundennummer" type="text"></div>
+          </details>
           <div class="field"><label>Notiz</label><input type="text" id="r-notiz" placeholder="z.B. Rechnungsnr. 2024-001"></div>
           <div class="form-hint" id="edit-hint-rec" hidden></div><button id="save-rec" class="btn-primary" onclick="addRechnung()">Speichern</button><button type="button" class="btn-secondary" id="cancel-rec" onclick="cancelEdit('rec')" hidden>Bearbeiten abbrechen</button>
         </div></div>
+        <div class="period-card"><strong>Erinnerungen um 9 Uhr</strong><p class="summary-note">Auf dem iPhone: App über Safari zum Home-Bildschirm hinzufügen und von dort öffnen. Danach Mitteilungen aktivieren. Auch überfällige Zahlungen bleiben sichtbar.</p><button class="edit-btn" onclick="enablePaymentPush()">Mitteilungen aktivieren</button> <button class="edit-btn" onclick="testPaymentPush()">Test senden</button> <button class="edit-btn" onclick="disablePaymentPush()">Auf diesem Gerät ausschalten</button><div id="push-status" class="summary-note" role="status"></div></div>
+        <div id="payment-summary"></div><div class="field"><label>Zahlungen suchen</label><input id="r-search" type="search" placeholder="Beschreibung, Anbieter, Kundennummer" oninput="renderRechnungen()"></div>
+        <div class="field"><label>Anzeige</label><select id="r-filter" onchange="renderRechnungen()"><option value="alle">Alle</option><option value="ueberfaellig">Überfällig</option><option value="woche">In den nächsten 7 Tagen</option><option value="monat">Diesen Monat</option></select></div>
+        <div class="sec-hd">Wiederkehrende Zahlungen</div><div id="payment-series"></div>
         <div class="sec-hd">Offene Rechnungen</div><div id="lst-rechnungen-offen"></div>
         <div class="sec-hd">Bezahlt</div><div id="lst-rechnungen-bezahlt"></div>
-      </div>
       <!-- LIEFERANTEN -->
-      <div class="panel" id="p-lieferanten">
+      <details id="provider-templates"><summary class="edit-btn" style="margin:14px">Anbieter-Vorlagen verwalten</summary>
         <div style="padding:14px 14px 0"><div class="card">
-          <div class="card-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Lieferant hinzufügen</div>
+          <div class="card-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Anbieter-Vorlage hinzufügen</div>
           <div class="field"><label>Name</label><input type="text" id="l-name" placeholder="z.B. Metro Cash & Carry"></div>
           <div class="field"><label>Kategorie</label><select id="l-kat"><option value="lebensmittel">🥩 Lebensmittel</option><option value="getraenke">🍷 Getränke</option><option value="reinigung">🧹 Reinigung</option><option value="sonstiges">📦 Sonstiges</option></select></div>
           <div class="field"><label>Kontakt / Telefon</label><input type="text" id="l-kontakt" placeholder="z.B. 0711 123456"></div>
@@ -753,7 +767,8 @@ body {
           <div class="field"><label>Notiz</label><input type="text" id="l-notiz" placeholder="z.B. Liefert Di + Fr"></div>
           <div class="form-hint" id="edit-hint-lief" hidden></div><button id="save-lief" class="btn-primary" onclick="addLieferant()">Speichern</button><button type="button" class="btn-secondary" id="cancel-lief" onclick="cancelEdit('lief')" hidden>Bearbeiten abbrechen</button>
         </div></div>
-        <div class="sec-hd">Lieferanten</div><div id="lst-lieferanten"></div>
+        <div class="sec-hd">Gespeicherte Anbieter</div><div id="lst-lieferanten"></div>
+      </details>
       </div>
 <!-- EINSTELLUNGEN -->
       <div class="panel" id="p-einstellungen">
@@ -771,7 +786,7 @@ body {
           <p id="account-message" role="status" style="font-size:12px;overflow-wrap:anywhere"></p>
           <button class="m-btn secondary" onclick="logoutApp()">Auf diesem Gerät abmelden</button>
         </div>
-        <div class="sec-hd">Supabase Synchronisation · v6</div>
+        <div class="sec-hd">Supabase Synchronisation · v7</div>
         <div class="card">
           <div class="setting-row"><div><div class="setting-lbl">Status</div><div class="setting-sub" id="set-sync-status">Nicht konfiguriert</div></div><div class="sync-dot" id="sync-dot3" style="margin-right:0"></div></div>
           <div class="setting-row"><div><div class="setting-lbl">URL & Key konfigurieren</div><div class="setting-sub">Supabase Projekt-URL und öffentlicher Schlüssel</div></div><span class="goal-edit" onclick="openModal('supabase')">Bearbeiten</span></div>
@@ -832,7 +847,7 @@ body {
 
 <div class="toast" id="toast"></div>
 
-<script src="sync.js?v=5"></script>
+<script src="sync.js?v=7"></script>
 <script src="auth.js?v=1"></script>
 <script>
 // ══════════════════════════════════════════════
@@ -871,6 +886,7 @@ async function unlockApp(user) {
   }
   document.getElementById('account-email').textContent=user.email;
   renderAll();syncEngine.start();document.body.classList.remove('auth-locked');
+  if(requestedPaymentView||new URLSearchParams(window.location?.search||'').get('view')==='rechnungen')switchTab('rechnungen');
 }
 function initSupabase() {
   lokalAuth?.stop();lockApp();SB=null;
@@ -961,24 +977,27 @@ const formSpecs={
  ein:{tab:'einnahmen',prefix:'e',fields:['datum','bar','karte','tip','gaeste','notiz']},
  aus:{tab:'ausgaben',prefix:'a',fields:['datum','kat','beschr','betrag']},
  mit:{tab:'personal',prefix:'m',fields:['name','pos','datum','von','bis','lohn']},
- rec:{tab:'rechnungen',prefix:'r',fields:['beschr','betrag','faellig','notiz']},
+ rec:{tab:'rechnungen',prefix:'r',fields:['beschr','betrag','faellig','notiz','kat','anbieter','kontakt','kundennummer','wiederholung','folgebetrag']},
  lief:{tab:'lieferanten',prefix:'l',fields:['name','kat','kontakt','zahlungsziel','notiz']}
 };
 const edits={},formBusy=new Set(),quickInitialized=new Set();
 function editButton(key,id){return `<button type="button" class="edit-btn" onclick="editEntry('${key}',${id})">Bearbeiten</button>`;}
 function editEntry(key,id){
+ if(key==='aus'&&D.aus.find(r=>r.id===id)?.rechnung_id){switchTab('rechnungen');toast('Bitte Zahlung dort korrigieren.');return;}
  const row=D[key]?.find(r=>r.id===id),spec=formSpecs[key];if(!row||!spec)return;
  edits[key]={id,original:{...row}};
  for(const field of spec.fields){const el=document.getElementById(spec.prefix+'-'+field);if(el){if(el.tagName==='SELECT'&&!Array.from(el.options).some(o=>o.value===String(row[field]??''))){const opt=document.createElement('option');opt.value=row[field]??'';opt.textContent=row[field]??'';el.appendChild(opt);}el.value=row[field]??'';}}
  document.getElementById('save-'+key).textContent='Änderungen speichern';
  const hint=document.getElementById('edit-hint-'+key);hint.hidden=false;hint.textContent='Du bearbeitest einen bestehenden Eintrag.';
  document.getElementById('cancel-'+key).hidden=false;
+ if(key==='rec'){document.getElementById('r-wiederholung').disabled=!!row.serie_id;document.getElementById('r-betrag').disabled=!!row.bezahlt;document.getElementById('r-kat').disabled=!!row.bezahlt;}
  switchTab(spec.tab);document.getElementById(spec.prefix+'-'+spec.fields[0])?.scrollIntoView?.({behavior:'smooth',block:'center'});
 }
 function cancelEdit(key){
  delete edits[key];const spec=formSpecs[key];
  for(const field of spec.fields){const el=document.getElementById(spec.prefix+'-'+field);if(!el)continue;
  if(field==='datum'||field==='faellig')el.value=today();else if(field==='von')el.value='08:00';else if(field==='bis')el.value='16:00';else if(field==='lohn')el.value='14';else if(el.tagName!=='SELECT')el.value='';}
+ if(key==='rec'){document.getElementById('r-wiederholung').disabled=false;document.getElementById('r-betrag').disabled=false;document.getElementById('r-kat').disabled=false;document.getElementById('r-wiederholung').value='einmalig';document.getElementById('r-provider').value='';}
  document.getElementById('save-'+key).textContent='Speichern';document.getElementById('edit-hint-'+key).hidden=true;document.getElementById('cancel-'+key).hidden=true;
 }
 async function commitForm(key,row){
@@ -988,7 +1007,11 @@ async function commitForm(key,row){
   const current=D[key].find(r=>r.id===edit.id);
   if(!current){toast('Eintrag wurde gelöscht. Bitte Bearbeiten abbrechen.','r');return false;}
   if(spec.fields.some(f=>current[f]!==edit.original[f])){toast('Eintrag wurde inzwischen geändert. Bitte Bearbeiten neu öffnen.','r');return false;}
-  row={...row,id:edit.id};if(key==='rec')delete row.bezahlt;
+  row={...row,id:edit.id};if(key==='rec'){
+   if(current.bezahlt&&(row.betrag!==current.betrag||row.kat!==current.kat)){toast('Zuerst Zahlung zurücknehmen, dann Betrag oder Kategorie korrigieren.','r');return false;}
+   delete row.bezahlt;if(current.serie_id)delete row.wiederholung;
+   if(!current.serie_id)row.anker=row.faellig;
+  }
  }
  formBusy.add(key);const btn=document.getElementById('save-'+key);btn.disabled=true;
  try{
@@ -1150,7 +1173,7 @@ function renderAus() {
   if(!D.aus.length){lst.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><p>Noch keine Ausgaben</p></div>';tot.innerHTML='';return;}
   const tA=D.aus.reduce((s,a)=>s+a.betrag,0);
   tot.innerHTML=`<div class="totals-card"><div class="t-row"><span>Gesamt Ausgaben</span><strong class="amtr">${eur(tA)}</strong></div></div>`;
-  lst.innerHTML=D.aus.map(a=>{const k=KAT[a.kat]||KAT.sonstiges;return`<div class="entry-wrap" id="ew${a.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${a.id})" ontouchmove="tm(event,${a.id})" ontouchend="te(event,${a.id},'aus')"><div class="entry-icon">${k.icon}</div><div class="entry-body"><div class="entry-date">${fmt(a.datum)} · <span style="color:${k.color}">${k.label}</span></div><div class="entry-main">${esc(a.beschr||'—')}</div></div><div class="entry-right"><div class="entry-amt amtr">${eur(a.betrag)}</div>${editButton('aus',a.id)}<button class="del-btn" onclick="delEntry('aus',${a.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>`}).join('');
+  lst.innerHTML=D.aus.map(a=>{const k=KAT[a.kat]||KAT.sonstiges;return`<div class="entry-wrap" id="ew${a.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${a.id})" ontouchmove="tm(event,${a.id})" ontouchend="te(event,${a.id},'aus')"><div class="entry-icon">${k.icon}</div><div class="entry-body"><div class="entry-date">${fmt(a.datum)} · <span style="color:${k.color}">${k.label}</span></div><div class="entry-main">${esc(a.beschr||'—')}</div></div><div class="entry-right"><div class="entry-amt amtr">${eur(a.betrag)}</div>${a.rechnung_id?`<button class="edit-btn" onclick="switchTab('rechnungen')">Zur Zahlung</button>`:editButton('aus',a.id)}<button class="del-btn" onclick="delEntry('aus',${a.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>`}).join('');
 }
 
 // ══════════════════════════════════════════════
@@ -1207,6 +1230,9 @@ async function delEntry(arr,id) {
   if(entry){entry.classList.add('removing');setTimeout(()=>_del(arr,id),280);}else _del(arr,id);
 }
 async function _del(arr,id) {
+  if(arr==='aus'&&D.aus.find(r=>r.id===id)?.rechnung_id){toast('Diese Ausgabe gehört zu einer Zahlung. Bitte dort zurücknehmen.','r');return;}
+  const invoice=arr==='rec'?D.rec.find(r=>r.id===id):null;
+  if(invoice&&(invoice.bezahlt||invoice.serie_id||D.rec.some(r=>r.serie_id===id))){toast('Bezahlte oder wiederkehrende Zahlungen bitte zurücknehmen bzw. pausieren.','r');return;}
   if(await persistChange('delete',arr,{id})){if(edits[arr]?.id===id)cancelEdit(arr);savedToast('Gelöscht');}
 }
 
@@ -1318,6 +1344,7 @@ function renderAll(){renderEin();renderAus();renderMit();renderDashboard();updat
 
 // Override switchTab to handle new tabs
 function switchTab(id) {
+  if(id==='lieferanten'){id='rechnungen';document.getElementById('provider-templates').open=true;}
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.snav-item').forEach(b => b.classList.remove('active'));
@@ -1421,52 +1448,57 @@ function renderMonat() {
 // ══════════════════════════════════════════
 // RECHNUNGEN
 // ══════════════════════════════════════════
-function addDays(dateStr, n) { const d=new Date(dateStr); d.setDate(d.getDate()+n); return d.toISOString().split('T')[0]; }
+function addDays(dateStr, n) { const d=new Date(dateStr+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().split('T')[0]; }
 
-async function addRechnung() {
-  const beschr = document.getElementById('r-beschr').value.trim();
-  const betrag = Number(document.getElementById('r-betrag').value||0);
-  const faellig = document.getElementById('r-faellig').value||today();
-  const notiz = document.getElementById('r-notiz').value.trim();
-  if(!validNumbers(betrag))return;
-  if(!beschr||!betrag){toast('Bitte Beschreibung und Betrag eingeben.','r');return;}
-  const row = {id:newId(),beschr,betrag,faellig,notiz,bezahlt:false};
-  if(!await commitForm('rec',row))return;
-  ['r-beschr','r-betrag','r-notiz'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('r-faellig').value=today();
-  renderRechnungen(); checkOverdue(); savedToast('Rechnung gespeichert');
+const repeatLabels={einmalig:'Einmalig',woechentlich:'Wöchentlich',monatlich:'Monatlich',vierteljaehrlich:'Vierteljährlich',jaehrlich:'Jährlich'};
+async function addRechnung(){
+ const val=id=>String(document.getElementById(id).value).trim();
+ const beschr=val('r-beschr'),betrag=Number(val('r-betrag')||0),faellig=val('r-faellig')||today(),notiz=val('r-notiz');
+ const folgebetrag=val('r-folgebetrag')?Number(val('r-folgebetrag')):null;
+ if(!validNumbers(betrag,...(folgebetrag===null?[]:[folgebetrag])))return;
+ if(!beschr||betrag<=0||folgebetrag===0){toast('Bitte Beschreibung und einen positiven Betrag eingeben.','r');return;}
+ const row={id:newId(),beschr,betrag,faellig,notiz,bezahlt:false,kat:val('r-kat')||'sonstiges',anbieter:val('r-anbieter'),kontakt:val('r-kontakt'),kundennummer:val('r-kundennummer'),wiederholung:val('r-wiederholung')||'einmalig',anker:faellig,folgebetrag};
+ if(!await commitForm('rec',row))return;
+ cancelEdit('rec');renderRechnungen();checkOverdue();savedToast('Zahlung gespeichert');
 }
-
-async function toggleBezahlt(id) {
-  const r=D.rec.find(x=>x.id===id);if(!r)return;
-  const bezahlt=!r.bezahlt;
-  if(await persistChange('update','rec',{id,bezahlt}))savedToast(bezahlt?'Als bezahlt markiert':'Wieder geöffnet');
+function useProvider(id){const l=D.lief.find(l=>l.id===Number(id));if(!l)return;document.getElementById('r-anbieter').value=l.name;document.getElementById('r-kontakt').value=l.kontakt||'';document.getElementById('r-kat').value=l.kat||'sonstiges';if(!edits.rec)document.getElementById('r-faellig').value=addDays(today(),l.zahlungsziel??14);}
+function paymentRoot(r){return r.serie_id?D.rec.find(x=>x.id===r.serie_id):r;}
+function openPayment(id){
+ const r=D.rec.find(r=>r.id===id);if(!r)return;
+ const html=r.bezahlt?`<div class="modal-hd"><div class="modal-title">Zahlung zurücknehmen?</div><div class="modal-sub">Die zugehörige automatisch gebuchte Ausgabe wird entfernt und diese Zahlung wieder geöffnet.</div></div><div class="modal-actions" style="padding-top:16px"><button class="m-btn danger" onclick="reversePayment(${id})">Zahlung zurücknehmen</button><button class="m-btn secondary" onclick="closeModal()">Abbrechen</button></div>`:
+ `<div class="modal-hd"><div class="modal-title">${esc(r.beschr)}</div><div class="modal-sub">Als bezahlt markieren und einmalig unter Ausgaben buchen.</div></div><div class="modal-body"><div class="modal-field"><label>Zahlungsbetrag (€)</label><input id="pay-amount" type="number" min="0.01" step="0.01" inputmode="decimal" value="${r.betrag}"></div><div class="modal-field"><label>Zahlungsdatum</label><input id="pay-date" type="date" value="${today()}"></div></div><div class="modal-actions"><button class="m-btn primary" onclick="completePayment(${id})">Erledigt / bezahlt</button><button class="m-btn secondary" onclick="closeModal()">Abbrechen</button></div>`;
+ document.getElementById('modal-inner').innerHTML=html;document.getElementById('modal-bg').classList.add('show');
 }
-
-function renderRechnungen() {
-  const offen = D.rec.filter(r=>!r.bezahlt).sort((a,b)=>a.faellig.localeCompare(b.faellig));
-  const bezahlt = D.rec.filter(r=>r.bezahlt).sort((a,b)=>b.faellig.localeCompare(a.faellig));
-  const now = today();
-  const lst1 = document.getElementById('lst-rechnungen-offen');
-  if(!lst1) return;
-  if(!offen.length) { lst1.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><p>Keine offenen Rechnungen</p></div>'; }
-  else {
-    const tO = offen.reduce((s,r)=>s+r.betrag,0);
-    lst1.innerHTML = `<div class="totals-card"><div class="t-row"><span>Offen gesamt</span><strong class="amtr">${eur(tO)}</strong></div></div>` +
-    offen.map(r => {
-      const isOverdue = r.faellig < now;
-      const isSoon = !isOverdue && r.faellig <= addDays(now,3);
-      const sb = isOverdue?'<span class="badge b-overdue">Überfällig</span>':isSoon?'<span class="badge b-soon">Bald fällig</span>':'<span class="badge b-ok">Offen</span>';
-      return `<div class="entry-wrap" id="ew${r.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${r.id})" ontouchmove="tm(event,${r.id})" ontouchend="te(event,${r.id},'rec')"><div class="entry-icon">🧾</div><div class="entry-body"><div class="entry-date">Fällig: ${fmtFull(r.faellig)}</div><div class="entry-main">${esc(r.beschr)}</div><div class="entry-sub">${sb}${r.notiz?' · '+esc(r.notiz):''}</div></div><div class="entry-right"><div class="entry-amt amtr">${eur(r.betrag)}</div>${editButton('rec',r.id)}<button onclick="toggleBezahlt(${r.id})" style="background:var(--green);border:none;color:#000;font-size:10px;font-weight:700;padding:4px 8px;border-radius:20px;cursor:pointer;white-space:nowrap;margin-top:4px;">✓ Bezahlt</button></div></div></div>`;
-    }).join('');
-  }
-  const lst2 = document.getElementById('lst-rechnungen-bezahlt');
-  if(lst2) lst2.innerHTML = bezahlt.length ? bezahlt.map(r => `<div class="entry-wrap" id="ew${r.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" style="opacity:0.5" ontouchstart="ts(event,${r.id})" ontouchmove="tm(event,${r.id})" ontouchend="te(event,${r.id},'rec')"><div class="entry-icon">✅</div><div class="entry-body"><div class="entry-date">Fällig war: ${fmtFull(r.faellig)}</div><div class="entry-main">${esc(r.beschr)}</div>${r.notiz?`<div class="entry-sub">${esc(r.notiz)}</div>`:''}</div><div class="entry-right"><div class="entry-amt" style="color:var(--text2);text-decoration:line-through">${eur(r.betrag)}</div>${editButton('rec',r.id)}<button onclick="toggleBezahlt(${r.id})" style="background:var(--bg2);border:1px solid var(--bord2);color:var(--text2);font-size:10px;font-weight:700;padding:4px 8px;border-radius:20px;cursor:pointer;margin-top:4px;">Öffnen</button></div></div></div>`).join('') : '<div style="padding:14px;font-size:13px;color:var(--text2)">Keine bezahlten Rechnungen</div>';
+async function payInvoice(id,betrag,datum){
+ const r=D.rec.find(r=>r.id===id);if(!r||r.bezahlt)return false;
+ if(!validNumbers(betrag)||betrag<=0||!/^\d{4}-\d{2}-\d{2}$/.test(datum)){toast('Bitte gültigen Betrag und Zahlungsdatum angeben.','r');return false;}
+ const ok=await persistChange('update','rec',{id,bezahlt:true,betrag,bezahlt_am:datum});
+ if(ok)savedToast(syncEngine?.pending().length?'Zahlung auf Gerät gespeichert · Buchung folgt nach Abgleich':'Zahlung und Ausgabe gebucht');return ok;
+}
+async function completePayment(id){if(await payInvoice(id,Number(document.getElementById('pay-amount').value),document.getElementById('pay-date').value))closeModal();}
+async function reversePayment(id){const r=D.rec.find(r=>r.id===id);if(!r?.bezahlt)return;if(await persistChange('update','rec',{id,bezahlt:false,bezahlt_am:null})){closeModal();savedToast('Zahlung zurückgenommen');}}
+// Backward-compatible programmatic payment entry point; UI always asks amount/date.
+async function toggleBezahlt(id){const r=D.rec.find(r=>r.id===id);if(!r)return;if(r.bezahlt)return reversePayment(id);return payInvoice(id,r.betrag,today());}
+async function snoozePayment(id,date){const r=D.rec.find(r=>r.id===id);if(!r||r.bezahlt)return;if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date<=today()){toast('Bitte einen zukünftigen Erinnerungstag wählen.','r');return;}if(await persistChange('update','rec',{id,erinnerung_am:date})){closeModal();savedToast('Erinnerung verschoben · Fälligkeit bleibt erhalten');}}
+function openSnooze(id){document.getElementById('modal-inner').innerHTML=`<div class="modal-hd"><div class="modal-title">Später erinnern</div><div class="modal-sub">Das ursprüngliche Fälligkeitsdatum bleibt unverändert.</div></div><div class="modal-body"><div class="modal-field"><label>Erinnerungstag (9 Uhr)</label><input id="snooze-date" type="date" min="${addDays(today(),1)}" value="${addDays(today(),1)}"></div></div><div class="modal-actions"><button class="m-btn primary" onclick="snoozePayment(${id},document.getElementById('snooze-date').value)">Verschieben</button><button class="m-btn secondary" onclick="closeModal()">Abbrechen</button></div>`;document.getElementById('modal-bg').classList.add('show');}
+async function setSeries(id,action){const r=D.rec.find(r=>r.id===id);if(!r||r.serie_id)return;const row={id,...(action==='stop'?{wiederholung:'einmalig',pausiert:false}:{pausiert:action==='pause'})};if(await persistChange('update','rec',row))savedToast(action==='stop'?'Wiederholung beendet':action==='pause'?'Wiederholung und Erinnerungen pausiert':'Wiederholung fortgesetzt');}
+function confirmStopSeries(id){document.getElementById('modal-inner').innerHTML=`<div class="modal-hd"><div class="modal-title">Wiederholung beenden?</div><div class="modal-sub">Zukünftige unbezahlte Folgetermine werden entfernt. Bisherige und bezahlte Termine bleiben erhalten.</div></div><div class="modal-actions" style="padding-top:16px"><button class="m-btn danger" onclick="setSeries(${id},'stop');closeModal()">Wiederholung beenden</button><button class="m-btn secondary" onclick="closeModal()">Abbrechen</button></div>`;document.getElementById('modal-bg').classList.add('show');}
+function renderRechnungen(){
+ const now=today(),weekEnd=addDays(now,6),month=now.slice(0,7);
+ const open=D.rec.filter(r=>!r.bezahlt);const sum=rows=>rows.reduce((s,r)=>s+r.betrag,0);
+ const summary=document.getElementById('payment-summary');if(summary)summary.innerHTML=`<div class="totals-card"><div class="t-row"><span>Nächste 7 Tage fällig</span><strong>${eur(sum(open.filter(r=>r.faellig>=now&&r.faellig<=weekEnd)))}</strong></div><div class="t-row"><span>Diesen Monat noch offen</span><strong>${eur(sum(open.filter(r=>r.faellig?.startsWith(month))))}</strong></div><div class="t-row"><span>Überfällig</span><strong class="amtr">${eur(sum(open.filter(r=>r.faellig&&r.faellig<now)))}</strong></div></div>`;
+ const series=document.getElementById('payment-series');if(series)series.innerHTML=D.rec.filter(r=>!r.serie_id&&r.wiederholung&&r.wiederholung!=='einmalig').map(r=>`<div class="payment-card"><h3>${esc(r.beschr)}</h3><p>${repeatLabels[r.wiederholung]||'Wiederkehrend'} · Folgebetrag ${eur(r.folgebetrag??r.betrag)} · ${r.pausiert?'Pausiert':'Aktiv'}</p><div class="payment-actions">${editButton('rec',r.id)}<button class="edit-btn" onclick="setSeries(${r.id},'${r.pausiert?'resume':'pause'}')">${r.pausiert?'Fortsetzen':'Pausieren'}</button><button class="edit-btn" onclick="confirmStopSeries(${r.id})">Beenden</button></div></div>`).join('')||'<div class="summary-note" style="margin:14px">Noch keine wiederkehrenden Zahlungen.</div>';
+ const query=(document.getElementById('r-search')?.value||'').trim().toLocaleLowerCase('de-DE'),filter=document.getElementById('r-filter')?.value||'alle';
+ const matches=r=>(!query||[r.beschr,r.anbieter,r.kundennummer,r.notiz].join(' ').toLocaleLowerCase('de-DE').includes(query))&&(filter==='alle'||filter==='ueberfaellig'&&r.faellig&&r.faellig<now||filter==='woche'&&r.faellig>=now&&r.faellig<=weekEnd||filter==='monat'&&r.faellig?.startsWith(month));
+ const card=r=>{const root=paymentRoot(r),status=r.bezahlt?'Bezahlt':r.faellig&&r.faellig<now?'Überfällig':r.faellig===now?'Heute fällig':'Offen';const k=KAT[r.kat]||KAT.sonstiges;
+ return `<div class="payment-card" id="ew${r.id}"><div class="payment-top"><h3>${esc(r.beschr)}</h3><strong class="${r.bezahlt?'amtg':'amtr'}">${eur(r.betrag)}</strong></div><p>${status} · Fällig: ${fmtFull(r.faellig)}${r.bezahlt_am?' · Bezahlt: '+fmtFull(r.bezahlt_am):''} · ${k.label}${root?.pausiert?' · Serie pausiert':''}${r.erinnerung_am&&!r.bezahlt?' · Erinnerung: '+fmtFull(r.erinnerung_am):''}</p>${r.anbieter||r.kontakt||r.kundennummer?`<p>${esc([r.anbieter,r.kontakt,r.kundennummer].filter(Boolean).join(' · '))}</p>`:''}${r.notiz?`<p>${esc(r.notiz)}</p>`:''}<div class="payment-actions"><button class="edit-btn" onclick="openPayment(${r.id})">${r.bezahlt?'Zahlung zurücknehmen':'✓ Erledigt / bezahlt'}</button>${editButton('rec',r.id)}${!r.bezahlt?`<button class="edit-btn" onclick="openSnooze(${r.id})">Später erinnern</button>`:''}${!r.bezahlt&&!r.serie_id&&!D.rec.some(x=>x.serie_id===r.id)?`<button class="edit-btn" onclick="_del('rec',${r.id})">Löschen</button>`:''}</div></div>`;};
+ const lst1=document.getElementById('lst-rechnungen-offen');if(lst1)lst1.innerHTML=open.filter(matches).sort((a,b)=>a.faellig.localeCompare(b.faellig)).map(card).join('')||'<div class="summary-note" style="margin:14px">Keine passenden offenen Zahlungen.</div>';
+ const lst2=document.getElementById('lst-rechnungen-bezahlt');if(lst2)lst2.innerHTML=D.rec.filter(r=>r.bezahlt&&matches(r)).sort((a,b)=>String(b.bezahlt_am||b.faellig).localeCompare(String(a.bezahlt_am||a.faellig))).map(card).join('')||'<div class="summary-note" style="margin:14px">Keine passenden bezahlten Zahlungen.</div>';
 }
 
 function checkOverdue() {
   const now = today();
-  const overdue = D.rec.filter(r=>!r.bezahlt&&r.faellig<now);
+  const overdue = D.rec.filter(r=>!r.bezahlt&&r.faellig&&r.faellig<now);
   const soon = D.rec.filter(r=>!r.bezahlt&&r.faellig>=now&&r.faellig<=addDays(now,3));
   const w = document.getElementById('overdue-wrap'); if(!w) return;
   if(overdue.length||soon.length) {
@@ -1497,6 +1529,7 @@ async function addLieferant() {
 }
 
 function renderLieferanten() {
+  const provider=document.getElementById('r-provider');if(provider){const selected=provider.value;provider.innerHTML='<option value="">Keine Vorlage</option>'+D.lief.map(l=>`<option value="${l.id}">${esc(l.name)}</option>`).join('');provider.value=selected;}
   const lst = document.getElementById('lst-lieferanten'); if(!lst) return;
   if(!D.lief.length) { lst.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg><p>Noch keine Lieferanten</p></div>'; return; }
   lst.innerHTML = D.lief.map(l => { const k=KAT[l.kat]||KAT.sonstiges; return `<div class="lief-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div class="lief-name">${esc(l.name)}</div><div class="lief-meta">${k.icon} ${k.label}${l.kontakt?' · 📞 '+esc(l.kontakt):''}</div></div><div>${editButton('lief',l.id)}<button class="del-btn" onclick="delLieferant(${l.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></div><div class="lief-tags"><span class="lief-tag">Zahlungsziel: ${l.zahlungsziel} Tage</span>${l.notiz?`<span class="lief-tag">${esc(l.notiz)}</span>`:''}</div></div>`; }).join('');
@@ -1622,6 +1655,27 @@ function exportPDF() {
 // Add Supabase tables for new data
 
 // Run initial renders for new sections
+const PAYMENT_PUSH_PUBLIC_KEY='BBs3LYhKtA8wWgGXB2jwStrRLQoTK0uzvRJGROp70v1GUG_VKZN3vy6RSWFfkd2ugjZEuijndNkyegzTbCzNxG0';
+let paymentWorker=null,requestedPaymentView=false;
+function pushStatus(message){const el=document.getElementById('push-status');if(el)el.textContent=message;}
+async function pushCall(body){if(!SB||!authUser)throw new Error('Bitte anmelden');const r=await SB.functions.invoke('payment-reminders',{body});if(r.error){let message=r.error.message;try{message=(await r.error.context.json()).error||message;}catch{}throw new Error(message);}if(r.data?.error)throw new Error(r.data.error);return r.data;}
+async function enablePaymentPush(){
+ try{
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window)){pushStatus('Bitte die App in Safari zum Home-Bildschirm hinzufügen und von dort öffnen. Dieser Browser unterstützt Push hier nicht.');return;}
+  // Permission request must originate directly from this button on iOS.
+  const permission=await Notification.requestPermission();if(permission!=='granted'){pushStatus('Mitteilungen nicht erlaubt. Bei Bedarf in den iPhone-Einstellungen freigeben.');return;}
+  pushStatus('Mitteilungen werden eingerichtet…');paymentWorker=await navigator.serviceWorker.register('sw.js',{scope:'./'});await navigator.serviceWorker.ready;
+  const key=PAYMENT_PUSH_PUBLIC_KEY;
+  const bytes=Uint8Array.from(atob(key.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
+  let sub=await paymentWorker.pushManager.getSubscription();if(!sub)sub=await paymentWorker.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:bytes});
+  await pushCall({action:'subscribe',subscription:sub.toJSON()});pushStatus('Aktiv auf diesem Gerät · täglich um 9 Uhr deutscher Zeit für fällige und überfällige Zahlungen. Mit „Test senden“ prüfen.');
+ }catch(e){pushStatus('Nicht eingerichtet: '+e.message);}
+}
+async function currentPaymentSubscription(){const reg=await navigator.serviceWorker?.getRegistration();return reg?.pushManager.getSubscription();}
+async function testPaymentPush(){try{const sub=await currentPaymentSubscription();if(!sub)throw new Error('Zuerst Mitteilungen aktivieren');await pushCall({action:'test',endpoint:sub.endpoint});pushStatus('Test-Mitteilung an dieses Gerät gesendet.');}catch(e){pushStatus(e.message);}}
+async function disablePaymentPush(){try{const sub=await currentPaymentSubscription();if(sub){await pushCall({action:'unsubscribe',endpoint:sub.endpoint});await sub.unsubscribe();}pushStatus('Zahlungserinnerungen auf diesem Gerät ausgeschaltet.');}catch(e){pushStatus(e.message);}}
+if(typeof navigator!=='undefined'&&navigator.serviceWorker)navigator.serviceWorker.addEventListener('message',event=>{if(event.data?.type==='open-payments'){requestedPaymentView=true;if(authUser)switchTab('rechnungen');}});
+
 initSupabase();
 
 </script>

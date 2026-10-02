@@ -10,6 +10,22 @@ Einstellungen zeigen Verbindungszustand, ausstehende Änderungen und Fehler. **J
 
 **Frühere lokale Daten ergänzen** importiert gespeicherte Altdaten ausdrücklich, ohne bestehende Cloud-IDs zu überschreiben. Vorher JSON-Backup exportieren. Backups enthalten alle fünf Tabellen sowie Warteschlange und Wiederherstellungskopie. Der Import ergänzt fehlende IDs; ausstehende Löschaufträge werden nicht automatisch aus einem Backup ausgeführt.
 
+## Rechnungen & Zahlungen (v7)
+
+Unter **Mehr → Rechnungen & Zahlungen** eine freie Beschreibung, Betrag, Kategorie und Fälligkeit erfassen. Anbieter/Kontakt/Kundennummer sind freiwillig. Einmalig, wöchentlich, monatlich, vierteljährlich oder jährlich wiederholen. **Erledigt / bezahlt** fragt Zahlungsbetrag/-datum ab und bucht genau einmal eine verknüpfte Ausgabe. Das ist eine Erfassung, keine Banküberweisung. **Zahlung zurücknehmen** entfernt diese automatische Ausgabe. Korrekturen dieser Ausgaben immer über die Zahlung vornehmen.
+
+**Später erinnern** verschiebt die Erinnerung, nicht die Fälligkeit. Wiederholung **pausieren**, **fortsetzen** oder **beenden**; beim Fortsetzen werden ausstehende Termine nachgetragen. Folgebetrag optional separat festlegen. Bereits bezahlte Termine bleiben erhalten. Die Seite zeigt offene Beträge der nächsten sieben Tage, des laufenden Monats und überfällige Zahlungen; Suche und Zeitraumfilter sind verfügbar. Bisherige Lieferanten sind als optionale **Anbieter-Vorlagen verwalten** in dieser Seite erhalten.
+
+### Mitteilungen auf dem iPhone
+
+1. App in Safari öffnen, **Teilen → Zum Home-Bildschirm**.
+2. Über das Home-Screen-Symbol öffnen und anmelden.
+3. **Mehr → Rechnungen & Zahlungen → Mitteilungen aktivieren**, iOS-Freigabe erteilen, danach **Test senden**.
+
+Backend und Zeitplan sind eingerichtet: täglich um 9 Uhr deutscher Zeit, einschließlich Sommer-/Winterzeit, eine zusammengefasste Erinnerung pro registriertem Gerät. Die App muss dafür nicht geöffnet sein. Überfällige Zahlungen werden weiter berücksichtigt; Fokusmodus/Geräteeinstellungen können Mitteilungen verzögern. Auf dieser Seite lassen sich Mitteilungen für das aktuelle Gerät auch ausschalten. Keine Push-Testzustellung aufs persönliche iPhone wurde ohne dessen Freigabe durchgeführt.
+
+Technischer Stand, SQL-Snapshot und alle geänderten Funktionen: [CHANGELOG.md](CHANGELOG.md). Private Push-Schlüssel liegen ausschließlich in Supabase Vault. Geschäftsdaten werden in den bestehenden Tabellen gespeichert; nur Geräteabonnements und Zustellungsprotokolle benötigen neue Tabellen. Der Service Worker fügt keinen Offline-Seiten-Cache hinzu.
+
 ## Mobile Navigation
 
 Unten stehen **Übersicht**, **Einnahmen**, **Ausgaben** und **Mehr**. Unter Mehr bleiben Personal/Schichten, Tagesabschluss, Monatsauswertung, Rechnungen, Lieferanten und Einstellungen erreichbar. Auf dem PC gibt es weiterhin die Seitenleiste.

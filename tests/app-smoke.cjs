@@ -20,7 +20,7 @@ fill('l-name','Test');await run('addLieferant()');assert.equal(run('D.lief.lengt
 for(const id of ['lst-ein','lst-aus','lst-mit','lst-rechnungen-bezahlt','lst-lieferanten','monat-cards'])assert.ok(els.get(id).innerHTML,'render '+id);
 assert.match(els.get('m-erg').textContent,/85/);
 // Editing reuses IDs, keeps invoice payment status and recalculates shifts.
-const flows=[['ein','e-bar','120','addEinnahme','bar',120],['aus','a-betrag','20','addAusgabe','betrag',20],['mit','m-lohn','20','addSchicht','ausgezahlt',80],['rec','r-betrag','24','addRechnung','betrag',24],['lief','l-zahlungsziel','0','addLieferant','zahlungsziel',0]];
+const flows=[['ein','e-bar','120','addEinnahme','bar',120],['aus','a-betrag','20','addAusgabe','betrag',20],['mit','m-lohn','20','addSchicht','ausgezahlt',80],['rec','r-notiz','Bezahlt geprüft','addRechnung','notiz','Bezahlt geprüft'],['lief','l-zahlungsziel','0','addLieferant','zahlungsziel',0]];
 for(const [key,field,value,fn,prop,expected] of flows){const id=run(`D.${key}[0].id`);run(`editEntry('${key}',${id})`);assert.equal(els.get('cancel-'+key).hidden,false);fill(field,value);await run(fn+'()');assert.equal(run(`D.${key}.length`),1);assert.equal(run(`D.${key}[0].id`),id);assert.equal(run(`D.${key}[0].${prop}`),expected);assert.equal(els.get('cancel-'+key).hidden,true);}
 assert.equal(run('D.rec[0].bezahlt'),true);
 // Cancel does not mutate; known remote changes/deletion block stale editors.
@@ -40,7 +40,21 @@ run("syncEngine=null");
 fill('a-betrag','-1');await run('addAusgabe()');assert.equal(run('D.aus.length'),1);
 run("D.lief[0].kat='Altbestand';editEntry('lief',D.lief[0].id)");assert.equal(els.get('l-kat').value,'Altbestand');run("cancelEdit('lief')");
 
+// New payment UI: amount correction before payment, idempotent local submit, snooze and series actions.
+await run('reversePayment(D.rec[0].id)');
+const paymentId=run('D.rec[0].id');
+await run(`payInvoice(${paymentId},18,today())`);assert.equal(run('D.rec[0].betrag'),18);assert.equal(run('D.rec[0].bezahlt'),true);
+assert.equal(await run(`payInvoice(${paymentId},99,today())`),false);assert.equal(run('D.rec[0].betrag'),18);
+await run(`reversePayment(${paymentId})`);const due=run('D.rec[0].faellig');await run(`snoozePayment(${paymentId},addDays(today(),1))`);assert.equal(run('D.rec[0].faellig'),due);assert.equal(run('D.rec[0].erinnerung_am'),run('addDays(today(),1)'));
+await run(`setSeries(${paymentId},'pause')`);assert.equal(run('D.rec[0].pausiert'),true);await run(`setSeries(${paymentId},'resume')`);assert.equal(run('D.rec[0].pausiert'),false);
+fill('r-search','nonexistent');run('renderRechnungen()');assert.match(els.get('lst-rechnungen-offen').innerHTML,/Keine passenden/);fill('r-search','');
+run('useProvider(D.lief[0].id)');assert.equal(els.get('r-anbieter').value,run('D.lief[0].name'));
+assert.equal(run("addDays('2026-03-28',2)"),'2026-03-30');
+assert.equal(globalThis.LokalSync.normalize('rec',{id:1}).serie_id,null);
+assert.equal(globalThis.LokalSync.normalize('aus',{id:2}).rechnung_id,null);
+
 await run('importData({ein:D.ein,rec:D.rec,lief:D.lief})');assert.equal(run('D.ein.length'),1);assert.equal(run('D.rec.length'),1);
+await run('reversePayment(D.rec[0].id)');
 for(const k of ['ein','aus','mit','rec','lief']){await run(`_del('${k}',D.${k}[0].id)`);assert.equal(run(`D.${k}.length`),0)}
 fill('l-name','<img src=x onerror=alert(1)>');await run('addLieferant()');assert.ok(!els.get('lst-lieferanten').innerHTML.includes('<img'));
 console.log('PASS boot, five create/edit/delete flows, period totals, invoice paid preservation, edit conflicts/cancel, durable UPDATE queue and double-submit guard, invalid inputs, legacy categories, import');

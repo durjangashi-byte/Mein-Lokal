@@ -55,7 +55,9 @@
     async write(op) {
       const table=this.client.from(tables[op.table].name);
       let result;
-      if(op.type==='insert') {
+      if(op.type==='update' && op.table==='rec' && op.row.bezahlt===true) {
+        result=await this.client.rpc('lokal_pay_invoice',{p_id:op.id,p_amount:op.row.betrag??this.data.rec.find(r=>r.id===op.id)?.betrag,p_date:op.row.bezahlt_am||new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Berlin'})});
+      } else if(op.type==='insert') {
         // Retry after a lost acknowledgement must not duplicate or overwrite a newer row.
         result=await table.upsert(op.row,{onConflict:'id',ignoreDuplicates:true}).select('id');
         if(!result.error && !result.data?.length) {
@@ -74,10 +76,11 @@
     }
     static normalize(key,row) {
       if(!Number.isSafeInteger(row.id))throw new Error('Eintrags-ID außerhalb des sicheren Zahlenbereichs.');
-      const shape={ein:{datum:'',bar:0,karte:0,tip:0,gaeste:0,notiz:''},aus:{datum:'',kat:'',beschr:'',betrag:0},mit:{datum:'',name:'',pos:'',von:'',bis:'',stunden:0,lohn:0,ausgezahlt:0},rec:{beschr:'',betrag:0,faellig:'',notiz:'',bezahlt:false},lief:{name:'',kat:'',kontakt:'',zahlungsziel:0,notiz:''}}[key];
+      const shape={ein:{datum:'',bar:0,karte:0,tip:0,gaeste:0,notiz:''},aus:{datum:'',kat:'',beschr:'',betrag:0,rechnung_id:null},mit:{datum:'',name:'',pos:'',von:'',bis:'',stunden:0,lohn:0,ausgezahlt:0},rec:{beschr:'',betrag:0,faellig:'',notiz:'',bezahlt:false,kat:'sonstiges',anbieter:'',kontakt:'',kundennummer:'',wiederholung:'einmalig',pausiert:false,anker:null,serie_id:null,erinnerung_am:null,bezahlt_am:null,folgebetrag:null},lief:{name:'',kat:'',kontakt:'',zahlungsziel:0,notiz:''}}[key];
       const result={id:row.id};
       for(const [field,fallback] of Object.entries(shape)) {
         const value=row[field]??fallback;
+        if(fallback===null){result[field]=value==null?null:['serie_id','rechnung_id','folgebetrag'].includes(field)?Number(value):String(value);continue;}
         result[field]=typeof fallback==='number'?(Number.isFinite(Number(value))?Number(value):0):typeof fallback==='boolean'?value===true:String(value);
       }
       for(const date of ['datum','faellig'])if(date in result && !/^\d{4}-\d{2}-\d{2}$/.test(result[date]))result[date]='';

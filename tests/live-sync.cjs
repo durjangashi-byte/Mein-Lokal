@@ -28,11 +28,15 @@ async function until(fn,label){const end=Date.now()+30000;while(Date.now()<end){
  for(const k of Object.keys(rows))sa.enqueue('insert',k,rows[k]);
  await sa.sync();await until(()=>Object.keys(rows).every(k=>db[k].some(r=>r.id===rows[k].id)),'five-table Realtime INSERT');console.log('PASS five-table realtime INSERT');
  sb.enqueue('update','rec',{id:rows.rec.id,bezahlt:true});await sb.sync();await until(()=>da.rec.find(r=>r.id===rows.rec.id)?.bezahlt,'reverse UPDATE');console.log('PASS reverse realtime invoice UPDATE');
+ await until(()=>da.aus.some(r=>r.rechnung_id===rows.rec.id),'automatic expense realtime');
+ const rpc=await a.rpc('lokal_pay_invoice',{p_id:rows.rec.id,p_amount:999,p_date:'2000-01-02'});if(rpc.error)throw rpc.error;
+ const expense=await a.from('ausgaben').select('*').eq('rechnung_id',rows.rec.id);assert.equal(expense.data.length,1);assert.equal(expense.data[0].betrag,1);console.log('PASS invoice payment creates one expense, repeated payment cannot overwrite amount');
  // Idempotent insert replay must not undo the other client's later update.
  sa.enqueue('insert','rec',rows.rec);await sa.sync();assert.equal(da.rec.find(r=>r.id===rows.rec.id).bezahlt,true);console.log('PASS lost-acknowledgement insert replay preserves newer update');
  offline=true;sa.enqueue('update','lief',{id:rows.lief.id,notiz:'offline recovery'});await sa.sync();assert.ok(sa.pending().length);assert.match(sa.error,/offline/);sa.stop();
  // Same device cache + durable outbox, new engine (page reload).
  sa=new LokalSync(a,da,storage,url+':'+uid,()=>{},()=>{});offline=false;await sa.sync();await until(()=>db.lief.find(r=>r.id===rows.lief.id)?.notiz==='offline recovery','offline replay');assert.equal(sa.pending().length,0);console.log('PASS offline queue survives engine restart and reaches second client');
+ sa.enqueue('update','rec',{id:rows.rec.id,bezahlt:false,bezahlt_am:null});await sa.sync();await until(()=>!db.aus.some(r=>r.rechnung_id===rows.rec.id),'payment reversal realtime');console.log('PASS payment reversal removes its automatic expense');
  for(const k of Object.keys(rows))sa.enqueue('delete',k,{id:rows[k].id});
  await sa.sync();await until(()=>Object.keys(rows).every(k=>!db[k].some(r=>r.id===rows[k].id)),'five-table Realtime DELETE');console.log('PASS five-table realtime DELETE');
- }finally{offline=false;sa?.stop();sb?.stop();await sa?.running;await sb?.running;for(const k of Object.keys(rows)){let r;for(let attempt=0;attempt<2;attempt++){r=await b.from(LOKAL_TABLES[k].name).delete().eq('id',rows[k].id);if(!r.error)break;}if(r.error)throw r.error;}await a.removeAllChannels();await b.removeAllChannels();console.log('Test records removed');}})().then(()=>process.exit(0)).catch(e=>{console.error(e);process.exit(1)});
+ }finally{offline=false;sa?.stop();sb?.stop();await sa?.running;await sb?.running;await b.from('rechnungen').update({bezahlt:false,bezahlt_am:null}).eq('id',rows.rec.id);for(const k of Object.keys(rows)){let r;for(let attempt=0;attempt<2;attempt++){r=await b.from(LOKAL_TABLES[k].name).delete().eq('id',rows[k].id);if(!r.error)break;}if(r.error)throw r.error;}await a.removeAllChannels();await b.removeAllChannels();console.log('Test records removed');}})().then(()=>process.exit(0)).catch(e=>{console.error(e);process.exit(1)});
