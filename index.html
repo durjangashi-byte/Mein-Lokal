@@ -653,18 +653,26 @@ body {
             <div class="card-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Einnahme eintragen</div>
             <div class="field"><label>Datum</label><input type="date" id="e-datum"></div>
             <div class="field-row">
-              <div class="field"><label>Bar (€)</label><input type="number" id="e-bar" placeholder="0,00" inputmode="decimal" min="0" step="0.01"></div>
-              <div class="field"><label>Karte (€)</label><input type="number" id="e-karte" placeholder="0,00" inputmode="decimal" min="0" step="0.01"></div>
+              <div class="field"><label>Gesamtumsatz (€)</label><input type="number" id="e-bar" placeholder="0,00" inputmode="decimal" min="0" step="0.01"></div>
+              <div class="field"><label>Davon Karte (€)</label><input type="number" id="e-karte" placeholder="0,00" inputmode="decimal" min="0" step="0.01"></div>
             </div>
             <div class="field-row">
-              <div class="field"><label>Trinkgeld (€)</label><input type="number" id="e-tip" placeholder="0,00" inputmode="decimal" min="0" step="0.01"></div>
+              <div class="field"><label>Trinkgeld zusätzlich (€)</label><input type="number" id="e-tip" placeholder="0,00" inputmode="decimal" min="0" step="0.01"></div>
               <div class="field"><label>Gäste</label><input type="number" id="e-gaeste" placeholder="0" inputmode="numeric" min="0"></div>
             </div>
+            <div class="summary-note">Gesamtumsatz enthält Bar- und Kartenzahlungen, ohne Trinkgeld. Bar wird automatisch als Gesamtumsatz minus Karte berechnet.</div>
             <div class="field"><label>Tagesnotiz</label><input type="text" id="e-notiz" placeholder="z.B. Fußballabend, sehr voll"></div>
             <div class="form-hint" id="edit-hint-ein" hidden></div><button id="save-ein" class="btn-primary" onclick="addEinnahme()">Speichern</button><button type="button" class="btn-secondary" id="cancel-ein" onclick="cancelEdit('ein')" hidden>Bearbeiten abbrechen</button>
           </div>
         </div>
         <div class="sec-hd">Einträge</div>
+        <div class="card" style="margin:0 14px 14px">
+          <div class="field"><label for="filter-ein-query">Einträge durchsuchen</label><input type="search" id="filter-ein-query" placeholder="Suche nach Datum, Notiz oder Betrag" oninput="renderEin()"></div>
+          <div class="field-row"><div class="field"><label for="filter-ein-from">Von</label><input type="date" id="filter-ein-from" onchange="renderEin()"></div><div class="field"><label for="filter-ein-to">Bis</label><input type="date" id="filter-ein-to" onchange="renderEin()"></div></div>
+          <div class="field"><label for="filter-ein-category">Zahlungsanteil</label><select id="filter-ein-category" onchange="renderEin()"><option value="">Alle</option><option value="bar">Mit Barumsatz</option><option value="karte">Mit Kartenumsatz</option><option value="tip">Mit Trinkgeld</option></select></div>
+          <button type="button" class="btn-secondary" onclick="resetListFilters('ein')">Filter zurücksetzen</button>
+          <div class="summary-note">Summen enthalten alle Beträge der passenden Einträge inklusive Trinkgeld.</div>
+        </div>
         <div id="tot-ein"></div><div id="lst-ein"></div>
       </div>
 
@@ -689,6 +697,13 @@ body {
           </div>
         </div>
         <div class="sec-hd">Einträge</div>
+        <div class="card" style="margin:0 14px 14px">
+          <div class="field"><label for="filter-aus-query">Einträge durchsuchen</label><input type="search" id="filter-aus-query" placeholder="Suche nach Datum, Notiz oder Betrag" oninput="renderAus()"></div>
+          <div class="field-row"><div class="field"><label for="filter-aus-from">Von</label><input type="date" id="filter-aus-from" onchange="renderAus()"></div><div class="field"><label for="filter-aus-to">Bis</label><input type="date" id="filter-aus-to" onchange="renderAus()"></div></div>
+          <div class="field"><label for="filter-aus-category">Kategorie</label><select id="filter-aus-category" onchange="renderAus()"><option value="">Alle</option><option value="lebensmittel">Lebensmittel</option><option value="getraenke">Getränke</option><option value="miete">Miete / Nebenkosten</option><option value="reinigung">Reinigung / Verbrauch</option><option value="sonstiges">Sonstiges</option><option value="personal">Personal</option></select></div>
+          <button type="button" class="btn-secondary" onclick="resetListFilters('aus')">Filter zurücksetzen</button>
+          
+        </div>
         <div id="tot-aus"></div><div id="lst-aus"></div>
       </div>
 
@@ -862,6 +877,7 @@ body {
 
 <script src="sync.js?v=7"></script>
 <script src="auth.js?v=1"></script>
+<script src="receipts.js?v=1"></script>
 <script>
 // ══════════════════════════════════════════════
 //  SUPABASE CONFIG  (filled via Settings UI)
@@ -874,6 +890,7 @@ function authMessage(message) {
   ['auth-message','account-message'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=message;});
 }
 function lockApp() {
+  clearReceiptContext();document.getElementById('modal-inner').replaceChildren();document.getElementById('modal-bg').classList.remove('show');
   authUser=null;
   for(const key of Object.keys(formSpecs))cancelEdit(key);
   syncEngine?.stop();syncEngine=null;
@@ -1001,6 +1018,7 @@ function editEntry(key,id){
  const row=D[key]?.find(r=>r.id===id),spec=formSpecs[key];if(!row||!spec)return;
  edits[key]={id,original:{...row}};
  for(const field of spec.fields){const el=document.getElementById(spec.prefix+'-'+field);if(el){if(el.tagName==='SELECT'&&!Array.from(el.options).some(o=>o.value===String(row[field]??''))){const opt=document.createElement('option');opt.value=row[field]??'';opt.textContent=row[field]??'';el.appendChild(opt);}el.value=row[field]??'';}}
+ if(key==='ein')document.getElementById('e-bar').value=Math.round((Number(row.bar||0)+Number(row.karte||0))*100)/100;
  document.getElementById('save-'+key).textContent='Änderungen speichern';
  const hint=document.getElementById('edit-hint-'+key);hint.hidden=false;hint.textContent='Du bearbeitest einen bestehenden Eintrag.';
  document.getElementById('cancel-'+key).hidden=false;
@@ -1077,7 +1095,7 @@ function openModal(type) {
   document.getElementById('modal-bg').classList.add('show');
   setTimeout(()=>{ const i=document.querySelector('#modal-inner input'); if(i&&type!=='supabase'){i.focus();i.select();} },320);
 }
-function closeModal() { document.getElementById('modal-bg').classList.remove('show'); }
+function closeModal() { clearReceiptContext(); document.getElementById('modal-bg').classList.remove('show'); }
 
 function saveSetting(key) {
   const v=document.getElementById('mi-v').value;
@@ -1090,21 +1108,6 @@ function saveSupabase() {
   SB_KEY=(document.getElementById('mi-sbkey').value||'').trim();
   localStorage.setItem('rv_sb_url',SB_URL); localStorage.setItem('rv_sb_key',SB_KEY);
   closeModal(); 
-const debtSum=rows=>rows.filter(a=>a.kat==='schulden').reduce((sum,a)=>sum+a.betrag,0);
-function debtSummary(income,out,labor,rows){const debt=debtSum(rows);return `<div class="t-row"><span>Betriebsausgaben</span><strong>${eur(out-debt)}</strong></div><div class="t-row"><span>Betriebsergebnis vor Schulden</span><strong>${eur(income-out-labor+debt)}</strong></div><div class="t-row"><span>Schuldenzahlungen</span><strong class="amtr">${eur(debt)}</strong></div>`;}
-let debtEdit=null,debtBusy=false;
-function cancelDebt(){debtEdit=null;document.getElementById('s-datum').value=today();document.getElementById('s-beschr').value='';document.getElementById('s-betrag').value='';document.getElementById('save-schulden').textContent='Zahlung speichern';}
-function editDebt(id){const row=D.aus.find(a=>a.id===id&&a.kat==='schulden');if(!row)return;debtEdit={...row};switchTab('schulden');document.getElementById('s-datum').value=row.datum;document.getElementById('s-beschr').value=row.beschr;document.getElementById('s-betrag').value=row.betrag;document.getElementById('save-schulden').textContent='Änderungen speichern';}
-async function saveDebt(){
- if(debtBusy)return;
- const datum=document.getElementById('s-datum').value,beschr=document.getElementById('s-beschr').value.trim(),betrag=Number(document.getElementById('s-betrag').value);
- if(!/^\d{4}-\d{2}-\d{2}$/.test(datum)||!beschr||!Number.isFinite(betrag)||betrag<=0){toast('Bitte Datum, Beschreibung und einen positiven Betrag eingeben.','r');return;}
- if(debtEdit){const current=D.aus.find(a=>a.id===debtEdit.id);if(!current||['datum','beschr','betrag','kat'].some(k=>current[k]!==debtEdit[k])){toast('Eintrag inzwischen geändert. Bitte erneut öffnen.','r');return;}}
- debtBusy=true;const btn=document.getElementById('save-schulden');btn.disabled=true;
- try{if(await persistChange(debtEdit?'update':'insert','aus',{id:debtEdit?.id??newId(),datum,beschr,betrag,kat:'schulden'})){cancelDebt();savedToast('Schuldenzahlung gespeichert');}}finally{debtBusy=false;btn.disabled=false;}
-}
-function renderDebt(){const rows=D.aus.filter(a=>a.kat==='schulden');document.getElementById('debt-total').innerHTML=`<div class="totals-card"><div class="t-row"><span>Schuldenzahlungen gesamt</span><strong class="amtr">${eur(debtSum(rows))}</strong></div></div>`;document.getElementById('debt-list').innerHTML=rows.map(a=>`<div class="entry-wrap" id="ew${a.id}"><div class="entry"><div class="entry-body"><div class="entry-date">${fmt(a.datum)}</div><div class="entry-main">${esc(a.beschr)}</div></div><div class="entry-right"><strong class="amtr">${eur(a.betrag)}</strong><button class="edit-btn" onclick="editDebt(${a.id})">Bearbeiten</button><button class="edit-btn" onclick="delEntry('aus',${a.id})">Löschen</button></div></div></div>`).join('')||'<div class="empty"><p>Noch keine Schuldenzahlungen</p></div>';}
-
 initSupabase();
 }
 function clearSupabase() {
@@ -1160,12 +1163,14 @@ const KAT={schulden:{label:'Schuldenzahlung',color:'#f59e0b',icon:'💳'},lebens
 // ══════════════════════════════════════════════
 async function addEinnahme() {
   const datum=document.getElementById('e-datum').value||today();
-  const bar=Number(document.getElementById('e-bar').value||0);
+  const gesamt=Number(document.getElementById('e-bar').value||0);
   const karte=Number(document.getElementById('e-karte').value||0);
   const tip=Number(document.getElementById('e-tip').value||0);
   const gaeste=Number(document.getElementById('e-gaeste').value||0);
   const notiz=document.getElementById('e-notiz').value.trim();
-  if(!validNumbers(bar,karte,tip,gaeste))return;
+  if(!validNumbers(gesamt,karte,tip,gaeste))return;
+  if(karte>gesamt){toast('Der Kartenbetrag darf den Gesamtumsatz nicht übersteigen.','r');return;}
+  const bar=Math.round((gesamt-karte)*100)/100;
   if(!Number.isInteger(gaeste)){toast('Bitte eine ganze Gästezahl eingeben.','r');return;}
   if(!bar&&!karte&&!tip){toast('Bitte mindestens einen Einnahmebetrag eingeben.','r');return;}
   const row={id:newId(),datum,bar,karte,tip,gaeste,notiz};
@@ -1174,12 +1179,29 @@ async function addEinnahme() {
   savedToast('Einnahme gespeichert');
 }
 
+function resetListFilters(key){
+ for(const field of ['query','from','to','category'])document.getElementById('filter-'+key+'-'+field).value='';
+ if(key==='ein')renderEin();else renderAus();
+}
+function filteredListEntries(key,rows){
+ const value=field=>document.getElementById('filter-'+key+'-'+field)?.value||'';
+ const query=value('query').trim().toLocaleLowerCase('de'),from=value('from'),to=value('to'),category=value('category');
+ return rows.filter(row=>{
+  if(from&&row.datum<from||to&&row.datum>to)return false;
+  if(category&&(key==='ein'?!(Number(row[category])>0):row.kat!==category))return false;
+  const amounts=key==='ein'?[row.bar,row.karte,row.tip,row.bar+row.karte+row.tip]:[row.betrag];
+  const text=[row.datum,fmt(row.datum),row.notiz,row.beschr,key==='aus'?(KAT[row.kat]||KAT.sonstiges).label:'',...amounts.flatMap(n=>[String(n),String(n).replace('.',','),eur(n)])].join(' ').toLocaleLowerCase('de');
+  return !query||text.includes(query);
+ });
+}
+
 function renderEin() {
   const lst=document.getElementById('lst-ein'),tot=document.getElementById('tot-ein');
-  if(!D.ein.length){lst.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><p>Noch keine Einnahmen</p></div>';tot.innerHTML='';return;}
-  const tE=D.ein.reduce((s,e)=>s+e.bar+e.karte+e.tip,0),tB=D.ein.reduce((s,e)=>s+e.bar,0),tK=D.ein.reduce((s,e)=>s+e.karte,0),tT=D.ein.reduce((s,e)=>s+e.tip,0);
-  tot.innerHTML=`<div class="totals-card"><div class="t-row"><span>Gesamt</span><strong class="amtg">${eur(tE)}</strong></div><div class="t-row"><span>Bar / Karte / TG</span><strong style="font-size:12px;color:var(--text2)">${eur(tB,true)} / ${eur(tK,true)} / ${eur(tT,true)}</strong></div></div>`;
-  lst.innerHTML=D.ein.map(e=>`<div class="entry-wrap" id="ew${e.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${e.id})" ontouchmove="tm(event,${e.id})" ontouchend="te(event,${e.id},'ein')"><div class="entry-icon" style="background:rgba(34,197,94,0.1)">💶</div><div class="entry-body"><div class="entry-date">${fmt(e.datum)}${e.gaeste?' · '+e.gaeste+' Gäste':''}</div><div class="entry-main">${e.bar?`<span class="badge b-bar">Bar ${eur(e.bar)}</span> `:''}${e.karte?`<span class="badge b-karte">Karte ${eur(e.karte)}</span>`:''}${e.tip?` <span style="font-size:10px;color:var(--amber)">+${eur(e.tip)} TG</span>`:''}</div>${e.notiz?`<div class="entry-sub">${esc(e.notiz)}</div>`:''}</div><div class="entry-right"><div class="entry-amt amtg">${eur(e.bar+e.karte+e.tip)}</div>${editButton('ein',e.id)}<button class="del-btn" onclick="delEntry('ein',${e.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>`).join('');
+  const entries=filteredListEntries('ein',D.ein);
+  if(!entries.length){lst.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><p>Keine passenden Einnahmen</p></div>';tot.innerHTML='<div class="totals-card"><div class="t-row"><span>Gefilterte Einnahmen inkl. Trinkgeld</span><strong class="amtg">'+eur(0)+'</strong></div></div>';return;}
+  const tE=entries.reduce((s,e)=>s+e.bar+e.karte+e.tip,0),tB=entries.reduce((s,e)=>s+e.bar,0),tK=entries.reduce((s,e)=>s+e.karte,0),tT=entries.reduce((s,e)=>s+e.tip,0);
+  tot.innerHTML=`<div class="totals-card"><div class="t-row"><span>Gefilterte Einnahmen inkl. Trinkgeld</span><strong class="amtg">${eur(tE)}</strong></div><div class="t-row"><span>Bar / Karte / Trinkgeld</span><strong style="font-size:12px;color:var(--text2)">${eur(tB,true)} / ${eur(tK,true)} / ${eur(tT,true)}</strong></div></div>`;
+  lst.innerHTML=entries.map(e=>`<div class="entry-wrap" id="ew${e.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${e.id})" ontouchmove="tm(event,${e.id})" ontouchend="te(event,${e.id},'ein')"><div class="entry-icon" style="background:rgba(34,197,94,0.1)">💶</div><div class="entry-body"><div class="entry-date">${fmt(e.datum)}${e.gaeste?' · '+e.gaeste+' Gäste':''}</div><div class="entry-main">${e.bar?`<span class="badge b-bar">Bar ${eur(e.bar)}</span> `:''}${e.karte?`<span class="badge b-karte">Karte ${eur(e.karte)}</span>`:''}${e.tip?` <span style="font-size:10px;color:var(--amber)">+${eur(e.tip)} TG</span>`:''}</div>${e.notiz?`<div class="entry-sub">${esc(e.notiz)}</div>`:''}</div><div class="entry-right"><div class="entry-amt amtg">${eur(e.bar+e.karte+e.tip)}</div>${editButton('ein',e.id)}<button class="del-btn" onclick="delEntry('ein',${e.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>`).join('');
 }
 
 // ══════════════════════════════════════════════
@@ -1199,12 +1221,12 @@ async function addAusgabe() {
 }
 
 function renderAus() {
-  const expenses=D.aus.filter(a=>a.kat!=='schulden');
+  const expenses=filteredListEntries('aus',D.aus.filter(a=>a.kat!=='schulden'));
   const lst=document.getElementById('lst-aus'),tot=document.getElementById('tot-aus');
-  if(!expenses.length){lst.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><p>Noch keine Ausgaben</p></div>';tot.innerHTML='';return;}
+  if(!expenses.length){lst.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><p>Keine passenden Ausgaben</p></div>';tot.innerHTML='<div class="totals-card"><div class="t-row"><span>Gefilterte Ausgaben</span><strong class="amtr">'+eur(0)+'</strong></div></div>';return;}
   const tA=expenses.reduce((s,a)=>s+a.betrag,0);
-  tot.innerHTML=`<div class="totals-card"><div class="t-row"><span>Gesamt Ausgaben</span><strong class="amtr">${eur(tA)}</strong></div></div>`;
-  lst.innerHTML=expenses.map(a=>{const k=KAT[a.kat]||KAT.sonstiges;return`<div class="entry-wrap" id="ew${a.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${a.id})" ontouchmove="tm(event,${a.id})" ontouchend="te(event,${a.id},'aus')"><div class="entry-icon">${k.icon}</div><div class="entry-body"><div class="entry-date">${fmt(a.datum)} · <span style="color:${k.color}">${k.label}</span></div><div class="entry-main">${esc(a.beschr||'—')}</div></div><div class="entry-right"><div class="entry-amt amtr">${eur(a.betrag)}</div>${a.rechnung_id?`<button class="edit-btn" onclick="switchTab('rechnungen')">Zur Zahlung</button>`:editButton('aus',a.id)}<button class="del-btn" onclick="delEntry('aus',${a.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>`}).join('');
+  tot.innerHTML=`<div class="totals-card"><div class="t-row"><span>Gefilterte Ausgaben</span><strong class="amtr">${eur(tA)}</strong></div></div>`;
+  lst.innerHTML=expenses.map(a=>{const k=KAT[a.kat]||KAT.sonstiges;return`<div class="entry-wrap" id="ew${a.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${a.id})" ontouchmove="tm(event,${a.id})" ontouchend="te(event,${a.id},'aus')"><div class="entry-icon">${k.icon}</div><div class="entry-body"><div class="entry-date">${fmt(a.datum)} · <span style="color:${k.color}">${k.label}</span></div><div class="entry-main">${esc(a.beschr||'—')}</div></div><div class="entry-right"><div class="entry-amt amtr">${eur(a.betrag)}</div>${receiptButton(a.id)}${a.rechnung_id?`<button class="edit-btn" onclick="switchTab('rechnungen')">Zur Zahlung</button>`:editButton('aus',a.id)}<button class="del-btn" onclick="delEntry('aus',${a.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>`}).join('');
 }
 
 // ══════════════════════════════════════════════
