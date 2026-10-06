@@ -587,7 +587,7 @@ body {
       <!-- DASHBOARD -->
       <div class="panel active" id="p-dashboard">
         <div id="ios-wrap"></div>
-        <div class="period-card"><label for="dashboard-period">Zeitraum der Übersicht</label><select id="dashboard-period" onchange="dashboardPeriod=this.value;renderDashboard();updateMetrics()"></select><div class="summary-note">Einnahmen inklusive erfasstem Trinkgeld. Ausgaben und Schichten nach Datum. Offene Rechnungen werden separat angezeigt und nicht nochmals als Kosten abgezogen.</div></div>
+        <div class="period-card"><label for="dashboard-period">Zeitraum der Übersicht</label><select id="dashboard-period" onchange="dashboardPeriod=this.value;localStorage.setItem('rv_dashboard_period',dashboardPeriod);renderDashboard();updateMetrics()"></select><div class="summary-note">Einnahmen inklusive erfasstem Trinkgeld. Ausgaben und Schichten nach Datum. Offene Rechnungen werden separat angezeigt und nicht nochmals als Kosten abgezogen.</div></div>
         <div class="sync-banner" role="status" aria-live="polite"><strong id="save-status">Daten werden geladen…</strong><small id="save-detail"></small><button type="button" onclick="loadFromSupabase()">Jetzt abgleichen</button></div>
         <div id="overdue-wrap"></div>
         <div class="desk-grid" style="padding:0">
@@ -1064,7 +1064,7 @@ const saveLocal = k => {
 const esc = value => String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const today = () => {const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
 
-let dashboardPeriod=today().slice(0,7);
+let dashboardPeriod=localStorage.getItem('rv_dashboard_period') ?? today().slice(0,7);
 function periodData(){const match=r=>!dashboardPeriod||r.datum?.startsWith(dashboardPeriod);return {ein:D.ein.filter(match),aus:D.aus.filter(match),mit:D.mit.filter(match)};}
 const formSpecs={
  ein:{tab:'einnahmen',prefix:'e',fields:['datum','bar','karte','tip','gaeste','notiz']},
@@ -1392,7 +1392,7 @@ function delStaff(name){D.staff=D.staff.filter(s=>s.name!==name);saveLocal('staf
 function renderDashboard() {
   const data=periodData();
   const months=[...new Set([today().slice(0,7),dashboardPeriod,...D.ein.map(r=>r.datum?.slice(0,7)),...D.aus.map(r=>r.datum?.slice(0,7)),...D.mit.map(r=>r.datum?.slice(0,7))].filter(m=>/^\d{4}-\d{2}$/.test(m)))].sort().reverse();
-  document.getElementById('dashboard-period').innerHTML=months.map(m=>`<option value="${m}"${m===dashboardPeriod?' selected':''}>${monthName(m.slice(5))} ${m.slice(0,4)}</option>`).join('')+`<option value=""${!dashboardPeriod?' selected':''}>Gesamter Zeitraum</option>`;
+  document.getElementById('dashboard-period').innerHTML=`<option value=""${!dashboardPeriod?' selected':''}>Gesamt · alle Monate</option>`+months.map(m=>`<option value="${m}"${m===dashboardPeriod?' selected':''}>${monthName(m.slice(5))} ${m.slice(0,4)}</option>`).join('');
   document.getElementById('dashboard-result-label').textContent='Ergebnis nach Schuldenzahlungen · '+(dashboardPeriod?monthName(dashboardPeriod.slice(5))+' '+dashboardPeriod.slice(0,4):'gesamt');
   const tE=data.ein.reduce((s,e)=>s+e.bar+e.karte+e.tip,0);
   const tA=data.aus.reduce((s,a)=>s+a.betrag,0);
