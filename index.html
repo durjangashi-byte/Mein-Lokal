@@ -1397,12 +1397,14 @@ function renderDashboard() {
   const tE=data.ein.reduce((s,e)=>s+e.bar+e.karte+e.tip,0);
   const tA=data.aus.reduce((s,a)=>s+a.betrag,0);
   const tL=data.mit.reduce((s,m)=>s+m.ausgezahlt,0);
+  const tSalary=data.aus.filter(a=>a.kat==='personal').reduce((s,a)=>s+a.betrag,0);
+  const tLabor=tL+tSalary;
   const tF=data.aus.filter(a=>a.kat==='lebensmittel').reduce((s,a)=>s+a.betrag,0);
   const g=tE-tA-tL, mg=tE>0?Math.round(g/tE*100):0, z=D.settings.ziel||0, tage=D.settings.tage||14;
 
-  document.getElementById('dh-before-labor').textContent=eur(tE-tA+debtSum(data.aus));
+  document.getElementById('dh-before-labor').textContent=eur(tE-(tA-tSalary)+debtSum(data.aus));
   document.getElementById('debt-breakdown').innerHTML=debtSummary(tE,tA,tL,data.aus);
-  document.getElementById('dh-labor').textContent=eur(tL);
+  document.getElementById('dh-labor').textContent=eur(tLabor);
   document.getElementById('dh-open').textContent=eur(D.rec.filter(r=>!r.bezahlt).reduce((sum,r)=>sum+r.betrag,0));
   const dv=document.getElementById('dh-val'); dv.textContent=eur(g); dv.className='dash-hero-val '+(g>=0?'pos':'neg');
   document.getElementById('dh-goal-lbl').textContent=z>0?eur(z):'nicht gesetzt';
@@ -1411,7 +1413,7 @@ function renderDashboard() {
   document.getElementById('dh-prog-txt').textContent=z>0?pct+'% erreicht · noch '+eur(Math.max(0,z-g)):'In Einstellungen Ziel setzen';
   document.getElementById('dh-marge').textContent='Marge: '+mg+'%';
 
-  const fP=tE>0?Math.round(tF/tE*100):null, lP=tE>0?Math.round(tL/tE*100):null;
+  const fP=tE>0?Math.round(tF/tE*100):null, lP=tE>0?Math.round(tLabor/tE*100):null;
   const byDay={};data.ein.forEach(e=>{byDay[e.datum]=(byDay[e.datum]||0)+e.bar+e.karte+e.tip;});
   const dk=Object.keys(byDay), avg=dk.length?Math.round(tE/dk.length):null;
   const tB=data.ein.reduce((s,e)=>s+e.bar,0), tK=data.ein.reduce((s,e)=>s+e.karte,0);
@@ -1523,6 +1525,8 @@ function renderTagesabschluss() {
   const tEin = tBar+tKarte+tTip;
   const tAus = ausH.reduce((s,a) => s+a.betrag, 0);
   const tLohn = mitH.reduce((s,m) => s+m.ausgezahlt, 0);
+  const tGehalt = ausH.filter(a=>a.kat==='personal').reduce((s,a)=>s+a.betrag,0);
+  const tPersonal = tLohn+tGehalt;
   const tErg = tEin-tAus-tLohn;
   const now = new Date();
   const el_date = document.getElementById('ta-date');
@@ -1538,7 +1542,7 @@ function renderTagesabschluss() {
   if(aw) aw.innerHTML = ausH.some(a=>a.kat!=='schulden') ? ausH.filter(a=>a.kat!=='schulden').map(a => { const k=KAT[a.kat]||KAT.sonstiges; return `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${k.icon} ${esc(a.beschr||k.label)}</span><strong class="amtr">${eur(a.betrag)}</strong></div></div>`; }).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Ausgaben gesamt</span><strong class="amtr">${eur(tAus-debtSum(ausH))}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Keine Ausgaben heute</div>';
   if(aw) aw.innerHTML+=`<div class="totals-card">${debtSummary(tEin,tAus,tLohn,ausH)}</div>`;
   const pw = document.getElementById('ta-personal-wrap');
-  if(pw) pw.innerHTML = mitH.length ? mitH.map(m => `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${esc(m.name)} (${esc(m.von)}–${esc(m.bis)})</span><strong class="amtr">${eur(m.ausgezahlt)}</strong></div></div>`).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Lohnkosten gesamt</span><strong class="amtr">${eur(tLohn)}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Kein Personal heute</div>';
+  if(pw) pw.innerHTML = mitH.length ? mitH.map(m => `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${esc(m.name)} (${esc(m.von)}–${esc(m.bis)})</span><strong class="amtr">${eur(m.ausgezahlt)}</strong></div></div>`).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Schichtlohnkosten</span><strong class="amtr">${eur(tLohn)}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Kein Personal heute</div>';
   const ev = document.getElementById('ta-erg-val');
   if(ev) { ev.textContent=eur(tErg); ev.className=tErg>=0?'amtg':'amtr'; }
 }
