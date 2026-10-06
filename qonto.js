@@ -10,14 +10,31 @@
  function privateSummary(data){const rows=(data||[]).filter(t=>classification(t)==='privat'&&t.side==='debit');const by={};let total=0;rows.forEach(t=>{const k=t.private_category||privateCat(t),a=Number(t.amount||0);total+=a;by[k]=(by[k]||0)+a});return {rows,total,by}}
  function renderPrivate(data){const el=document.getElementById('qonto-private');if(!el)return;const s=privateSummary(data);const cats=Object.entries(s.by).sort((a,b)=>b[1]-a[1]);el.innerHTML='<div class="sec-hd">Privater Geldabfluss</div><div class="totals-card"><div class="t-row"><span>Privat gesamt</span><strong class="amtr">'+eurQ(s.total)+'</strong></div><div class="t-row"><span>Private Buchungen</span><strong>'+s.rows.length+'</strong></div></div>'+(cats.length?'<div class="card">'+cats.map(([k,v])=>'<div class="setting-row"><div><div class="setting-lbl">'+escQ(k)+'</div></div><strong>'+eurQ(v)+'</strong></div>').join('')+'</div>':'<div class="empty"><p>Noch keine privaten Buchungen klassifiziert</p></div>')}
  function duplicate(t){const d=dateQ(t.settled_at||t.emitted_at),a=Number(t.amount);return t.side==='debit'?D.aus.some(x=>x.datum===d&&Math.abs(Number(x.betrag)-a)<.01):D.ein.some(x=>x.datum===d&&Math.abs(Number(x.bar)-a)<.01)}
- function install(){
+ function isCardPayout(t){return t.side==='credit'&&((t.reference||'').toLowerCase().includes('zahlungen-vor-ort')||(t.label||'').toLowerCase().includes('angeforderte zahlungen'))}
+ function cardReconciliation(data){
+  const payouts=(data||[]).filter(isCardPayout).sort((a,b)=>dateQ(a.settled_at).localeCompare(dateQ(b.settled_at)));
+  const income=(D.ein||[]).filter(e=>Number(e.karte)>0).map(e=>({...e,_used:false}));
+  return payouts.map(p=>{
+   const pd=new Date(dateQ(p.settled_at)+'T12:00:00'), amount=Math.round(Number(p.amount)*100);
+   const candidates=income.filter(e=>!e._used&&new Date(e.datum+'T12:00:00')<=pd&&(pd-new Date(e.datum+'T12:00:00'))/86400000<=7);
+   let chosen=null;
+   for(let mask=1;mask<(1<<Math.min(candidates.length,12));mask++){let sum=0,rows=[];for(let i=0;i<Math.min(candidates.length,12);i++)if(mask&(1<<i)){sum+=Math.round(Number(candidates[i].karte)*100);rows.push(candidates[i])}if(sum===amount){chosen=rows;break}}
+   if(chosen)chosen.forEach(e=>e._used=true);
+   return {p,chosen};
+  });
+ }
+ function renderCardReconciliation(data){
+  const el=document.getElementById('qonto-card-check');if(!el)return;
+  const rows=cardReconciliation(data), matched=rows.filter(x=>x.chosen).length;
+  el.innerHTML='<div class="sec-hd">Kartenabgleich</div><div class="totals-card"><div class="t-row"><span>Qonto-Auszahlungen abgeglichen</span><strong>'+matched+' / '+rows.length+'</strong></div></div><div class="card">'+rows.slice().reverse().map(x=>{const p=x.p;return '<div class="setting-row"><div><div class="setting-lbl">'+escQ(dateQ(p.settled_at))+' · '+eurQ(p.amount)+'</div><div class="setting-sub">'+(x.chosen?'✓ passt zu '+x.chosen.map(e=>escQ(e.datum)+' · Karte '+eurQ(e.karte)).join(' + '):'Noch keine passende Kartenerfassung')+'</div></div><strong class="'+(x.chosen?'amtg':'ca')+'">'+(x.chosen?'✓':'Prüfen')+'</strong></div>'}).join('')+'</div>';
+ } function install(){
   const more=document.querySelector('#p-mehr .more-menu'); if(!more||document.getElementById('p-bank'))return;
   const btn=document.createElement('button');btn.type='button';btn.className='more-link';btn.onclick=()=>switchTab('bank');
   btn.innerHTML='<span>🏦</span><span><strong>Bank · Qonto</strong><small>Kontobewegungen synchronisieren und übernehmen</small></span><span class="more-arrow">›</span>';
   more.insertBefore(btn,more.lastElementChild);
   const panel=document.createElement('div');panel.className='panel';panel.id='p-bank';
   panel.innerHTML='<div class="sec-hd">Bank · Qonto</div><div class="card"><div class="card-hd">🏦 Qonto Verbindung</div><div style="padding:14px 16px"><p class="summary-note" id="qonto-status">Bereit. Zugangsdaten werden ausschließlich serverseitig gespeichert.</p></div><button class="btn-primary" id="qonto-sync-btn" onclick="qontoSync()">Jetzt synchronisieren</button></div><div id="qonto-summary"></div><div class="sec-hd">Noch nicht übernommene Bankbewegungen</div><div id="qonto-list"><div class="empty"><p>Noch nicht geladen</p></div></div>';
-  panel.innerHTML=panel.innerHTML.replace('<div id="qonto-summary"></div>','<div id="qonto-summary"></div><div id="qonto-private"></div>');
+  panel.innerHTML=panel.innerHTML.replace('<div id="qonto-summary"></div>','<div id="qonto-summary"></div><div id="qonto-card-check"></div><div id="qonto-private"></div>');
   document.querySelector('.content')?.appendChild(panel);
  }
  async function load(){
@@ -25,7 +42,7 @@
   const {data,error}=await SB.from('qonto_transactions').select('*').order('settled_at',{ascending:false}).limit(300);
   const list=document.getElementById('qonto-list');if(!list)return;
   if(error){list.innerHTML='<div class="empty"><p>'+escQ(error.message)+'</p></div>';return}
-  renderPrivate(data||[]);
+  renderPrivate(data||[]);\n  renderCardReconciliation(data||[]);
   const open=(data||[]).filter(t=>!t.imported_kind&&!t.ignored&&classification(t)==='unklar');
   document.getElementById('qonto-summary').innerHTML='<div class="totals-card"><div class="t-row"><span>Bankbewegungen geladen</span><strong>'+data.length+'</strong></div><div class="t-row"><span>Noch zu prüfen</span><strong>'+open.length+'</strong></div></div>';
   if(!open.length){list.innerHTML='<div class="empty"><p>Alles geprüft ✓</p></div>';return}
