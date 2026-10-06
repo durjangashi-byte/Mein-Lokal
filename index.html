@@ -525,6 +525,47 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
 .payment-card{margin:0 14px 10px;padding:14px;background:var(--bg1);border:1px solid var(--bord2);border-radius:var(--rsm)}
 .payment-card h3{font-size:14px;overflow-wrap:anywhere}.payment-card p{font-size:12px;color:var(--text2);line-height:1.5;margin-top:7px;overflow-wrap:anywhere}
 .payment-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.payment-top strong{white-space:nowrap}
+/* vNext visual system: intentionally different from legacy layout */
+.header{height:72px;padding:12px 18px;border:0}.header .logo{font-size:22px}.header-right .hbtn{border-radius:999px;background:#151b24}
+#metrics-period{display:none}.metrics{display:none}
+.content{padding-top:0}
+#p-dashboard{padding:0 0 34px;background:linear-gradient(180deg,#080b10 0,#07090c 55%)}
+.dashboard-vnext-head{padding:18px 18px 6px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.dashboard-vnext-kicker{font-size:11px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.dashboard-vnext-title{font-size:30px;line-height:1;font-weight:850;letter-spacing:-1.5px;margin-top:6px}
+.period-card{margin:10px 18px 14px!important;background:transparent!important;border:0!important;padding:0!important;box-shadow:none!important}
+.period-card label{display:none!important}.period-card select{background:#121821!important;border:1px solid var(--border)!important;border-radius:999px!important;padding:11px 42px 11px 15px!important;width:auto!important;min-width:180px}
+.period-card .summary-note{display:none}
+.sync-banner{margin:0 18px 12px!important;background:rgba(101,166,255,.055)!important;border:1px solid rgba(101,166,255,.12)!important}
+#p-dashboard .desk-grid{display:grid!important;grid-template-columns:1fr!important;gap:12px!important;padding:0 18px!important}
+#p-dashboard .desk-full{grid-column:auto!important}
+#p-dashboard .dash-hero{margin:0!important;border-radius:28px;padding:26px;background:linear-gradient(145deg,#17221d 0,#10161b 48%,#0e141b 100%);border:1px solid rgba(61,220,132,.16);min-height:240px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;overflow:hidden}
+#p-dashboard .dash-hero:before{content:'';position:absolute;width:230px;height:230px;border-radius:50%;right:-80px;top:-100px;background:rgba(61,220,132,.10);filter:blur(4px)}
+#p-dashboard .dash-hero-lbl{font-size:12px;color:#9ba8a0;position:relative}
+#p-dashboard .dash-hero-val{font-size:52px;letter-spacing:-3px;margin:8px 0 20px;position:relative}
+#p-dashboard .dash-hero .summary-note{background:transparent;border:0;padding:2px 0;font-size:11px}
+#p-dashboard .goal-row{margin-top:14px}
+#p-dashboard .kpi-row{margin:0!important;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#p-dashboard .kpi{border-radius:22px;padding:17px;min-height:112px;display:flex;flex-direction:column;justify-content:flex-end;background:#10151d}
+#p-dashboard .kpi-val{font-size:27px;margin-top:5px}
+#p-dashboard .highlight-row{margin:0!important;gap:10px}.hl-card{border-radius:22px;background:#10151d;padding:17px}
+#p-dashboard .prognose-card{margin:10px 0 0!important;border-radius:22px;background:#10151d}
+#p-dashboard .chart-section{margin:0;background:#0f141b;border:1px solid var(--border);border-radius:24px;padding:18px}
+#p-dashboard .kat-list{border:0;background:transparent}.kat-row{padding-left:0;padding-right:0}
+.bottom-nav{left:12px;right:12px;bottom:10px;width:auto;position:fixed;border:1px solid rgba(255,255,255,.08);border-radius:24px;height:68px;padding-bottom:0;background:rgba(15,20,27,.92);box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.content{padding-bottom:88px}.nav-bar{display:none}.nav-item.active{background:rgba(61,220,132,.08);border-radius:18px;margin:6px 3px}
+@media(min-width:768px){
+ .header{height:76px;padding:14px 30px}.metrics{display:none}.content{padding-bottom:0}
+ #p-dashboard{max-width:1180px!important;padding:0 34px 50px}
+ .dashboard-vnext-head{padding:26px 0 8px}.dashboard-vnext-title{font-size:38px}
+ .period-card{margin:10px 0 18px!important}
+ #p-dashboard .desk-grid{grid-template-columns:1.25fr .75fr!important;padding:0!important;align-items:start}
+ #p-dashboard .desk-full{grid-column:1/-1!important}
+ #p-dashboard .dash-hero{min-height:270px}
+ #p-dashboard .kpi-row{grid-template-columns:repeat(4,1fr)}
+ .bottom-nav{display:none}
+}
+
 </style>
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png">
 </head>
@@ -623,6 +664,7 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
 
       <!-- DASHBOARD -->
       <div class="panel active" id="p-dashboard">
+        <div class="dashboard-vnext-head"><div><div class="dashboard-vnext-kicker">Bobo's Bistro · Finanzen</div><div class="dashboard-vnext-title">Cockpit</div></div><button class="hbtn" onclick="loadFromSupabase()">↻ Sync</button></div>
         <div id="ios-wrap"></div>
         <div class="period-card"><label for="dashboard-period">Zeitraum der Übersicht</label><select id="dashboard-period" onchange="dashboardPeriod=this.value;localStorage.setItem('rv_dashboard_period',dashboardPeriod);renderDashboard();updateMetrics()"></select><div class="summary-note">Einnahmen inklusive erfasstem Trinkgeld. Ausgaben und Schichten nach Datum. Offene Rechnungen werden separat angezeigt und nicht nochmals als Kosten abgezogen.</div></div>
         <div class="sync-banner" role="status" aria-live="polite"><strong id="save-status">Daten werden geladen…</strong><small id="save-detail"></small><button type="button" onclick="loadFromSupabase()">Jetzt abgleichen</button></div>
