@@ -684,9 +684,22 @@ body {
             <div class="field"><label>Datum</label><input type="date" id="a-datum"></div>
             <div class="field"><label>Kategorie</label>
               <select id="a-kat">
-                <option value="lebensmittel">🥩 Lebensmittel</option>
+                <option value="lebensmittel">🥩 Lebensmittel / Wareneinkauf</option>
                 <option value="getraenke">🍷 Getränke</option>
-                <option value="miete">🏠 Miete / Nebenkosten</option>
+                <option value="personal">👥 Lohn & Gehalt</option>
+                <option value="krankenkasse">🏥 AOK / Krankenkasse</option>
+                <option value="sozialversicherung">🛡️ Sozialversicherung</option>
+                <option value="finanzamt">🏛️ Finanzamt / Steuern</option>
+                <option value="versicherung">📋 Versicherungen</option>
+                <option value="miete">🏠 Miete / Pacht / Nebenkosten</option>
+                <option value="strom">⚡ Strom</option>
+                <option value="gas">🔥 Gas</option>
+                <option value="wasser">💧 Wasser</option>
+                <option value="internet">🌐 Internet / Telefon</option>
+                <option value="steuerberater">🧾 Steuerberater / Buchhaltung</option>
+                <option value="gebuehren">🏦 Gebühren</option>
+                <option value="reparatur">🔧 Reparatur / Wartung</option>
+                <option value="fahrzeug">🚗 Fahrzeug / Fahrtkosten</option>
                 <option value="reinigung">🧹 Reinigung / Verbrauch</option>
                 <option value="sonstiges">📦 Sonstiges</option>
               </select>
@@ -700,7 +713,7 @@ body {
         <div class="card" style="margin:0 14px 14px">
           <div class="field"><label for="filter-aus-query">Einträge durchsuchen</label><input type="search" id="filter-aus-query" placeholder="Suche nach Datum, Notiz oder Betrag" oninput="renderAus()"></div>
           <div class="field-row"><div class="field"><label for="filter-aus-from">Von</label><input type="date" id="filter-aus-from" onchange="renderAus()"></div><div class="field"><label for="filter-aus-to">Bis</label><input type="date" id="filter-aus-to" onchange="renderAus()"></div></div>
-          <div class="field"><label for="filter-aus-category">Kategorie</label><select id="filter-aus-category" onchange="renderAus()"><option value="">Alle</option><option value="lebensmittel">Lebensmittel</option><option value="getraenke">Getränke</option><option value="miete">Miete / Nebenkosten</option><option value="reinigung">Reinigung / Verbrauch</option><option value="sonstiges">Sonstiges</option><option value="personal">Personal</option></select></div>
+          <div class="field"><label for="filter-aus-category">Kategorie</label><select id="filter-aus-category" onchange="renderAus()"><option value="">Alle</option><option value="lebensmittel">Lebensmittel / Wareneinkauf</option><option value="getraenke">Getränke</option><option value="personal">Lohn & Gehalt</option><option value="krankenkasse">AOK / Krankenkasse</option><option value="sozialversicherung">Sozialversicherung</option><option value="finanzamt">Finanzamt / Steuern</option><option value="versicherung">Versicherungen</option><option value="miete">Miete / Pacht / Nebenkosten</option><option value="strom">Strom</option><option value="gas">Gas</option><option value="wasser">Wasser</option><option value="internet">Internet / Telefon</option><option value="steuerberater">Steuerberater / Buchhaltung</option><option value="gebuehren">Gebühren</option><option value="reparatur">Reparatur / Wartung</option><option value="fahrzeug">Fahrzeug / Fahrtkosten</option><option value="reinigung">Reinigung / Verbrauch</option><option value="sonstiges">Sonstiges</option></select></div>
           <button type="button" class="btn-secondary" onclick="resetListFilters('aus')">Filter zurücksetzen</button>
           
         </div>
@@ -721,6 +734,22 @@ body {
       </div>
       <!-- PERSONAL -->
       <div class="panel" id="p-personal">
+        <div style="padding:14px 14px 0">
+          <div class="card">
+            <div class="card-hd">💶 Lohn / Gehalt eintragen</div>
+            <div class="field"><label>Mitarbeiter</label><input type="text" id="g-name" placeholder="z.B. Anna Müller"></div>
+            <div class="field-row">
+              <div class="field"><label>Monatsbetrag (€)</label><input type="number" id="g-betrag" placeholder="0,00" inputmode="decimal" min="0.01" step="0.01"></div>
+              <div class="field"><label>Erste Fälligkeit</label><input type="date" id="g-faellig"></div>
+            </div>
+            <div class="field"><label>Art</label><select id="g-art"><option value="monatlich">Monatsgehalt – jeden Monat</option><option value="einmalig">Einmalige Lohnzahlung</option></select></div>
+            <div class="field"><label>Notiz (optional)</label><input type="text" id="g-notiz" placeholder="z.B. Gehalt Oktober"></div>
+            <button type="button" class="btn-primary" onclick="addGehalt()">Gehalt speichern</button>
+            <div class="summary-note">Monatsgehälter werden als wiederkehrende Zahlung vorgemerkt. Erst bei „Bezahlt“ werden sie als Personalkosten in den Ausgaben gebucht.</div>
+          </div>
+        </div>
+        <div class="sec-hd">Lohn & Gehalt</div>
+        <div id="tot-gehalt"></div><div id="lst-gehalt"></div>
         <div style="padding:14px 14px 0">
           <div class="card">
             <div class="card-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Schicht eintragen</div>
@@ -768,7 +797,24 @@ body {
           <div class="card-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Zahlung eintragen</div>
           <div class="field"><label>Beschreibung</label><input type="text" id="r-beschr" placeholder="z.B. Metro Lieferung"></div>
           <div class="field-row"><div class="field"><label>Betrag (€)</label><input type="number" id="r-betrag" placeholder="0,00" inputmode="decimal" min="0" step="0.01"></div><div class="field"><label>Fällig am</label><input type="date" id="r-faellig"></div></div>
-<div class="field"><label>Ausgabenkategorie</label><select id="r-kat"><option value="lebensmittel">Lebensmittel</option><option value="getraenke">Getränke</option><option value="miete">Miete / Nebenkosten</option><option value="reinigung">Reinigung / Verbrauch</option><option value="sonstiges" selected>Sonstiges</option></select></div>
+<div class="field"><label>Ausgabenkategorie</label><select id="r-kat"><option value="lebensmittel">🥩 Lebensmittel / Wareneinkauf</option>
+                <option value="getraenke">🍷 Getränke</option>
+                <option value="personal">👥 Lohn & Gehalt</option>
+                <option value="krankenkasse">🏥 AOK / Krankenkasse</option>
+                <option value="sozialversicherung">🛡️ Sozialversicherung</option>
+                <option value="finanzamt">🏛️ Finanzamt / Steuern</option>
+                <option value="versicherung">📋 Versicherungen</option>
+                <option value="miete">🏠 Miete / Pacht / Nebenkosten</option>
+                <option value="strom">⚡ Strom</option>
+                <option value="gas">🔥 Gas</option>
+                <option value="wasser">💧 Wasser</option>
+                <option value="internet">🌐 Internet / Telefon</option>
+                <option value="steuerberater">🧾 Steuerberater / Buchhaltung</option>
+                <option value="gebuehren">🏦 Gebühren</option>
+                <option value="reparatur">🔧 Reparatur / Wartung</option>
+                <option value="fahrzeug">🚗 Fahrzeug / Fahrtkosten</option>
+                <option value="reinigung">🧹 Reinigung / Verbrauch</option>
+                <option value="sonstiges" selected>📦 Sonstiges</option></select></div>
           <div class="field"><label>Wiederholung</label><select id="r-wiederholung"><option value="einmalig">Einmalig</option><option value="woechentlich">Wöchentlich</option><option value="monatlich">Monatlich</option><option value="vierteljaehrlich">Vierteljährlich</option><option value="jaehrlich">Jährlich</option></select></div>
           <div class="field"><label>Betrag für Folgetermine (€, optional)</label><input type="number" id="r-folgebetrag" inputmode="decimal" min="0" step="0.01" placeholder="Wie diese Zahlung"></div>
           <details style="margin:0 16px 14px"><summary style="padding:10px 0;cursor:pointer">Anbieter & Zusatzinfos (optional)</summary>
@@ -789,7 +835,24 @@ body {
         <div style="padding:14px 14px 0"><div class="card">
           <div class="card-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Anbieter-Vorlage hinzufügen</div>
           <div class="field"><label>Name</label><input type="text" id="l-name" placeholder="z.B. Metro Cash & Carry"></div>
-          <div class="field"><label>Kategorie</label><select id="l-kat"><option value="lebensmittel">🥩 Lebensmittel</option><option value="getraenke">🍷 Getränke</option><option value="reinigung">🧹 Reinigung</option><option value="sonstiges">📦 Sonstiges</option></select></div>
+          <div class="field"><label>Kategorie</label><select id="l-kat"><option value="lebensmittel">🥩 Lebensmittel / Wareneinkauf</option>
+                <option value="getraenke">🍷 Getränke</option>
+                <option value="personal">👥 Lohn & Gehalt</option>
+                <option value="krankenkasse">🏥 AOK / Krankenkasse</option>
+                <option value="sozialversicherung">🛡️ Sozialversicherung</option>
+                <option value="finanzamt">🏛️ Finanzamt / Steuern</option>
+                <option value="versicherung">📋 Versicherungen</option>
+                <option value="miete">🏠 Miete / Pacht / Nebenkosten</option>
+                <option value="strom">⚡ Strom</option>
+                <option value="gas">🔥 Gas</option>
+                <option value="wasser">💧 Wasser</option>
+                <option value="internet">🌐 Internet / Telefon</option>
+                <option value="steuerberater">🧾 Steuerberater / Buchhaltung</option>
+                <option value="gebuehren">🏦 Gebühren</option>
+                <option value="reparatur">🔧 Reparatur / Wartung</option>
+                <option value="fahrzeug">🚗 Fahrzeug / Fahrtkosten</option>
+                <option value="reinigung">🧹 Reinigung / Verbrauch</option>
+                <option value="sonstiges">📦 Sonstiges</option></select></div>
           <div class="field"><label>Kontakt / Telefon</label><input type="text" id="l-kontakt" placeholder="z.B. 0711 123456"></div>
           <div class="field"><label>Zahlungsziel (Tage)</label><input type="number" id="l-zahlungsziel" placeholder="z.B. 14" inputmode="numeric" min="0"></div>
           <div class="field"><label>Notiz</label><input type="text" id="l-notiz" placeholder="z.B. Liefert Di + Fr"></div>
@@ -1053,7 +1116,7 @@ async function commitForm(key,row){
  }finally{formBusy.delete(key);btn.disabled=false;}
 }
 function validNumbers(...values){if(values.some(v=>!Number.isFinite(v)||v<0)){toast('Bitte gültige, nicht negative Beträge und Zahlen eingeben.','r');return false;}return true;}
-function prepareQuickForm(tab){const key=Object.keys(formSpecs).find(k=>formSpecs[k].tab===tab);if(!key||edits[key])return;const spec=formSpecs[key];for(const field of ['datum','faellig']){const el=document.getElementById(spec.prefix+'-'+field);if(el&&!el.value)el.value=today();}if((key==='aus'||key==='lief')&&!quickInitialized.has(key)){quickInitialized.add(key);const kat=localStorage.getItem('rv_last_'+key+'_kat');if(kat&&['lebensmittel','getraenke','miete','reinigung','sonstiges'].includes(kat))document.getElementById(spec.prefix+'-kat').value=kat;}}
+function prepareQuickForm(tab){const key=Object.keys(formSpecs).find(k=>formSpecs[k].tab===tab);if(!key||edits[key])return;const spec=formSpecs[key];for(const field of ['datum','faellig']){const el=document.getElementById(spec.prefix+'-'+field);if(el&&!el.value)el.value=today();}if((key==='aus'||key==='lief')&&!quickInitialized.has(key)){quickInitialized.add(key);const kat=localStorage.getItem('rv_last_'+key+'_kat');if(kat&&Object.prototype.hasOwnProperty.call(KAT,kat)&&kat!=='schulden')document.getElementById(spec.prefix+'-kat').value=kat;}}
 const eur = (n,s=false) => { const v=Math.round(n*100)/100; return s?Math.round(v).toLocaleString('de-DE')+'€':v.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; };
 const fmt = s => { if(!s)return'—'; const[y,mo,d]=s.split('-'); return esc(['So','Mo','Di','Mi','Do','Fr','Sa'][new Date(s).getDay()]+' '+d+'.'+mo+'.'); };
 const staffCol = name => ['#a855f7','#22c55e','#3b82f6','#f59e0b','#14b8a6','#ef4444','#f97316','#06b6d4'][(name||'A').charCodeAt(0)%8];
@@ -1156,7 +1219,7 @@ function updateMetrics() {
 // ══════════════════════════════════════════════
 //  KAT MAP
 // ══════════════════════════════════════════════
-const KAT={schulden:{label:'Schuldenzahlung',color:'#f59e0b',icon:'💳'},lebensmittel:{label:'Lebensmittel',color:'#a855f7',icon:'🥩'},getraenke:{label:'Getränke',color:'#14b8a6',icon:'🍷'},miete:{label:'Miete/NK',color:'#f59e0b',icon:'🏠'},reinigung:{label:'Reinigung',color:'#3b82f6',icon:'🧹'},sonstiges:{label:'Sonstiges',color:'#888',icon:'📦'},personal:{label:'Personal',color:'#ef4444',icon:'👥'}};
+const KAT={schulden:{label:'Schuldenzahlung',color:'#f59e0b',icon:'💳'},lebensmittel:{label:'Lebensmittel / Wareneinkauf',color:'#a855f7',icon:'🥩'},getraenke:{label:'Getränke',color:'#14b8a6',icon:'🍷'},personal:{label:'Lohn & Gehalt',color:'#ef4444',icon:'👥'},krankenkasse:{label:'AOK / Krankenkasse',color:'#3b82f6',icon:'🏥'},sozialversicherung:{label:'Sozialversicherung',color:'#6366f1',icon:'🛡️'},finanzamt:{label:'Finanzamt / Steuern',color:'#f59e0b',icon:'🏛️'},versicherung:{label:'Versicherungen',color:'#8b5cf6',icon:'📋'},miete:{label:'Miete / Pacht / Nebenkosten',color:'#f59e0b',icon:'🏠'},strom:{label:'Strom',color:'#eab308',icon:'⚡'},gas:{label:'Gas',color:'#f97316',icon:'🔥'},wasser:{label:'Wasser',color:'#06b6d4',icon:'💧'},internet:{label:'Internet / Telefon',color:'#0ea5e9',icon:'🌐'},steuerberater:{label:'Steuerberater / Buchhaltung',color:'#64748b',icon:'🧾'},gebuehren:{label:'Gebühren',color:'#78716c',icon:'🏦'},reparatur:{label:'Reparatur / Wartung',color:'#84cc16',icon:'🔧'},fahrzeug:{label:'Fahrzeug / Fahrtkosten',color:'#22c55e',icon:'🚗'},reinigung:{label:'Reinigung / Verbrauch',color:'#3b82f6',icon:'🧹'},sonstiges:{label:'Sonstiges',color:'#888',icon:'📦'}};
 
 // ══════════════════════════════════════════════
 //  EINNAHMEN
@@ -1232,6 +1295,27 @@ function renderAus() {
 // ══════════════════════════════════════════════
 //  PERSONAL
 // ══════════════════════════════════════════════
+async function addGehalt(){
+  const name=document.getElementById('g-name').value.trim();
+  const betrag=Number(document.getElementById('g-betrag').value||0);
+  const faellig=document.getElementById('g-faellig').value||today();
+  const wiederholung=document.getElementById('g-art').value||'monatlich';
+  const notiz=document.getElementById('g-notiz').value.trim();
+  if(!name||!validNumbers(betrag)||betrag<=0){toast('Bitte Mitarbeiter und einen positiven Betrag eingeben.','r');return;}
+  const row={id:newId(),beschr:'Gehalt – '+name,betrag,faellig,notiz,bezahlt:false,kat:'personal',anbieter:name,kontakt:'',kundennummer:'',wiederholung,anker:faellig,folgebetrag:null};
+  if(!await persistChange('insert','rec',row))return;
+  ['g-name','g-betrag','g-notiz'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('g-faellig').value=today();document.getElementById('g-art').value='monatlich';
+  renderGehalt();renderRechnungen();checkOverdue();savedToast('Gehalt vorgemerkt');
+}
+function renderGehalt(){
+  const rows=D.rec.filter(r=>r.kat==='personal').sort((a,b)=>(a.faellig||'').localeCompare(b.faellig||''));
+  const paid=D.aus.filter(a=>a.kat==='personal');
+  const tot=document.getElementById('tot-gehalt'),lst=document.getElementById('lst-gehalt');
+  if(tot)tot.innerHTML=`<div class="totals-card"><div class="t-row"><span>Gebuchte Personalkosten</span><strong class="amtr">${eur(paid.reduce((s,a)=>s+a.betrag,0))}</strong></div><div class="t-row"><span>Offene Lohn-/Gehaltszahlungen</span><strong>${eur(rows.filter(r=>!r.bezahlt).reduce((s,r)=>s+r.betrag,0))}</strong></div></div>`;
+  if(!lst)return;
+  lst.innerHTML=rows.length?rows.map(r=>`<div class="entry"><div class="entry-icon">👤</div><div class="entry-body"><div class="entry-date">${fmt(r.faellig)} · ${r.wiederholung==='monatlich'?'monatlich':'einmalig'}</div><div class="entry-main">${esc(r.beschr)}</div>${r.notiz?`<div class="entry-sub">${esc(r.notiz)}</div>`:''}</div><div class="entry-right"><div class="entry-amt amtr">${eur(r.betrag)}</div><button class="edit-btn" onclick="openPayment(${r.id})">${r.bezahlt?'Bezahlt':'Als bezahlt'}</button><button class="edit-btn" onclick="switchTab('rechnungen')">Details</button></div></div>`).join(''):'<div class="empty"><p>Noch keine Lohn- oder Gehaltszahlungen</p></div>';
+}
 function renderChips() {
   const w=document.getElementById('chip-wrap'),c=document.getElementById('chips');
   if(!D.staff.length){w.style.display='none';return;}
@@ -1313,12 +1397,14 @@ function renderDashboard() {
   const tE=data.ein.reduce((s,e)=>s+e.bar+e.karte+e.tip,0);
   const tA=data.aus.reduce((s,a)=>s+a.betrag,0);
   const tL=data.mit.reduce((s,m)=>s+m.ausgezahlt,0);
+  const tSalary=data.aus.filter(a=>a.kat==='personal').reduce((s,a)=>s+a.betrag,0);
+  const tLabor=tL+tSalary;
   const tF=data.aus.filter(a=>a.kat==='lebensmittel').reduce((s,a)=>s+a.betrag,0);
   const g=tE-tA-tL, mg=tE>0?Math.round(g/tE*100):0, z=D.settings.ziel||0, tage=D.settings.tage||14;
 
-  document.getElementById('dh-before-labor').textContent=eur(tE-tA+debtSum(data.aus));
+  document.getElementById('dh-before-labor').textContent=eur(tE-(tA-tSalary)+debtSum(data.aus));
   document.getElementById('debt-breakdown').innerHTML=debtSummary(tE,tA,tL,data.aus);
-  document.getElementById('dh-labor').textContent=eur(tL);
+  document.getElementById('dh-labor').textContent=eur(tLabor);
   document.getElementById('dh-open').textContent=eur(D.rec.filter(r=>!r.bezahlt).reduce((sum,r)=>sum+r.betrag,0));
   const dv=document.getElementById('dh-val'); dv.textContent=eur(g); dv.className='dash-hero-val '+(g>=0?'pos':'neg');
   document.getElementById('dh-goal-lbl').textContent=z>0?eur(z):'nicht gesetzt';
@@ -1327,7 +1413,7 @@ function renderDashboard() {
   document.getElementById('dh-prog-txt').textContent=z>0?pct+'% erreicht · noch '+eur(Math.max(0,z-g)):'In Einstellungen Ziel setzen';
   document.getElementById('dh-marge').textContent='Marge: '+mg+'%';
 
-  const fP=tE>0?Math.round(tF/tE*100):null, lP=tE>0?Math.round(tL/tE*100):null;
+  const fP=tE>0?Math.round(tF/tE*100):null, lP=tE>0?Math.round(tLabor/tE*100):null;
   const byDay={};data.ein.forEach(e=>{byDay[e.datum]=(byDay[e.datum]||0)+e.bar+e.karte+e.tip;});
   const dk=Object.keys(byDay), avg=dk.length?Math.round(tE/dk.length):null;
   const tB=data.ein.reduce((s,e)=>s+e.bar,0), tK=data.ein.reduce((s,e)=>s+e.karte,0);
@@ -1382,7 +1468,7 @@ async function recoverLocal() {
 
 function exportCSV(){let c='Typ,Datum,Beschreibung,Bar,Karte,TG,Betrag,Kat,Name,Stunden\n';D.ein.forEach(e=>{c+=`Einnahme,${e.datum},"${e.notiz||''}",${e.bar},${e.karte},${e.tip},${e.bar+e.karte+e.tip},,\n`;});D.aus.forEach(a=>{c+=`${a.kat==='schulden'?'Schuldenzahlung':'Ausgabe'},${a.datum},"${a.beschr||''}",,,, ${a.betrag},${a.kat},\n`;});D.mit.forEach(m=>{c+=`Schicht,${m.datum},"${m.pos}",,,, ${m.ausgezahlt},,${m.name},${m.stunden.toFixed(1)}\n`;});const b=new Blob([c],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='restaurant-'+today()+'.csv';a.click();toast('CSV exportiert');}
 
-function renderAll(){renderEin();renderAus();renderDebt();renderMit();renderDashboard();updateMetrics();renderSettings();renderRechnungen();renderLieferanten();checkOverdue();renderTagesabschluss();renderMonat();}
+function renderAll(){renderEin();renderAus();renderDebt();renderMit();renderGehalt();renderDashboard();updateMetrics();renderSettings();renderRechnungen();renderLieferanten();checkOverdue();renderTagesabschluss();renderMonat();}
 
 // ══════════════════════════════════════════════
 //  BOOT
@@ -1414,7 +1500,7 @@ function switchTab(id) {
   else if(id==='monat') renderMonat();
   else if(id==='einnahmen') {}
   else if(id==='ausgaben') {}
-  else if(id==='personal') renderChips();
+  else if(id==='personal'){renderChips();renderGehalt();const gf=document.getElementById('g-faellig');if(gf&&!gf.value)gf.value=today();}
   else if(id==='rechnungen') renderRechnungen();
   else if(id==='lieferanten') renderLieferanten();
   else if(id==='einstellungen') renderSettings();
@@ -1439,6 +1525,8 @@ function renderTagesabschluss() {
   const tEin = tBar+tKarte+tTip;
   const tAus = ausH.reduce((s,a) => s+a.betrag, 0);
   const tLohn = mitH.reduce((s,m) => s+m.ausgezahlt, 0);
+  const tGehalt = ausH.filter(a=>a.kat==='personal').reduce((s,a)=>s+a.betrag,0);
+  const tPersonal = tLohn+tGehalt;
   const tErg = tEin-tAus-tLohn;
   const now = new Date();
   const el_date = document.getElementById('ta-date');
@@ -1454,7 +1542,7 @@ function renderTagesabschluss() {
   if(aw) aw.innerHTML = ausH.some(a=>a.kat!=='schulden') ? ausH.filter(a=>a.kat!=='schulden').map(a => { const k=KAT[a.kat]||KAT.sonstiges; return `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${k.icon} ${esc(a.beschr||k.label)}</span><strong class="amtr">${eur(a.betrag)}</strong></div></div>`; }).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Ausgaben gesamt</span><strong class="amtr">${eur(tAus-debtSum(ausH))}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Keine Ausgaben heute</div>';
   if(aw) aw.innerHTML+=`<div class="totals-card">${debtSummary(tEin,tAus,tLohn,ausH)}</div>`;
   const pw = document.getElementById('ta-personal-wrap');
-  if(pw) pw.innerHTML = mitH.length ? mitH.map(m => `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${esc(m.name)} (${esc(m.von)}–${esc(m.bis)})</span><strong class="amtr">${eur(m.ausgezahlt)}</strong></div></div>`).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Lohnkosten gesamt</span><strong class="amtr">${eur(tLohn)}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Kein Personal heute</div>';
+  if(pw) pw.innerHTML = mitH.length ? mitH.map(m => `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${esc(m.name)} (${esc(m.von)}–${esc(m.bis)})</span><strong class="amtr">${eur(m.ausgezahlt)}</strong></div></div>`).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Schichtlohnkosten</span><strong class="amtr">${eur(tLohn)}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Kein Personal heute</div>';
   const ev = document.getElementById('ta-erg-val');
   if(ev) { ev.textContent=eur(tErg); ev.className=tErg>=0?'amtg':'amtr'; }
 }
