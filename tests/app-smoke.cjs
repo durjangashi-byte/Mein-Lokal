@@ -2,10 +2,10 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 require('../sync.js');
 const html=fs.readFileSync(require('node:path').join(__dirname,'../index.html'),'utf8');
-const els=new Map([...html.matchAll(/id="([^"]+)"/g)].map(m=>[m[1],{value:'',style:{},classList:{add(){},remove(){}},textContent:'',innerHTML:''}]));
+const els=new Map([...html.matchAll(/id="([^"]+)"/g)].map(m=>[m[1],{value:'',style:{},classList:{add(){},remove(){}},textContent:'',innerHTML:'',replaceChildren(){this.innerHTML=''}}]));
 for(const m of html.matchAll(/<select[^>]*id="([^"]+)"[^>]*>([\s\S]*?)<\/select>/g)){const el=els.get(m[1]);el.tagName='SELECT';el.options=[...m[2].matchAll(/<option(?: value="([^"]*)")?[^>]*>([^<]*)/g)].map(o=>({value:o[1]??o[2]}));el.value=el.options[0]?.value||'';el.appendChild=opt=>el.options.push(opt);}
 const store=new Map([['rv_sb_url',''],['rv_sb_key','']]);
-const ctx=vm.createContext({console,crypto:require('node:crypto').webcrypto,setTimeout:()=>0,clearTimeout(){},window:{addEventListener(){}},document:{body:{classList:{add(){},remove(){}}},getElementById:id=>els.get(id)||null,addEventListener(){},querySelectorAll:()=>[],createElement:()=>({})},localStorage:{getItem:k=>store.get(k)??null,setItem:(k,v)=>store.set(k,v),get length(){return store.size},key:i=>Array.from(store.keys())[i],removeItem:k=>store.delete(k)},LOKAL_TABLES:globalThis.LOKAL_TABLES,LokalSync:globalThis.LokalSync});
+const ctx=vm.createContext({console,clearReceiptContext(){},receiptButton(){return ''},crypto:require('node:crypto').webcrypto,setTimeout:()=>0,clearTimeout(){},window:{addEventListener(){}},document:{body:{classList:{add(){},remove(){}}},getElementById:id=>els.get(id)||null,addEventListener(){},querySelectorAll:()=>[],createElement:()=>({})},localStorage:{getItem:k=>store.get(k)??null,setItem:(k,v)=>store.set(k,v),get length(){return store.size},key:i=>Array.from(store.keys())[i],removeItem:k=>store.delete(k)},LOKAL_TABLES:globalThis.LOKAL_TABLES,LokalSync:globalThis.LokalSync});
 vm.runInContext(html.match(/<script>\s*([\s\S]*?)<\/script>/)[1],ctx);
 const run=code=>vm.runInContext(code,ctx);const fill=(id,v)=>els.get(id).value=v;
 (async()=>{
@@ -18,9 +18,9 @@ fill('m-name','Test');fill('m-von','22:00');fill('m-bis','02:00');fill('m-lohn',
 fill('r-beschr','Test');fill('r-betrag','12');await run('addRechnung()');assert.equal(run('D.rec.length'),1);await run('toggleBezahlt(D.rec[0].id)');assert.equal(run('D.rec[0].bezahlt'),true);
 fill('l-name','Test');await run('addLieferant()');assert.equal(run('D.lief.length'),1);
 for(const id of ['lst-ein','lst-aus','lst-mit','lst-rechnungen-bezahlt','lst-lieferanten','monat-cards'])assert.ok(els.get(id).innerHTML,'render '+id);
-assert.match(els.get('m-erg').textContent,/85/);
+assert.match(els.get('m-erg').textContent,/35/);
 // Editing reuses IDs, keeps invoice payment status and recalculates shifts.
-const flows=[['ein','e-bar','120','addEinnahme','bar',120],['aus','a-betrag','20','addAusgabe','betrag',20],['mit','m-lohn','20','addSchicht','ausgezahlt',80],['rec','r-notiz','Bezahlt geprüft','addRechnung','notiz','Bezahlt geprüft'],['lief','l-zahlungsziel','0','addLieferant','zahlungsziel',0]];
+const flows=[['ein','e-bar','120','addEinnahme','bar',70],['aus','a-betrag','20','addAusgabe','betrag',20],['mit','m-lohn','20','addSchicht','ausgezahlt',80],['rec','r-notiz','Bezahlt geprüft','addRechnung','notiz','Bezahlt geprüft'],['lief','l-zahlungsziel','0','addLieferant','zahlungsziel',0]];
 for(const [key,field,value,fn,prop,expected] of flows){const id=run(`D.${key}[0].id`);run(`editEntry('${key}',${id})`);assert.equal(els.get('cancel-'+key).hidden,false);fill(field,value);await run(fn+'()');assert.equal(run(`D.${key}.length`),1);assert.equal(run(`D.${key}[0].id`),id);assert.equal(run(`D.${key}[0].${prop}`),expected);assert.equal(els.get('cancel-'+key).hidden,true);}
 assert.equal(run('D.rec[0].bezahlt'),true);
 // Cancel does not mutate; known remote changes/deletion block stale editors.
@@ -40,6 +40,26 @@ run("syncEngine=null");
 fill('a-betrag','-1');await run('addAusgabe()');assert.equal(run('D.aus.length'),1);
 run("D.lief[0].kat='Altbestand';editEntry('lief',D.lief[0].id)");assert.equal(els.get('l-kat').value,'Altbestand');run("cancelEdit('lief')");
 
+// Searchable individual drill-down: period isolation, no caps/deduplication, safe text and original editing links.
+const original=run('JSON.stringify(D)');
+run("D.ein=[{id:101,datum:'2026-10-07',bar:1015.4,karte:142.6,tip:0,notiz:'Gesamtumsatz'}];D.aus=[{id:102,datum:'2026-10-07',kat:'getraenke',beschr:'Ackermann Getränke',betrag:284.21},{id:103,datum:'2026-10-07',kat:'schulden',beschr:'Darlehen Bobo',betrag:1000},{id:104,datum:'2026-09-01',kat:'getraenke',beschr:'September',betrag:20},{id:105,datum:'2026-10-08',kat:'personal',beschr:'Sabrina',betrag:84},{id:106,datum:'2026-10-08',kat:'sonstiges',beschr:'<img src=x onerror=alert(1)>',betrag:1}];D.mit=[{id:107,datum:'2026-10-08',name:'Sabrina Schicht',von:'10:00',bis:'12:00',stunden:2,lohn:15,ausgezahlt:30}];dashboardPeriod='2026-10';selectedMonth='2026-10';renderDashboard();renderMonat()");
+const beforeSearch=run('JSON.stringify(D)');
+assert.equal(run("bookingRows('dashboard').length"),6);
+assert.equal((els.get('dashboard-bookings').innerHTML.match(/class="booking-entry"/g)||[]).length,6);
+assert.ok(!els.get('dashboard-bookings').innerHTML.includes('September'));
+assert.ok(!els.get('dashboard-bookings').innerHTML.includes('<img'));
+assert.match(els.get('dashboard-bookings').innerHTML,/editEntry\('aus',102\)/);
+fill('dashboard-booking-query','ackermann');run("renderBookings('dashboard')");
+assert.match(els.get('dashboard-bookings').innerHTML,/Ackermann/);assert.match(els.get('dashboard-bookings').innerHTML,/ open>/);assert.match(els.get('dashboard-booking-count').textContent,/1 von 6/);
+for(const query of ['284,21','284.21','2026-10-07','getränke']){fill('dashboard-booking-query',query);run("renderBookings('dashboard')");assert.match(els.get('dashboard-bookings').innerHTML,/Ackermann/);}
+fill('dashboard-booking-query','absent');run("renderBookings('dashboard')");assert.match(els.get('dashboard-bookings').innerHTML,/Keine passenden/);
+run("resetBookingSearch('dashboard')");fill('dashboard-booking-kind','schulden');run("renderBookings('dashboard')");assert.match(els.get('dashboard-bookings').innerHTML,/Darlehen/);assert.ok(!els.get('dashboard-bookings').innerHTML.includes('Ackermann'));
+fill('monat-booking-query','Sabrina');run("renderBookings('monat')");assert.match(els.get('monat-booking-count').textContent,/2 von 6/);assert.equal(els.get('dashboard-booking-kind').value,'schulden');
+assert.equal(run('JSON.stringify(D)'),beforeSearch);
+run("resetBookingSearch('dashboard');resetBookingSearch('monat');D.aus=Array.from({length:125},(_,i)=>({id:200+i,datum:'2026-10-08',kat:'sonstiges',beschr:'Gleiche Beschreibung',betrag:1}));renderBookings('dashboard')");
+assert.equal((els.get('dashboard-bookings').innerHTML.match(/class="booking-entry"/g)||[]).length,127);
+run('Object.assign(D,'+original+')');run("dashboardPeriod=today().slice(0,7);selectedMonth=dashboardPeriod;renderAll()");
+
 // New payment UI: amount correction before payment, idempotent local submit, snooze and series actions.
 await run('reversePayment(D.rec[0].id)');
 const paymentId=run('D.rec[0].id');
@@ -57,5 +77,6 @@ await run('importData({ein:D.ein,rec:D.rec,lief:D.lief})');assert.equal(run('D.e
 await run('reversePayment(D.rec[0].id)');
 for(const k of ['ein','aus','mit','rec','lief']){await run(`_del('${k}',D.${k}[0].id)`);assert.equal(run(`D.${k}.length`),0)}
 fill('l-name','<img src=x onerror=alert(1)>');await run('addLieferant()');assert.ok(!els.get('lst-lieferanten').innerHTML.includes('<img'));
-console.log('PASS boot, five create/edit/delete flows, period totals, invoice paid preservation, edit conflicts/cancel, durable UPDATE queue and double-submit guard, invalid inputs, legacy categories, import');
+console.log('PASS individual booking search, period isolation, all rows without caps, debts/shifts separated, escaped text, read-only drill-down, boot, five create/edit/delete flows, period totals, invoice paid preservation, edit conflicts/cancel, durable UPDATE queue and double-submit guard, invalid inputs, legacy categories, import');
 })().catch(e=>{console.error(e);process.exitCode=1});
+

@@ -566,6 +566,12 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
  .bottom-nav{display:none}
 }
 
+
+.booking-browser{margin:14px;padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:16px}
+.booking-browser h2{font-size:17px;margin:0 0 12px}.booking-tools{display:flex;gap:8px;flex-wrap:wrap}.booking-tools .field{flex:1;min-width:160px}.booking-tools button{min-height:44px}
+.booking-count{font-size:12px;color:var(--text2);margin:10px 0}.booking-group h3{font-size:14px;margin:18px 0 8px}.booking-entry{border-top:1px solid var(--border)}
+.booking-entry summary{cursor:pointer;min-height:52px;padding:12px 0;display:flex;align-items:center;gap:10px;list-style:none}.booking-entry summary::before{content:'›';color:var(--text2);font-size:22px}.booking-entry[open] summary::before{transform:rotate(90deg)}.booking-title{flex:1;min-width:0;overflow-wrap:anywhere}.booking-title small{display:block;color:var(--text2);font-size:12px;margin-top:4px}.booking-entry summary strong{white-space:nowrap;font-size:14px}.booking-detail{padding:0 8px 16px 24px;font-size:13px;color:var(--text2);overflow-wrap:anywhere}.booking-detail p{white-space:pre-wrap;margin:6px 0}.booking-entry summary:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
 </style>
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png">
 </head>
@@ -684,6 +690,10 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
               <div class="progress-bar"><div class="progress-fill" id="dh-prog" style="width:0%;background:var(--blue)"></div></div>
               <div class="dash-hero-sub"><span id="dh-prog-txt">In Einstellungen Ziel setzen</span><span id="dh-marge">Marge: 0%</span></div>
             </div>
+          </div>
+
+          <div class="desk-full">
+<section class="booking-browser" aria-labelledby="dashboard-booking-title"><h2 id="dashboard-booking-title">Alle Einzelbuchungen</h2><div class="booking-tools"><div class="field"><label for="dashboard-booking-query">Einträge durchsuchen</label><input id="dashboard-booking-query" type="search" placeholder="Ackermann, Datum, Kategorie, Betrag …" oninput="renderBookings('dashboard')"></div><div class="field"><label for="dashboard-booking-kind">Eintragsart</label><select id="dashboard-booking-kind" onchange="renderBookings('dashboard')"><option value="">Alle Einträge</option><option value="ein">Einnahmen</option><option value="aus">Betriebsausgaben</option><option value="schulden">Schuldenzahlungen</option><option value="mit">Schichten / Lohnkosten</option></select></div><button type="button" class="edit-btn" onclick="resetBookingSearch('dashboard')">Suche zurücksetzen</button></div><div id="dashboard-booking-count" class="booking-count" role="status" aria-live="polite"></div><div id="dashboard-bookings"></div></section>
           </div>
 
           <div class="desk-full">
@@ -868,6 +878,7 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
         <div class="month-tabs" id="month-tabs"></div>
         <div class="sec-hd">Wochenvergleich</div><div class="week-grid" id="week-grid"></div>
         <div class="sec-hd">Monatsübersicht</div><div id="monat-cards"></div>
+<section class="booking-browser" aria-labelledby="monat-booking-title"><h2 id="monat-booking-title">Alle Einzelbuchungen</h2><div class="booking-tools"><div class="field"><label for="monat-booking-query">Einträge durchsuchen</label><input id="monat-booking-query" type="search" placeholder="Ackermann, Datum, Kategorie, Betrag …" oninput="renderBookings('monat')"></div><div class="field"><label for="monat-booking-kind">Eintragsart</label><select id="monat-booking-kind" onchange="renderBookings('monat')"><option value="">Alle Einträge</option><option value="ein">Einnahmen</option><option value="aus">Betriebsausgaben</option><option value="schulden">Schuldenzahlungen</option><option value="mit">Schichten / Lohnkosten</option></select></div><button type="button" class="edit-btn" onclick="resetBookingSearch('monat')">Suche zurücksetzen</button></div><div id="monat-booking-count" class="booking-count" role="status" aria-live="polite"></div><div id="monat-bookings"></div></section>
         <div class="chart-section" style="margin-bottom:14px"><div class="chart-lbl">Einnahmen pro Tag</div><div id="monat-chart"></div></div>
       </div>
       <!-- RECHNUNGEN -->
@@ -1468,8 +1479,46 @@ function delStaff(name){D.staff=D.staff.filter(s=>s.name!==name);saveLocal('staf
 // ══════════════════════════════════════════════
 //  DASHBOARD
 // ══════════════════════════════════════════════
+
+// Read-only drill-down: every stored booking is shown individually, never truncated.
+function bookingRows(scope){
+ const month=scope==='monat'?selectedMonth:dashboardPeriod;
+ const matches=r=>!month||r.datum?.startsWith(month);
+ return ['ein','aus','mit'].flatMap(key=>D[key].filter(matches).map(row=>({key,row,kind:key==='aus'&&row.kat==='schulden'?'schulden':key})));
+}
+function bookingAmount({key,row}){return key==='ein'?Number(row.bar||0)+Number(row.karte||0)+Number(row.tip||0):Number(key==='mit'?row.ausgezahlt||0:row.betrag||0);}
+function bookingTitle({key,row}){return key==='ein'?'Tageseinnahme':key==='mit'?(row.name||'Schicht'):(row.beschr||'Ausgabe');}
+function bookingCategory({key,row}){return key==='aus'?(KAT[row.kat]?.label||row.kat||'Sonstiges'):key==='mit'?(row.pos||'Schicht'):'Einnahmen';}
+function bookingMatches(entry,query){
+ const {row}=entry,amount=bookingAmount(entry);
+ const values=[bookingTitle(entry),bookingCategory(entry),row.datum,fmt(row.datum),row.notiz,row.name,row.pos,row.von,row.bis,row.stunden,row.bar,row.karte,row.tip,row.gaeste,amount,eur(amount),amount.toFixed(2),amount.toFixed(2).replace('.',',')];
+ const amounts=[amount,row.bar,row.karte,row.tip,row.lohn].filter(n=>n!==undefined&&n!==null).flatMap(n=>[eur(Number(n)),Number(n).toFixed(2).replace('.',',')]);
+ const text=values.concat(amounts).join(' ').toLocaleLowerCase('de-DE');
+ return query.split(/\s+/).every(term=>text.includes(term));
+}
+function resetBookingSearch(scope){document.getElementById(scope+'-booking-query').value='';document.getElementById(scope+'-booking-kind').value='';renderBookings(scope);}
+function renderBookings(scope){
+ const target=document.getElementById(scope+'-bookings');if(!target)return;
+ const query=(document.getElementById(scope+'-booking-query')?.value||'').trim().toLocaleLowerCase('de-DE');
+ const kind=document.getElementById(scope+'-booking-kind')?.value||'';
+ const all=bookingRows(scope),rows=all.filter(entry=>(!kind||entry.kind===kind)&&bookingMatches(entry,query));
+ const open=new Set(Array.from(target.querySelectorAll?.('details[open]')||[],el=>el.dataset.booking));
+ document.getElementById(scope+'-booking-count').textContent=rows.length+' von '+all.length+' Einträgen im gewählten Zeitraum · Position antippen für Details';
+ const labels={ein:'Einnahmen',aus:'Betriebsausgaben (inkl. erfasster Gehälter)',schulden:'Schuldenzahlungen',mit:'Schichten / Lohnkosten'};
+ target.innerHTML=Object.entries(labels).map(([group,label])=>{
+  const entries=rows.filter(e=>e.kind===group).sort((a,b)=>String(b.row.datum).localeCompare(String(a.row.datum))||Number(b.row.id)-Number(a.row.id));
+  if(!entries.length)return '';
+  return `<div class="booking-group"><h3>${label} · ${entries.length} · ${eur(entries.reduce((sum,e)=>sum+bookingAmount(e),0))}</h3>${entries.map(entry=>{
+   const {key,row}=entry,token=key+':'+row.id;
+   const detail=key==='ein'?`Bar: ${eur(row.bar||0)} · Karte: ${eur(row.karte||0)} · Trinkgeld: ${eur(row.tip||0)} · Gäste: ${Number(row.gaeste||0)}`:key==='mit'?`${esc(row.von||'')}–${esc(row.bis||'')} · ${Number(row.stunden||0)} Stunden · Stundensatz: ${eur(row.lohn||0)}`:`Kategorie: ${esc(bookingCategory(entry))}${row.rechnung_id?' · Aus bezahlter Rechnung gebucht':''}`;
+   return `<details class="booking-entry" data-booking="${esc(token)}"${query||open.has(token)?' open':''}><summary><span class="booking-title">${esc(bookingTitle(entry))}<small>${fmt(row.datum)} · ${esc(bookingCategory(entry))}</small></span><strong>${eur(bookingAmount(entry))}</strong></summary><div class="booking-detail"><p>Datum: ${esc(row.datum||'—')}</p><p>${detail}</p>${row.notiz?`<p>${esc(row.notiz)}</p>`:''}${editButton(key,row.id)}${key==='aus'?receiptButton(row.id):''}</div></details>`;
+  }).join('')}</div>`;
+ }).join('')||'<p class="summary-note">Keine passenden Einzelbuchungen. Suche oder Zeitraum ändern.</p>';
+}
+
 function renderDashboard() {
   const data=periodData();
+  renderBookings('dashboard');
   const months=[...new Set([today().slice(0,7),dashboardPeriod,...D.ein.map(r=>r.datum?.slice(0,7)),...D.aus.map(r=>r.datum?.slice(0,7)),...D.mit.map(r=>r.datum?.slice(0,7))].filter(m=>/^\d{4}-\d{2}$/.test(m)))].sort().reverse();
   document.getElementById('dashboard-period').innerHTML=`<option value=""${!dashboardPeriod?' selected':''}>Gesamt · alle Monate</option>`+months.map(m=>`<option value="${m}"${m===dashboardPeriod?' selected':''}>${monthName(m.slice(5))} ${m.slice(0,4)}</option>`).join('');
   document.getElementById('dashboard-result-label').textContent='Ergebnis nach Schuldenzahlungen · '+(dashboardPeriod?monthName(dashboardPeriod.slice(5))+' '+dashboardPeriod.slice(0,4):'gesamt');
@@ -1643,6 +1692,7 @@ function renderMonat() {
   if(!selectedMonth || !months.has(selectedMonth)) selectedMonth = sortedM[0] || currentM;
   const tabs = document.getElementById('month-tabs');
   if(tabs) tabs.innerHTML = sortedM.map(m => `<div class="month-tab${m===selectedMonth?' active':''}" onclick="selectedMonth=${esc(JSON.stringify(m))};renderMonat()">${monthName(m.split('-')[1])} ${m.split('-')[0]}</div>`).join('');
+  renderBookings('monat');
   const [y,mo] = selectedMonth.split('-');
   const einM = D.ein.filter(e => e.datum && e.datum.startsWith(selectedMonth));
   const ausM = D.aus.filter(a => a.datum && a.datum.startsWith(selectedMonth));
@@ -1920,4 +1970,5 @@ initSupabase();
 </script>
 </body>
 </html>
+
 

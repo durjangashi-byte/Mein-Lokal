@@ -1,3 +1,13 @@
+# Einzelbuchungen & Suche – 8. Oktober 2026
+
+Cockpit und Monatsauswertung zeigen jede Einnahme, Betriebsausgabe, Schuldenzahlung und Schicht als eigene aufklappbare Position. Alle Zeilen des gewählten Zeitraums bleiben zugänglich, ohne Zusammenfassung identischer Beschreibungen oder Begrenzung. Suche nach Beschreibung, Notiz, Datum, Kategorie, Name und Betrag; Eintragsart separat filtern. Suchtreffer öffnen ihre Details automatisch. Die Übersicht bietet über den vorhandenen Zeitraumfilter auch alle Monate. Details enthalten vorhandene Daten, Bearbeiten und bei Ausgaben Belege über die bestehenden Abläufe. Offene Rechnungen bleiben in Rechnungen & Zahlungen und werden nicht als gebuchte Ausgaben dupliziert.
+
+Keine Änderungen an Summenberechnung, Synchronisierung, Authentifizierung, Datenbank oder Geschäftsdaten durch dieses UI-Paket. Keine zusätzlichen Abfragen oder Dependencies.
+
+Prüfung: `node tests/app-smoke.cjs`, `node tests/auth.cjs`, `node tests/qonto-private.cjs` bestanden. Smoke-Test aktualisiert für vorhandene Beleg-Funktionen und Gesamtumsatz-Eingabe; neue Checks für Zeitraum, Suche, Trennung, 125 Einzel-Ausgaben ohne Begrenzung, HTML-Maskierung und unveränderte Daten. Live-Sync-Test (benötigt Besitzerzugang) nicht erneut ausgeführt. Automatisierter mobiler Browser-Test konnte wegen fehlender Browser-Binaries und fehlgeschlagenem Download nicht ausgeführt werden; tatsächliche iPhone-Darstellung bleibt zu prüfen.
+
+---
+
 # Rechnungen & Zahlungen – 2. Oktober 2026 (v7)
 
 ## Umgesetzter Ablauf
