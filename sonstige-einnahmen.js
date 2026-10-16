@@ -16,9 +16,9 @@ p.innerHTML='<h3 style="margin:0 0 6px">Sonstige Bankeinnahmen</h3><p style="opa
 p.querySelector('form').onsubmit=async e=>{e.preventDefault();const f=e.currentTarget;const row={datum:f.elements.namedItem('datum').value,betrag:Number(f.elements.namedItem('betrag').value),kategorie:f.elements.namedItem('kategorie').value,beschreibung:f.elements.namedItem('beschreibung').value};const id=f.elements.namedItem('id').value;const res=id?await SB.from('sonstige_einnahmen').update(row).eq('id',id):await SB.from('sonstige_einnahmen').insert(row);if(res.error)alert(res.error.message);else refresh();};
 p.onclick=async e=>{const edit=e.target.closest('[data-edit]'),del=e.target.closest('[data-delete]');if(edit){const x=entries.find(v=>String(v.id)===edit.dataset.edit),f=p.querySelector('form');if(!x)return;for(const k of ['id','datum','betrag','kategorie','beschreibung'])f.elements.namedItem(k).value=x[k];f.scrollIntoView({behavior:'smooth',block:'center'});}if(del){if(!confirm('Diese sonstige Einnahme wirklich löschen?'))return;const {error}=await SB.from('sonstige_einnahmen').delete().eq('id',del.dataset.delete);if(error)alert(error.message);else refresh();}};
 }
-document.addEventListener('DOMContentLoaded',()=>{panel();refresh();setTimeout(refresh,1200);setTimeout(refresh,4000);});
+document.addEventListener('DOMContentLoaded',()=>{panel();refresh();});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
 document.addEventListener('change',e=>{if(e.target?.id==='dashboard-period')refresh();});
 window.refreshSonstigeEinnahmen=refresh;
-setInterval(()=>{if(typeof SB!=='undefined'&&SB&&document.getElementById('p-einnahmen')?.offsetParent)refresh();},60000);
+
 })();
