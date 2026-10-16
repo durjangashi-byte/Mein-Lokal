@@ -1,3 +1,12 @@
+## 2026-10-16 – Sonstige Bankeinnahmen vollständig integrieren
+
+- Separate Verwaltung mit Datum, Kategorie, Suche, Monat, Cent-Summe und CRUD; bestehendes Design beibehalten.
+- Gemeinsame Sync-Engine, Realtime-Publikation, Cache/Warteschlange, JSON-Backup, CSV und Einzelbuchungssuche um Bankeinnahmen ergänzt.
+- Bankeinnahmen separat in Cockpit, Monat, Tagesergebnis und PDF; Restaurant-Tagesumsätze und Bar/Karte unverändert.
+- Atomare, idempotente Qonto-Gutschrift-RPC mit Owner-RLS, Quellbesitzerprüfung, Karten-/Privat-/Statussperre, Legacy-Zuordnung und Löschmarker. Bestehende Finanzdaten nicht verändert.
+- Syntaxfehler in qonto.js behoben, Klassifizierung versteckt keine unimportierten betrieblichen Eingänge mehr, Auth-Rennen und parallele Importklicks abgefangen.
+- Auth-/App-/Qonto-Regressionen und isolierte PostgreSQL-Tests ergänzt; GitHub Actions führt sie bei PR und Push aus. WebKit-Tests verwenden simulierte APIs.
+
 # Einzelbuchungen & Suche – 8. Oktober 2026
 
 Cockpit und Monatsauswertung zeigen jede Einnahme, Betriebsausgabe, Schuldenzahlung und Schicht als eigene aufklappbare Position. Alle Zeilen des gewählten Zeitraums bleiben zugänglich, ohne Zusammenfassung identischer Beschreibungen oder Begrenzung. Suche nach Beschreibung, Notiz, Datum, Kategorie, Name und Betrag; Eintragsart separat filtern. Suchtreffer öffnen ihre Details automatisch. Die Übersicht bietet über den vorhandenen Zeitraumfilter auch alle Monate. Details enthalten vorhandene Daten, Bearbeiten und bei Ausgaben Belege über die bestehenden Abläufe. Offene Rechnungen bleiben in Rechnungen & Zahlungen und werden nicht als gebuchte Ausgaben dupliziert.
