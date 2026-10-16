@@ -1911,6 +1911,7 @@ function exportPDF() {
   doc.text('SONSTIGE BETRIEBLICHE EINNAHMEN',14,y); y+=6;
   D.bank.forEach(row=>{
     if(y>265){doc.addPage();y=20;}
+    doc.setFillColor(20,20,20);doc.rect(14,y-4,182,10,'F');
     doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(200,200,200);
     let description=row.beschreibung;while(description.length&&doc.getTextWidth(description)>110)description=description.slice(0,-1);
     doc.text(fmtFull(row.datum),16,y+2);doc.text(description,50,y+2);
@@ -1925,8 +1926,11 @@ function exportPDF() {
     doc.setFillColor(20,20,20); doc.rect(14,y-4,182,10,'F');
     doc.setTextColor(200,200,200); doc.setFontSize(8); doc.setFont('helvetica','normal');
     doc.text(fmtFull(a.datum),16,y+2);
-    doc.text(k.label,50,y+2);
-    if(a.beschr) doc.text(a.beschr.slice(0,22),85,y+2);
+    let category=k.label,description=a.beschr||'';
+    while(category.length&&doc.getTextWidth(category)>43)category=category.slice(0,-1);
+    while(description.length&&doc.getTextWidth(description)>65)description=description.slice(0,-1);
+    doc.text(category,50,y+2);
+    if(description)doc.text(description,100,y+2);
     doc.setTextColor(239,68,68); doc.setFont('helvetica','bold');
     doc.text(eur(a.betrag),190,y+2,{align:'right'}); y+=11;
   });
