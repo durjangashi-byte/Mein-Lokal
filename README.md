@@ -84,3 +84,12 @@ PG_TEST_MODULE=/tmp/ml-db-test/node_modules/@electric-sql/pglite node tests/bank
 ```
 
 `tests/bank-income-browser.cjs` prüft die echte App und den festgelegten Supabase-SDK in WebKit mit lokal simulierten Auth-/REST-Antworten, ohne Produktionszugriffe. Voraussetzung: Playwright samt WebKit und Systembibliotheken; `TEST_SUPABASE_SDK` und `TEST_JSPDF_SDK` geben die lokal geladenen, in index.html festgelegten Browser-Bundles an. Dies ersetzt keinen echten iPhone- und Zwei-Geräte-Praxistest mit dem Besitzerkonto.
+
+
+## Private Ausgaben / Entnahmen
+
+Als privat markierte, abgeschlossene Qonto-Ausgänge werden beim normalen App-Abgleich vollständig und ohne 300-Zeilen-Grenze geladen. Cockpit, Tagesabschluss, Monat und PDF zeigen das Ergebnis vor Privat, private Ausgaben separat und das Ergebnis nach Privat. Restaurantumsatz, Betriebsausgaben, Personal und Schulden bleiben getrennt. Privat markierte Gutschriften oder offene/fehlgeschlagene Zahlungen zählen nicht als private Ausgabe; Privatentnahmen verändern die Betriebsmarge nicht. Der Zeitraum folgt dem Buchungsdatum in Europe/Berlin und den bestehenden Monatsfiltern.
+
+Die Einzelbuchungssuche enthält eine eigene Eintragsart Privat; im Bankbereich sind die privaten Positionen und Kategorien des im Cockpit ausgewählten Zeitraums sichtbar. Bereits mit einer Ausgabe verknüpfte private Qonto-Ausgänge werden nur als Privatentnahme abgezogen. Es werden keine zusätzlichen Ausgaben angelegt oder vorhandene Buchungen umgeschrieben. Privatdaten im JSON-Backup sind eine lesbare Momentaufnahme; Wiederherstellung ändert keine Qonto-Klassifizierungen.
+
+`node tests/private-sync.cjs` prüft den ausschließlich lesenden Bankabgleich einschließlich mehr als 1.000 Zeilen, Statusfilter und Sitzungswechseln.
