@@ -1,3 +1,10 @@
+## 2026-10-17 – Zwei Ergebnisse und vollständige Privathistorie
+
+- Zwei gut sichtbare Ergebniskarten: ohne private Buchungen und mit privaten Buchungen.
+- Gesamter vorhandener Zeitraum beim ersten Öffnen; danach freie, gespeicherte Monatsauswahl.
+- Auch ältere private Eingänge/Einlagen einbeziehen; bestehende private Ausgänge weiter abziehen. Beide Richtungen einzeln sichtbar, ohne zusätzliche Finanzbuchungen.
+- Betriebsergebnis um bereits privat verknüpfte Einnahmen bereinigt, ohne Quelldaten zu verändern.
+
 ## 2026-10-17 – Ergebnis nach privaten Ausgaben
 
 - Private Qonto-Ausgänge getrennt vom Betriebsergebnis als Entnahmen ausgewiesen und vom verfügbaren Ergebnis abgezogen.
