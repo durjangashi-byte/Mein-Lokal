@@ -1043,6 +1043,8 @@ function authMessage(message) {
   ['auth-message','account-message'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=message;});
 }
 function lockApp() {
+  document.getElementById('sonstige-einnahmen-panel')?.replaceChildren();
+  const sonstigeDash=document.getElementById('dashboard-sonstige-income');if(sonstigeDash)sonstigeDash.textContent='';
   clearReceiptContext();document.getElementById('modal-inner').replaceChildren();document.getElementById('modal-bg').classList.remove('show');
   authUser=null;
   for(const key of Object.keys(formSpecs))cancelEdit(key);
@@ -1052,6 +1054,7 @@ function lockApp() {
 }
 async function unlockApp(user) {
   authUser=user;
+  setTimeout(()=>window.refreshSonstigeEinnahmen?.(),0);
   if(!localStorage.getItem('rv4_recovery')) {
     const legacy={};for(const key of Object.keys(LOKAL_TABLES))legacy[key]=readLocal('rv3_'+key,[]);
     localStorage.setItem('rv4_recovery',JSON.stringify(legacy));
