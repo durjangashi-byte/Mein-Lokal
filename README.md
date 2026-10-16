@@ -63,3 +63,24 @@ node tests/live-sync.cjs
 ```
 
 Die UMD-Datei stammt aus dem gleichen festgelegten jsDelivr-Paket wie die App. `SUPABASE_URL` und `SUPABASE_PUBLISHABLE_KEY` können das Testziel überschreiben. Keine Zugangsdaten oder Sitzungstokens im Repository speichern. Der DOM-Test ersetzt keinen Layout- oder Safari-Test; der Live-Test prüft die echten Daten- und Realtime-Schnittstellen.
+
+
+## Sonstige betriebliche Bankeinnahmen
+
+Unter **Einnahmen → Sonstige betriebliche Einnahmen** lassen sich Überweisungen, Cashback und weitere betriebliche Einnahmen separat anlegen, bearbeiten, löschen sowie nach Monat und Text durchsuchen. Ein leerer Monatsfilter zeigt alle Monate. Die Summe folgt beiden Filtern. Die Restaurant-Tagesumsätze, Bar-/Kartenanteile und Umsatzdiagramme bleiben unverändert. Cockpit, Tagesergebnis, Monatsauswertung sowie PDF-/CSV-Auswertung berücksichtigen die zusätzlichen Einnahmen genau einmal. Monatsübersicht und Cockpit enthalten auch Monate mit ausschließlich Bankeinnahmen. Der allgemeine PDF-Export umfasst weiterhin alle gespeicherten Zeiträume.
+
+Die Tabelle `sonstige_einnahmen` nutzt die gemeinsame Sync-Engine, Owner-RLS, gerätegebundenen Cache und dauerhafte Warteschlange. Realtime, Vordergrundwechsel und 30-Sekunden-Abgleich übertragen Änderungen; das JSON-Backup enthält `bank` samt Qonto-Verknüpfungen. Nicht übertragene Änderungen werden als ausstehend angezeigt. Erkannte Änderungen an einem geöffneten Entwurf verhindern veraltetes Speichern; exakt gleichzeitige manuelle Änderungen unterliegen wie die übrige App noch Last-Write-Wins.
+
+Qonto-Gutschriften werden ausschließlich über `lokal_import_qonto_income` in sonstige Einnahmen übernommen. Die RPC sperrt die Quellzeile, prüft Owner/Quellenbesitzer, Status und Kartenkennzeichen und nutzt die eindeutige Qonto-Verknüpfung. Wiederholungen liefern denselben Eintrag; ein Löschmarker verhindert erneutes Importieren gelöschter verknüpfter Einnahmen. Bereits manuell erfasste, eindeutig passende Einnahmen werden verknüpft, bei Mehrdeutigkeit wird abgebrochen. Der alte Qonto-Debitimport bleibt unverändert und ist weiterhin kein atomarer Bankimport. Bankbewegungen sind auf die letzten 300 geladenen Vorgänge begrenzt.
+
+Die Migration `supabase/migrations/*_bank_income_sync_and_import.sql` erweitert die bereits vorhandene Tabelle und aktiviert ihre Realtime-Publikation. Sie schreibt keine vorhandenen Finanzbuchungen um. Keine Service-Role-Schlüssel im Browser.
+
+Zusätzliche lokale Tests:
+
+```sh
+node tests/qonto-private.cjs
+npm install --prefix /tmp/ml-db-test @electric-sql/pglite@0.3.14 --no-audit --no-fund
+PG_TEST_MODULE=/tmp/ml-db-test/node_modules/@electric-sql/pglite node tests/bank-income-db.cjs
+```
+
+`tests/bank-income-browser.cjs` prüft die echte App und den festgelegten Supabase-SDK in WebKit mit lokal simulierten Auth-/REST-Antworten, ohne Produktionszugriffe. Voraussetzung: Playwright samt WebKit und Systembibliotheken; `TEST_SUPABASE_SDK` und `TEST_JSPDF_SDK` geben die lokal geladenen, in index.html festgelegten Browser-Bundles an. Dies ersetzt keinen echten iPhone- und Zwei-Geräte-Praxistest mit dem Besitzerkonto.

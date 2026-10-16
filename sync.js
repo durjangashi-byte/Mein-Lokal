@@ -1,6 +1,7 @@
 /* Shared sync engine. Existing tables; no schema changes or privileged keys. */
 (function (root) {
   const tables = {
+    bank: {name:'sonstige_einnahmen', order:'datum', ascending:false},
     ein: {name:'einnahmen', order:'datum', ascending:false},
     aus: {name:'ausgaben', order:'datum', ascending:false},
     mit: {name:'schichten', order:'datum', ascending:false},
@@ -76,7 +77,7 @@
     }
     static normalize(key,row) {
       if(!Number.isSafeInteger(row.id))throw new Error('Eintrags-ID außerhalb des sicheren Zahlenbereichs.');
-      const shape={ein:{datum:'',bar:0,karte:0,tip:0,gaeste:0,notiz:''},aus:{datum:'',kat:'',beschr:'',betrag:0,rechnung_id:null},mit:{datum:'',name:'',pos:'',von:'',bis:'',stunden:0,lohn:0,ausgezahlt:0},rec:{beschr:'',betrag:0,faellig:'',notiz:'',bezahlt:false,kat:'sonstiges',anbieter:'',kontakt:'',kundennummer:'',wiederholung:'einmalig',pausiert:false,anker:null,serie_id:null,erinnerung_am:null,bezahlt_am:null,folgebetrag:null},lief:{name:'',kat:'',kontakt:'',zahlungsziel:0,notiz:''}}[key];
+      const shape={bank:{datum:'',betrag:0,kategorie:'sonstiges',beschreibung:'',quelle:'manuell',qonto_transaction_id:null},ein:{datum:'',bar:0,karte:0,tip:0,gaeste:0,notiz:''},aus:{datum:'',kat:'',beschr:'',betrag:0,rechnung_id:null},mit:{datum:'',name:'',pos:'',von:'',bis:'',stunden:0,lohn:0,ausgezahlt:0},rec:{beschr:'',betrag:0,faellig:'',notiz:'',bezahlt:false,kat:'sonstiges',anbieter:'',kontakt:'',kundennummer:'',wiederholung:'einmalig',pausiert:false,anker:null,serie_id:null,erinnerung_am:null,bezahlt_am:null,folgebetrag:null},lief:{name:'',kat:'',kontakt:'',zahlungsziel:0,notiz:''}}[key];
       const result={id:row.id};
       for(const [field,fallback] of Object.entries(shape)) {
         const value=row[field]??fallback;

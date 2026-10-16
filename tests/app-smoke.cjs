@@ -77,6 +77,26 @@ await run('importData({ein:D.ein,rec:D.rec,lief:D.lief})');assert.equal(run('D.e
 await run('reversePayment(D.rec[0].id)');
 for(const k of ['ein','aus','mit','rec','lief']){await run(`_del('${k}',D.${k}[0].id)`);assert.equal(run(`D.${k}.length`),0)}
 fill('l-name','<img src=x onerror=alert(1)>');await run('addLieferant()');assert.ok(!els.get('lst-lieferanten').innerHTML.includes('<img'));
+
+// Bank income is separate from turnover and counted exactly once in all results.
+run(`D.ein=[{id:1,datum:'2026-10-08',bar:800,karte:200,tip:0,gaeste:0,notiz:''}];D.aus=[{id:2,datum:'2026-10-08',kat:'personal',betrag:100,beschr:'Gehalt'},{id:3,datum:'2026-10-08',kat:'schulden',betrag:50,beschr:'Tilgung'}];D.mit=[{id:4,datum:'2026-10-08',ausgezahlt:80,name:'Schicht',stunden:4,lohn:20,pos:'Service',von:'10:00',bis:'14:00'}];D.bank=[{id:5,datum:'2026-10-01',betrag:16.24,kategorie:'cashback',beschreibung:'Qonto Cashback',quelle:'qonto',qonto_transaction_id:'cashback'},{id:6,datum:'2026-10-16',betrag:343.80,kategorie:'bankueberweisung',beschreibung:'Diakonische Jugendhilfe',quelle:'qonto',qonto_transaction_id:null}];dashboardPeriod='2026-10';selectedMonth='2026-10';renderAll()`);
+const financialBefore=run('JSON.stringify([D.ein,D.aus,D.mit])');
+assert.equal(run('bankSum()'),360.04);
+assert.match(els.get('m-ein').textContent,/1.000/);
+assert.match(els.get('dh-val').textContent,/1.130,04/);
+assert.match(els.get('debt-breakdown').innerHTML,/360,04/);
+assert.match(els.get('monat-cards').innerHTML,/1.130,04/);
+assert.match(els.get('dashboard-bookings').innerHTML,/Diakonische/);
+fill('dashboard-booking-query','cashback');run("renderBookings('dashboard')");assert.match(els.get('dashboard-booking-count').textContent,/1 von 6/);
+run("D.bank.push({id:7,datum:'1998-02-01',betrag:20,kategorie:'sonstiges',beschreibung:'Nur Bank',quelle:'manuell'});dashboardPeriod='1998-02';selectedMonth='1998-02';renderAll()");
+assert.match(els.get('dh-val').textContent,/20,00/);assert.match(els.get('m-ein').textContent,/0/);
+assert.match(els.get('dashboard-period').innerHTML,/1998-02/);assert.match(els.get('monat-cards').innerHTML,/20,00/);
+assert.equal(run('JSON.stringify([D.ein,D.aus,D.mit])'),financialBefore);
+// Shared sync includes bank rows and retains source identity while normalizing decimal strings.
+assert.equal(globalThis.LOKAL_TABLES.bank.name,'sonstige_einnahmen');
+assert.equal(globalThis.LokalSync.normalize('bank',{id:8,betrag:'16.24',qonto_transaction_id:'source'}).betrag,16.24);
+assert.equal(globalThis.LokalSync.normalize('bank',{id:8,qonto_transaction_id:'source'}).qonto_transaction_id,'source');
+console.log('PASS bank income period/result separation, cent totals, month-only bank entries, salary/debt handling and immutable restaurant data');
 console.log('PASS individual booking search, period isolation, all rows without caps, debts/shifts separated, escaped text, read-only drill-down, boot, five create/edit/delete flows, period totals, invoice paid preservation, edit conflicts/cancel, durable UPDATE queue and double-submit guard, invalid inputs, legacy categories, import');
 })().catch(e=>{console.error(e);process.exitCode=1});
 
