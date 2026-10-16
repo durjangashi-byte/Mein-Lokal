@@ -22,6 +22,7 @@ jobs:
           node tests/app-smoke.cjs
           node tests/qonto-private.cjs
           node tests/qonto-edge.cjs
+          node tests/private-sync.cjs
       - name: Isolated PostgreSQL regression dependency
         run: npm install --prefix "$RUNNER_TEMP/bank-db" @electric-sql/pglite@0.3.14 --no-audit --no-fund
       - name: Bank income SQL and permissions

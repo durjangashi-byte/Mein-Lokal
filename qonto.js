@@ -8,7 +8,7 @@
  function privateCat(t){const s=((t.label||'')+' '+(t.reference||'')).toLowerCase();if(s.includes('geliehen'))return 'Geliehen / Geldtransfer';if(/zara|tk maxx|jd sports|otto|panda design/.test(s))return 'Shopping';if(/mcdonald|masterkoefte|masterköfte/.test(s))return 'Essen privat';if(/babyone/.test(s))return 'Familie';if(/versicherung|alexander melnik/.test(s))return 'Versicherung';if(/ortel/.test(s))return 'Mobilfunk';if(/dietz|tabak/.test(s))return 'Tabakwaren';if(/joyclub|pm international|liberty/.test(s))return 'Online / Abos';return 'Sonstiges privat'}
  function classification(t){return t.classification||'unklar'}
  function privateSummary(data){const rows=(data||[]).filter(t=>classification(t)==='privat'&&t.side==='debit');const by={};let total=0;rows.forEach(t=>{const k=t.private_category||privateCat(t),a=Number(t.amount||0);total+=a;by[k]=(by[k]||0)+a});return {rows,total,by}}
- function renderPrivate(data){const el=document.getElementById('qonto-private');if(!el)return;const s=privateSummary(data);const cats=Object.entries(s.by).sort((a,b)=>b[1]-a[1]);el.innerHTML='<div class="sec-hd">Privater Geldabfluss</div><div class="totals-card"><div class="t-row"><span>Privat gesamt</span><strong class="amtr">'+eurQ(s.total)+'</strong></div><div class="t-row"><span>Private Buchungen</span><strong>'+s.rows.length+'</strong></div></div>'+(cats.length?'<div class="card">'+cats.map(([k,v])=>'<div class="setting-row"><div><div class="setting-lbl">'+escQ(k)+'</div></div><strong>'+eurQ(v)+'</strong></div>').join('')+'</div>':'<div class="empty"><p>Noch keine privaten Buchungen klassifiziert</p></div>')}
+ function renderPrivate(data){const selected=typeof dashboardPeriod==='undefined'?'':dashboardPeriod;data=(data||[]).filter(t=>t.status==='completed'&&(!selected||(typeof qontoBookingDate==='function'?qontoBookingDate(t):dateQ(t.settled_at||t.emitted_at)).startsWith(selected)));const el=document.getElementById('qonto-private');if(!el)return;const s=privateSummary(data);const cats=Object.entries(s.by).sort((a,b)=>b[1]-a[1]);el.innerHTML='<div class="sec-hd">Private Ausgaben / Entnahmen</div><p class="summary-note">Zeitraum der Übersicht: '+escQ(selected||'alle Monate')+' · wird separat vom Betriebsergebnis abgezogen.</p><div class="totals-card"><div class="t-row"><span>Privat gesamt</span><strong class="amtr">'+eurQ(s.total)+'</strong></div><div class="t-row"><span>Private Buchungen</span><strong>'+s.rows.length+'</strong></div></div>'+(cats.length?'<div class="card">'+cats.map(([k,v])=>'<div class="setting-row"><div><div class="setting-lbl">'+escQ(k)+'</div></div><strong>'+eurQ(v)+'</strong></div>').join('')+'</div>':'<div class="empty"><p>Noch keine privaten Buchungen klassifiziert</p></div>')}
  const importing=new Set();
  let loadVersion=0;
  const current=(client,user)=>SB===client&&authUser===user&&!!user;
@@ -45,13 +45,19 @@
   panel.innerHTML=panel.innerHTML.replace('<div id="qonto-summary"></div>','<div id="qonto-summary"></div><div id="qonto-card-check"></div><div id="qonto-private"></div>');
   document.querySelector('.content')?.appendChild(panel);
  }
+ window.renderPrivateOutflows=()=>{
+  renderPrivate(typeof D!=='undefined'?D.privat||[]:[]);
+  const el=document.getElementById('qonto-private');if(!el||typeof privateItems!=='function')return;
+  const selected=typeof dashboardPeriod==='undefined'?'':dashboardPeriod;
+  el.innerHTML+=privateItems(selected).slice().sort((a,b)=>b.datum.localeCompare(a.datum)).map(r=>'<div class="payment-card"><div class="payment-top"><h3 style="overflow-wrap:anywhere">'+escQ(r.beschreibung)+'</h3><strong class="amtr">'+eurQ(r.betrag)+'</strong></div><p>'+escQ(r.datum)+' · '+escQ(r.kategorie)+'</p></div>').join('');
+ };
  async function load(){
   if(!SB||!authUser)return;
   const client=SB,user=authUser,version=++loadVersion;
   const {data,error}=await client.from('qonto_transactions').select('*').order('settled_at',{ascending:false}).limit(300);
   const list=document.getElementById('qonto-list');if(!list||!current(client,user)||version!==loadVersion)return;
   if(error){list.innerHTML='<div class="empty"><p>'+escQ(error.message)+'</p></div>';return}
-  renderPrivate(data||[]);
+  window.renderPrivateOutflows();
   renderCardReconciliation(data||[]);
   const open=(data||[]).filter(t=>!t.imported_kind&&!t.imported_id&&!t.ignored&&classification(t)!=='privat'&&!(D.bank||[]).some(r=>r.qonto_transaction_id===t.id));
   document.getElementById('qonto-summary').innerHTML='<div class="totals-card"><div class="t-row"><span>Bankbewegungen geladen</span><strong>'+data.length+'</strong></div><div class="t-row"><span>Noch zu prüfen</span><strong>'+open.length+'</strong></div></div>';
@@ -66,6 +72,7 @@
    const {data,error}=await client.functions.invoke('qonto-sync',{body:{action:'sync'}});
    if(!current(client,user))return;
    if(error){let m=error.message;try{m=(await error.context.json()).error||m}catch{}throw new Error(m)}
+   await syncEngine?.sync();if(!current(client,user))return;
    if(s)s.textContent='Synchronisiert: '+(data?.synced||0)+' Bewegungen aus '+(data?.accounts||0)+' Konto/Konten.';
    await load();
   }catch(e){if(current(client,user)&&s)s.textContent=e.message||String(e)}finally{if(b)b.disabled=false}
@@ -109,7 +116,7 @@
   patch.private_category=kind==='privat'?privateCat(t):null;
   const {error}=await client.from('qonto_transactions').update(patch).eq('id',id);
   if(!current(client,user))return;
-  if(error)toast(error.message,'r');else{savedToast(kind==='privat'?'Als privat markiert':'Als betrieblich markiert');await load();}
+  if(error)toast(error.message,'r');else{savedToast(kind==='privat'?'Als privat markiert':'Als betrieblich markiert');await syncEngine?.sync();if(current(client,user))await load();}
  };
  window.qontoIgnore=async function(id){
   if(!SB||!authUser)return;
@@ -123,7 +130,7 @@
   if(error)toast(error.message,'r');else await load();
  };
  const oldSwitch=window.switchTab;
- const hook=()=>{install();const orig=window.switchTab;if(typeof orig==='function'&&!orig.__qonto){const wrapped=function(name){const r=orig.apply(this,arguments);if(name==='bank')load();return r};wrapped.__qonto=true;window.switchTab=wrapped}};
+ const hook=()=>{install();window.renderPrivateOutflows();const orig=window.switchTab;if(typeof orig==='function'&&!orig.__qonto){const wrapped=function(name){const r=orig.apply(this,arguments);if(name==='bank')load();return r};wrapped.__qonto=true;window.switchTab=wrapped}};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(hook,0));else setTimeout(hook,0);
  window.addEventListener('load',()=>setTimeout(hook,0));
 })();

@@ -20,8 +20,8 @@ function harness(){
  assert.match(elements.get('qonto-list').innerHTML,/Als sonstige Einnahme übernehmen/); // business classification stays visible
  for(const patch of [{imported_kind:'sonstige'},{imported_id:42},{ignored:true},{classification:'privat'},{label:'Zahlungen-vor-Ort'}]){state.rows=[{...credit,...patch}];await w.qontoImport('credit','ein');}
  assert.equal(state.rpcs.length,1);assert.equal(state.persisted.length,0);
- state.rows=[{...credit,label:'Zahlungen-vor-Ort'}];await w.qontoSync();assert.doesNotMatch(elements.get('qonto-list').innerHTML,/onclick="qontoImport/);assert.match(elements.get('qonto-list').innerHTML,/Kartenauszahlung/);
- state.rows=[credit];state.rpcError={message:'RPC denied'};await w.qontoImport('credit','sonstige');assert.equal(state.syncs,1);assert.match(state.toasts.at(-1)[0],/RPC denied/);
+ state.rows=[{...credit,label:'Zahlungen-vor-Ort'}];await w.qontoSync();assert.equal(state.syncs,2);assert.doesNotMatch(elements.get('qonto-list').innerHTML,/onclick="qontoImport/);assert.match(elements.get('qonto-list').innerHTML,/Kartenauszahlung/);
+ state.rows=[credit];state.rpcError={message:'RPC denied'};await w.qontoImport('credit','sonstige');assert.equal(state.syncs,2);assert.match(state.toasts.at(-1)[0],/RPC denied/);
  state.rpcError=null;let resolve;state.rpcPromise=new Promise(r=>resolve=r);const first=w.qontoImport('credit','sonstige');await Promise.resolve();await Promise.resolve();await w.qontoImport('credit','sonstige');const count=state.rpcs.length;resolve({data:123,error:null});await first;assert.equal(state.rpcs.length,count);
  const h=harness();let readDone;h.state.readPromise=new Promise(r=>readDone=r);const pending=h.ctx.window.qontoImport('credit','ein');h.ctx.authUser=null;readDone({data:credit,error:null});await pending;assert.equal(h.state.rpcs.length,0);
  const l=harness();let loadDone;l.state.loadPromise=new Promise(r=>loadDone=r);const loading=l.ctx.window.qontoSync();await Promise.resolve();await Promise.resolve();l.ctx.authUser=null;loadDone({data:[credit],error:null});await loading;assert.equal(l.elements.get('qonto-list').innerHTML,'');

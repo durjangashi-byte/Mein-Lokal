@@ -1,3 +1,10 @@
+## 2026-10-17 – Ergebnis nach privaten Ausgaben
+
+- Private Qonto-Ausgänge getrennt vom Betriebsergebnis als Entnahmen ausgewiesen und vom verfügbaren Ergebnis abgezogen.
+- Cockpit, Tag, Monat, PDF/CSV und Einzelbuchungssuche ergänzt; Betriebsmarge bleibt vor Privatentnahmen.
+- Vollständiger lesender Bankabgleich mit Cache, Monats-/Berlin-Datumsfilter und Realtime, ohne zusätzliche Finanzbuchung.
+- Schutz vor doppeltem Abzug bereits als Ausgabe importierter privater Bewegungen.
+
 ## 2026-10-16 – Sonstige Bankeinnahmen vollständig integrieren
 
 - Separate Verwaltung mit Datum, Kategorie, Suche, Monat, Cent-Summe und CRUD; bestehendes Design beibehalten.

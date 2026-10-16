@@ -661,7 +661,7 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
     <div class="metrics">
       <div class="metric"><div class="metric-lbl">Restaurant-Einnahmen</div><div class="metric-val cg" id="m-ein">0€</div></div>
       <div class="metric"><div class="metric-lbl">Kosten + Schulden</div><div class="metric-val cr" id="m-kos">0€</div></div>
-      <div class="metric"><div class="metric-lbl">Nach Schulden</div><div class="metric-val ct" id="m-erg">0€</div></div>
+      <div class="metric"><div class="metric-lbl">Nach Privatentnahmen</div><div class="metric-val ct" id="m-erg">0€</div></div>
       <div class="metric"><div class="metric-lbl">Ziel</div><div class="metric-val ca" id="m-ziel">—</div></div>
     </div>
 
@@ -672,7 +672,7 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
       <div class="panel active" id="p-dashboard">
         <div class="dashboard-vnext-head"><div><div class="dashboard-vnext-kicker">Bobo's Bistro · Finanzen</div><div class="dashboard-vnext-title">Cockpit</div></div><button class="hbtn" onclick="loadFromSupabase()">↻ Sync</button></div>
         <div id="ios-wrap"></div>
-        <div class="period-card"><label for="dashboard-period">Zeitraum der Übersicht</label><select id="dashboard-period" onchange="dashboardPeriod=this.value;localStorage.setItem('rv_dashboard_period',dashboardPeriod);renderDashboard();updateMetrics()"></select><div class="summary-note">Einnahmen inklusive erfasstem Trinkgeld. Ausgaben und Schichten nach Datum. Offene Rechnungen werden separat angezeigt und nicht nochmals als Kosten abgezogen.</div></div>
+        <div class="period-card"><label for="dashboard-period">Zeitraum der Übersicht</label><select id="dashboard-period" onchange="dashboardPeriod=this.value;localStorage.setItem('rv_dashboard_period',dashboardPeriod);renderDashboard();updateMetrics()"></select><div class="summary-note">Einnahmen inklusive erfasstem Trinkgeld. Private Qonto-Ausgaben werden separat als Entnahmen abgezogen. Ausgaben und Schichten nach Datum. Offene Rechnungen werden separat angezeigt und nicht nochmals als Kosten abgezogen.</div></div>
         <div class="sync-banner" role="status" aria-live="polite"><strong id="save-status">Daten werden geladen…</strong><small id="save-detail"></small><button type="button" onclick="loadFromSupabase()">Jetzt abgleichen</button></div>
         <div id="overdue-wrap"></div>
         <div class="desk-grid" style="padding:0">
@@ -693,7 +693,7 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
           </div>
 
           <div class="desk-full">
-<section class="booking-browser" aria-labelledby="dashboard-booking-title"><h2 id="dashboard-booking-title">Alle Einzelbuchungen</h2><div class="booking-tools"><div class="field"><label for="dashboard-booking-query">Einträge durchsuchen</label><input id="dashboard-booking-query" type="search" placeholder="Ackermann, Datum, Kategorie, Betrag …" oninput="renderBookings('dashboard')"></div><div class="field"><label for="dashboard-booking-kind">Eintragsart</label><select id="dashboard-booking-kind" onchange="renderBookings('dashboard')"><option value="">Alle Einträge</option><option value="bank">Sonstige betriebliche Einnahmen</option><option value="ein">Einnahmen</option><option value="aus">Betriebsausgaben</option><option value="schulden">Schuldenzahlungen</option><option value="mit">Schichten / Lohnkosten</option></select></div><button type="button" class="edit-btn" onclick="resetBookingSearch('dashboard')">Suche zurücksetzen</button></div><div id="dashboard-booking-count" class="booking-count" role="status" aria-live="polite"></div><div id="dashboard-bookings"></div></section>
+<section class="booking-browser" aria-labelledby="dashboard-booking-title"><h2 id="dashboard-booking-title">Alle Einzelbuchungen</h2><div class="booking-tools"><div class="field"><label for="dashboard-booking-query">Einträge durchsuchen</label><input id="dashboard-booking-query" type="search" placeholder="Ackermann, Datum, Kategorie, Betrag …" oninput="renderBookings('dashboard')"></div><div class="field"><label for="dashboard-booking-kind">Eintragsart</label><select id="dashboard-booking-kind" onchange="renderBookings('dashboard')"><option value="">Alle Einträge</option><option value="privat">Private Ausgaben / Entnahmen</option><option value="bank">Sonstige betriebliche Einnahmen</option><option value="ein">Einnahmen</option><option value="aus">Betriebsausgaben</option><option value="schulden">Schuldenzahlungen</option><option value="mit">Schichten / Lohnkosten</option></select></div><button type="button" class="edit-btn" onclick="resetBookingSearch('dashboard')">Suche zurücksetzen</button></div><div id="dashboard-booking-count" class="booking-count" role="status" aria-live="polite"></div><div id="dashboard-bookings"></div></section>
           </div>
 
           <div class="desk-full">
@@ -870,7 +870,7 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
         <div class="tages-breakdown"><div class="tages-pill"><div class="tages-pill-lbl">Bar</div><div class="tages-pill-val cg" id="ta-bar">0€</div></div><div class="tages-pill"><div class="tages-pill-lbl">Karte</div><div class="tages-pill-val cb" id="ta-karte">0€</div></div><div class="tages-pill"><div class="tages-pill-lbl">Trinkgeld</div><div class="tages-pill-val ca" id="ta-tip">0€</div></div></div>
         <div class="sec-hd">Ausgaben heute</div><div id="ta-ausgaben-wrap"></div>
         <div class="sec-hd">Personal heute</div><div id="ta-personal-wrap"></div>
-        <div class="totals-card" style="margin:14px 14px 0"><div class="t-row"><span style="font-weight:700">Ergebnis nach Schuldenzahlungen</span><strong id="ta-erg-val" class="amtg">0,00 €</strong></div></div>
+        <div class="totals-card" style="margin:14px 14px 0"><div class="t-row"><span style="font-weight:700">Ergebnis nach privaten Ausgaben</span><strong id="ta-erg-val" class="amtg">0,00 €</strong></div></div>
         <button class="btn-secondary" style="margin-top:10px;" onclick="exportTagesPDF()">📄 Tagesabschluss als PDF</button>
       </div>
       <!-- MONAT -->
@@ -878,7 +878,7 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
         <div class="month-tabs" id="month-tabs"></div>
         <div class="sec-hd">Wochenvergleich</div><div class="week-grid" id="week-grid"></div>
         <div class="sec-hd">Monatsübersicht</div><div id="monat-cards"></div>
-<section class="booking-browser" aria-labelledby="monat-booking-title"><h2 id="monat-booking-title">Alle Einzelbuchungen</h2><div class="booking-tools"><div class="field"><label for="monat-booking-query">Einträge durchsuchen</label><input id="monat-booking-query" type="search" placeholder="Ackermann, Datum, Kategorie, Betrag …" oninput="renderBookings('monat')"></div><div class="field"><label for="monat-booking-kind">Eintragsart</label><select id="monat-booking-kind" onchange="renderBookings('monat')"><option value="">Alle Einträge</option><option value="bank">Sonstige betriebliche Einnahmen</option><option value="ein">Einnahmen</option><option value="aus">Betriebsausgaben</option><option value="schulden">Schuldenzahlungen</option><option value="mit">Schichten / Lohnkosten</option></select></div><button type="button" class="edit-btn" onclick="resetBookingSearch('monat')">Suche zurücksetzen</button></div><div id="monat-booking-count" class="booking-count" role="status" aria-live="polite"></div><div id="monat-bookings"></div></section>
+<section class="booking-browser" aria-labelledby="monat-booking-title"><h2 id="monat-booking-title">Alle Einzelbuchungen</h2><div class="booking-tools"><div class="field"><label for="monat-booking-query">Einträge durchsuchen</label><input id="monat-booking-query" type="search" placeholder="Ackermann, Datum, Kategorie, Betrag …" oninput="renderBookings('monat')"></div><div class="field"><label for="monat-booking-kind">Eintragsart</label><select id="monat-booking-kind" onchange="renderBookings('monat')"><option value="">Alle Einträge</option><option value="privat">Private Ausgaben / Entnahmen</option><option value="bank">Sonstige betriebliche Einnahmen</option><option value="ein">Einnahmen</option><option value="aus">Betriebsausgaben</option><option value="schulden">Schuldenzahlungen</option><option value="mit">Schichten / Lohnkosten</option></select></div><button type="button" class="edit-btn" onclick="resetBookingSearch('monat')">Suche zurücksetzen</button></div><div id="monat-booking-count" class="booking-count" role="status" aria-live="polite"></div><div id="monat-bookings"></div></section>
         <div class="chart-section" style="margin-bottom:14px"><div class="chart-lbl">Einnahmen pro Tag</div><div id="monat-chart"></div></div>
       </div>
       <!-- RECHNUNGEN -->
@@ -1028,10 +1028,10 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
 
 <div class="toast" id="toast"></div>
 
-<script src="sync.js?v=8"></script>
+<script src="sync.js?v=9"></script>
 <script src="auth.js?v=1"></script>
 <script src="receipts.js?v=1"></script>
-<script src="qonto.js?v=4"></script>
+<script src="qonto.js?v=5"></script>
 <script>
 // ══════════════════════════════════════════════
 //  SUPABASE CONFIG  (filled via Settings UI)
@@ -1045,7 +1045,8 @@ function authMessage(message) {
 }
 function lockApp() {
   window.resetBankIncome?.();
-  if(typeof D!=='undefined')D.bank=[];
+  document.getElementById('qonto-private')?.replaceChildren();
+  if(typeof D!=='undefined'){D.bank=[];D.privat=[];}
   const sonstigeDash=document.getElementById('dashboard-sonstige-income');if(sonstigeDash)sonstigeDash.textContent='';
   clearReceiptContext();document.getElementById('modal-inner').replaceChildren();document.getElementById('modal-bg').classList.remove('show');
   authUser=null;
@@ -1061,6 +1062,7 @@ async function unlockApp(user) {
     localStorage.setItem('rv4_recovery',JSON.stringify(legacy));
   }
   for(const key of Object.keys(LOKAL_TABLES))D[key]=readLocal('rv5:'+SB_URL+':'+user.id+':'+key,[]).map(row=>LokalSync.normalize(key,row));
+  D.privat=readLocal('rv5:'+SB_URL+':'+user.id+':privat',[]);
   syncEngine=new LokalSync(SB,D,localStorage,SB_URL+':'+user.id,()=>{if(authUser?.id===user.id){saveLocal();renderAll();}},setSyncStatus);
   // Adopt old pending operations only after the server verifies the owner account.
   const oldPrefix='rv4_pending:'+SB_URL+':';
@@ -1094,6 +1096,7 @@ async function logoutApp() {
   const user=authUser;
   if(await lokalAuth?.signOut()) {
     for(const key of Object.keys(LOKAL_TABLES)){D[key]=[];if(user)localStorage.removeItem('rv5:'+SB_URL+':'+user.id+':'+key);}
+    if(user)localStorage.removeItem('rv5:'+SB_URL+':'+user.id+':privat');
     lockApp();
   }
 }
@@ -1144,10 +1147,10 @@ function readLocal(key,fallback) {
     return value&&typeof value==='object'&&!Array.isArray(value)?value:fallback;}
   catch {authMessage('Lokale Daten konnten nicht gelesen werden. Die Originaldatei bleibt erhalten; Cloud-Daten werden geladen.');return fallback;}
 }
-const D = {bank:[],ein:[],aus:[],mit:[],rec:[],lief:[],staff:readLocal('rv3_staff',[]),settings:readLocal('rv3_set',{ziel:0,tage:14,plaetze:40})};
+const D = {privat:[],bank:[],ein:[],aus:[],mit:[],rec:[],lief:[],staff:readLocal('rv3_staff',[]),settings:readLocal('rv3_set',{ziel:0,tage:14,plaetze:40})};
 const saveLocal = k => {
-  const m={bank:'rv3_bank',ein:'rv3_ein',aus:'rv3_aus',mit:'rv3_mit',staff:'rv3_staff',settings:'rv3_set',rec:'rv3_rec',lief:'rv3_lief'};
-  const storageKey=key=>LOKAL_TABLES[key]&&authUser?'rv5:'+SB_URL+':'+authUser.id+':'+key:m[key];
+  const m={privat:'rv3_privat',bank:'rv3_bank',ein:'rv3_ein',aus:'rv3_aus',mit:'rv3_mit',staff:'rv3_staff',settings:'rv3_set',rec:'rv3_rec',lief:'rv3_lief'};
+  const storageKey=key=>(LOKAL_TABLES[key]||key==='privat')&&authUser?'rv5:'+SB_URL+':'+authUser.id+':'+key:m[key];
   if(k) localStorage.setItem(storageKey(k),JSON.stringify(D[k]));
   else Object.keys(m).forEach(kk=>localStorage.setItem(storageKey(kk),JSON.stringify(D[kk])));
 };
@@ -1161,7 +1164,19 @@ const today = () => {const d=new Date();return `${d.getFullYear()}-${String(d.ge
 let dashboardPeriod=localStorage.getItem('rv_dashboard_period') ?? today().slice(0,7);
 function bankSum(rows=D.bank){return rows.reduce((sum,r)=>sum+Math.round(Number(r.betrag)*100),0)/100;}
 function bankSummary(amount){return `<div class="t-row"><span>Sonstige betriebliche Einnahmen</span><strong class="amtg">${eur(amount)}</strong></div>`;}
-function periodData(){const match=r=>!dashboardPeriod||r.datum?.startsWith(dashboardPeriod);return {bank:D.bank.filter(match),ein:D.ein.filter(match),aus:D.aus.filter(match),mit:D.mit.filter(match)};}
+function qontoBookingDate(row){
+ const value=row.settled_at||row.emitted_at;if(!value)return '';
+ const date=new Date(value);if(!Number.isFinite(date.getTime()))return '';
+ const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Berlin',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date);
+ const part=key=>parts.find(p=>p.type===key)?.value;return part('year')+'-'+part('month')+'-'+part('day');
+}
+function privateItems(period=''){
+ return D.privat.filter(r=>r.classification==='privat'&&r.side==='debit'&&r.status==='completed').map(r=>({id:r.id,datum:qontoBookingDate(r),betrag:Number(r.amount)||0,beschreibung:r.label||r.reference||'Private Ausgabe',kategorie:r.private_category||'Privat',imported_id:r.imported_kind==='aus'?Number(r.imported_id):null})).filter(r=>!period||r.datum.startsWith(period));
+}
+function privateSum(period=''){return bankSum(privateItems(period));}
+function businessExpenses(rows){const ids=new Set(privateItems().map(r=>r.imported_id).filter(id=>id!==null));return rows.filter(r=>!ids.has(r.id));}
+function privateSummaryRows(operating,amount){return `<div class="t-row"><span>Ergebnis nach Schulden, vor Privat</span><strong>${eur(operating)}</strong></div><div class="t-row"><span>Private Ausgaben / Entnahmen</span><strong class="amtr">${eur(amount)}</strong></div><div class="t-row"><span>Ergebnis nach privaten Ausgaben</span><strong>${eur(operating-amount)}</strong></div>`;}
+function periodData(){const match=r=>!dashboardPeriod||r.datum?.startsWith(dashboardPeriod);return {bank:D.bank.filter(match),ein:D.ein.filter(match),aus:businessExpenses(D.aus.filter(match)),mit:D.mit.filter(match)};}
 const formSpecs={
  ein:{tab:'einnahmen',prefix:'e',fields:['datum','bar','karte','tip','gaeste','notiz']},
  aus:{tab:'ausgaben',prefix:'a',fields:['datum','kat','beschr','betrag']},
@@ -1170,7 +1185,7 @@ const formSpecs={
  lief:{tab:'lieferanten',prefix:'l',fields:['name','kat','kontakt','zahlungsziel','notiz']}
 };
 const edits={},formBusy=new Set(),quickInitialized=new Set();
-function editButton(key,id){if(key==='bank')return `<button type="button" class="edit-btn" onclick="editBankIncome(${id})">Bearbeiten</button>`;return `<button type="button" class="edit-btn" onclick="editEntry('${key}',${id})">Bearbeiten</button>`;}
+function editButton(key,id){if(key==='privat')return `<button type="button" class="edit-btn" onclick="switchTab('bank')">In Bank ansehen</button>`;if(key==='bank')return `<button type="button" class="edit-btn" onclick="editBankIncome(${id})">Bearbeiten</button>`;return `<button type="button" class="edit-btn" onclick="editEntry('${key}',${id})">Bearbeiten</button>`;}
 function editEntry(key,id){
  if(key==='aus'&&D.aus.find(r=>r.id===id)?.rechnung_id){switchTab('rechnungen');toast('Bitte Zahlung dort korrigieren.');return;}
  if(key==='aus'&&D.aus.find(r=>r.id===id)?.kat==='schulden'){editDebt(id);return;}
@@ -1305,7 +1320,7 @@ function updateMetrics() {
   const tE=data.ein.reduce((s,e)=>s+e.bar+e.karte+e.tip,0);
   const tA=data.aus.reduce((s,a)=>s+a.betrag,0);
   const tL=data.mit.reduce((s,m)=>s+m.ausgezahlt,0);
-  const g=tE+bankSum(data.bank)-tA-tL;
+  const g=tE+bankSum(data.bank)-tA-tL-privateSum(dashboardPeriod);
   document.getElementById('m-ein').textContent=eur(tE,true);
   document.getElementById('m-kos').textContent=eur(tA+tL,true);
   const me=document.getElementById('m-erg'); me.textContent=eur(g,true); me.className='metric-val '+(g>0?'cg':g<0?'cr':'ct');
@@ -1490,11 +1505,11 @@ function delStaff(name){D.staff=D.staff.filter(s=>s.name!==name);saveLocal('staf
 function bookingRows(scope){
  const month=scope==='monat'?selectedMonth:dashboardPeriod;
  const matches=r=>!month||r.datum?.startsWith(month);
- return ['ein','bank','aus','mit'].flatMap(key=>D[key].filter(matches).map(row=>({key,row,kind:key==='aus'&&row.kat==='schulden'?'schulden':key})));
+ return ['ein','bank','aus','mit','privat'].flatMap(key=>(key==='privat'?privateItems():key==='aus'?businessExpenses(D.aus):D[key]).filter(matches).map(row=>({key,row,kind:key==='aus'&&row.kat==='schulden'?'schulden':key})));
 }
 function bookingAmount({key,row}){return key==='ein'?Number(row.bar||0)+Number(row.karte||0)+Number(row.tip||0):Number(key==='mit'?row.ausgezahlt||0:row.betrag||0);}
-function bookingTitle({key,row}){return key==='bank'?row.beschreibung:key==='ein'?'Tageseinnahme':key==='mit'?(row.name||'Schicht'):(row.beschr||'Ausgabe');}
-function bookingCategory({key,row}){return key==='bank'?(row.kategorie||'Bankeinnahme'):key==='aus'?(KAT[row.kat]?.label||row.kat||'Sonstiges'):key==='mit'?(row.pos||'Schicht'):'Einnahmen';}
+function bookingTitle({key,row}){return key==='bank'||key==='privat'?row.beschreibung:key==='ein'?'Tageseinnahme':key==='mit'?(row.name||'Schicht'):(row.beschr||'Ausgabe');}
+function bookingCategory({key,row}){return key==='bank'||key==='privat'?(row.kategorie||'Bankeinnahme'):key==='aus'?(KAT[row.kat]?.label||row.kat||'Sonstiges'):key==='mit'?(row.pos||'Schicht'):'Einnahmen';}
 function bookingMatches(entry,query){
  const {row}=entry,amount=bookingAmount(entry);
  const values=[bookingTitle(entry),bookingCategory(entry),row.datum,fmt(row.datum),row.notiz,row.name,row.pos,row.von,row.bis,row.stunden,row.bar,row.karte,row.tip,row.gaeste,amount,eur(amount),amount.toFixed(2),amount.toFixed(2).replace('.',',')];
@@ -1510,7 +1525,7 @@ function renderBookings(scope){
  const all=bookingRows(scope),rows=all.filter(entry=>(!kind||entry.kind===kind)&&bookingMatches(entry,query));
  const open=new Set(Array.from(target.querySelectorAll?.('details[open]')||[],el=>el.dataset.booking));
  document.getElementById(scope+'-booking-count').textContent=rows.length+' von '+all.length+' Einträgen im gewählten Zeitraum · Position antippen für Details';
- const labels={ein:'Restaurant-Einnahmen',bank:'Sonstige betriebliche Einnahmen',aus:'Betriebsausgaben (inkl. erfasster Gehälter)',schulden:'Schuldenzahlungen',mit:'Schichten / Lohnkosten'};
+ const labels={ein:'Restaurant-Einnahmen',bank:'Sonstige betriebliche Einnahmen',privat:'Private Ausgaben / Entnahmen',aus:'Betriebsausgaben (inkl. erfasster Gehälter)',schulden:'Schuldenzahlungen',mit:'Schichten / Lohnkosten'};
  target.innerHTML=Object.entries(labels).map(([group,label])=>{
   const entries=rows.filter(e=>e.kind===group).sort((a,b)=>String(b.row.datum).localeCompare(String(a.row.datum))||Number(b.row.id)-Number(a.row.id));
   if(!entries.length)return '';
@@ -1525,9 +1540,9 @@ function renderBookings(scope){
 function renderDashboard() {
   const data=periodData();
   renderBookings('dashboard');
-  const months=[...new Set([today().slice(0,7),dashboardPeriod,...D.ein.map(r=>r.datum?.slice(0,7)),...D.aus.map(r=>r.datum?.slice(0,7)),...D.mit.map(r=>r.datum?.slice(0,7)),...D.bank.map(r=>r.datum?.slice(0,7))].filter(m=>/^\d{4}-\d{2}$/.test(m)))].sort().reverse();
+  const months=[...new Set([today().slice(0,7),dashboardPeriod,...D.ein.map(r=>r.datum?.slice(0,7)),...D.aus.map(r=>r.datum?.slice(0,7)),...D.mit.map(r=>r.datum?.slice(0,7)),...D.bank.map(r=>r.datum?.slice(0,7)),...privateItems().map(r=>r.datum?.slice(0,7))].filter(m=>/^\d{4}-\d{2}$/.test(m)))].sort().reverse();
   document.getElementById('dashboard-period').innerHTML=`<option value=""${!dashboardPeriod?' selected':''}>Gesamt · alle Monate</option>`+months.map(m=>`<option value="${m}"${m===dashboardPeriod?' selected':''}>${monthName(m.slice(5))} ${m.slice(0,4)}</option>`).join('');
-  document.getElementById('dashboard-result-label').textContent='Ergebnis nach Schuldenzahlungen · '+(dashboardPeriod?monthName(dashboardPeriod.slice(5))+' '+dashboardPeriod.slice(0,4):'gesamt');
+  document.getElementById('dashboard-result-label').textContent='Ergebnis nach privaten Ausgaben · '+(dashboardPeriod?monthName(dashboardPeriod.slice(5))+' '+dashboardPeriod.slice(0,4):'gesamt');
   const tE=data.ein.reduce((s,e)=>s+e.bar+e.karte+e.tip,0);
   const tA=data.aus.reduce((s,a)=>s+a.betrag,0);
   const tL=data.mit.reduce((s,m)=>s+m.ausgezahlt,0);
@@ -1535,10 +1550,10 @@ function renderDashboard() {
   const tLabor=tL+tSalary;
   const tF=data.aus.filter(a=>a.kat==='lebensmittel').reduce((s,a)=>s+a.betrag,0);
   const tBank=bankSum(data.bank);
-  const g=tE+tBank-tA-tL, mg=tE+tBank>0?Math.round(g/(tE+tBank)*100):0, z=D.settings.ziel||0, tage=D.settings.tage||14;
+  const operating=tE+tBank-tA-tL,privateAmount=privateSum(dashboardPeriod),g=operating-privateAmount, mg=tE+tBank>0?Math.round(operating/(tE+tBank)*100):0, z=D.settings.ziel||0, tage=D.settings.tage||14;
 
   document.getElementById('dh-before-labor').textContent=eur(tE+tBank-(tA-tSalary)+debtSum(data.aus));
-  document.getElementById('debt-breakdown').innerHTML=bankSummary(tBank)+debtSummary(tE+tBank,tA,tL,data.aus);
+  document.getElementById('debt-breakdown').innerHTML=bankSummary(tBank)+debtSummary(tE+tBank,tA,tL,data.aus)+privateSummaryRows(operating,privateAmount);
   document.getElementById('dh-labor').textContent=eur(tLabor);
   document.getElementById('dh-open').textContent=eur(D.rec.filter(r=>!r.bezahlt).reduce((sum,r)=>sum+r.betrag,0));
   const dv=document.getElementById('dh-val'); dv.textContent=eur(g); dv.className='dash-hero-val '+(g>=0?'pos':'neg');
@@ -1546,7 +1561,7 @@ function renderDashboard() {
   const pct=z>0?Math.min(100,Math.max(0,Math.round(g/z*100))):0;
   const pf=document.getElementById('dh-prog'); pf.style.width=pct+'%'; pf.style.background=pct>=100?'var(--green)':pct>=60?'var(--amber)':'var(--blue)';
   document.getElementById('dh-prog-txt').textContent=z>0?pct+'% erreicht · noch '+eur(Math.max(0,z-g)):'In Einstellungen Ziel setzen';
-  document.getElementById('dh-marge').textContent='Marge: '+mg+'%';
+  document.getElementById('dh-marge').textContent='Betriebsmarge: '+mg+'%';
 
   const fP=tE>0?Math.round(tF/tE*100):null, lP=tE>0?Math.round(tLabor/tE*100):null;
   const byDay={};data.ein.forEach(e=>{byDay[e.datum]=(byDay[e.datum]||0)+e.bar+e.karte+e.tip;});
@@ -1577,7 +1592,7 @@ function renderDashboard() {
 // ══════════════════════════════════════════════
 //  EXPORT / IMPORT
 // ══════════════════════════════════════════════
-function exportJSON(){const b=new Blob([JSON.stringify({bank:D.bank,ein:D.ein,aus:D.aus,mit:D.mit,rec:D.rec,lief:D.lief,pending:syncEngine?.pending()||[],recovery:JSON.parse(localStorage.getItem('rv4_recovery')||'null'),staff:D.staff,settings:D.settings,v:3,ts:new Date().toISOString()},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='restaurant-backup-'+today()+'.json';a.click();toast('Backup exportiert');}
+function exportJSON(){const b=new Blob([JSON.stringify({bank:D.bank,ein:D.ein,aus:D.aus,mit:D.mit,rec:D.rec,lief:D.lief,pending:syncEngine?.pending()||[],recovery:JSON.parse(localStorage.getItem('rv4_recovery')||'null'),staff:D.staff,settings:D.settings,privatSnapshot:D.privat,v:3,ts:new Date().toISOString()},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='restaurant-backup-'+today()+'.json';a.click();toast('Backup exportiert');}
 async function importData(x) {
   if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Ungültiges Backup');
   const normalized={};
@@ -1601,9 +1616,9 @@ async function recoverLocal() {
   catch(e){toast('Wiederherstellung: '+e.message,'r');}
 }
 
-function exportCSV(){let c='Typ,Datum,Beschreibung,Bar,Karte,TG,Betrag,Kat,Name,Stunden\n';D.ein.forEach(e=>{c+=`Einnahme,${e.datum},"${e.notiz||''}",${e.bar},${e.karte},${e.tip},${e.bar+e.karte+e.tip},,\n`;});D.bank.forEach(r=>{c+=`Bankeinnahme,${r.datum},"${r.beschreibung.replace(/"/g,'""')}",,,,${r.betrag},${r.kategorie},\n`;});D.aus.forEach(a=>{c+=`${a.kat==='schulden'?'Schuldenzahlung':'Ausgabe'},${a.datum},"${a.beschr||''}",,,, ${a.betrag},${a.kat},\n`;});D.mit.forEach(m=>{c+=`Schicht,${m.datum},"${m.pos}",,,, ${m.ausgezahlt},,${m.name},${m.stunden.toFixed(1)}\n`;});const b=new Blob([c],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='restaurant-'+today()+'.csv';a.click();toast('CSV exportiert');}
+function exportCSV(){let c='Typ,Datum,Beschreibung,Bar,Karte,TG,Betrag,Kat,Name,Stunden\n';D.ein.forEach(e=>{c+=`Einnahme,${e.datum},"${e.notiz||''}",${e.bar},${e.karte},${e.tip},${e.bar+e.karte+e.tip},,\n`;});D.bank.forEach(r=>{c+=`Bankeinnahme,${r.datum},"${r.beschreibung.replace(/"/g,'""')}",,,,${r.betrag},${r.kategorie},\n`;});privateItems().forEach(r=>{c+=`Privatentnahme,${r.datum},"${r.beschreibung.replace(/"/g,'""')}",,,,${r.betrag},Privat,\n`;});businessExpenses(D.aus).forEach(a=>{c+=`${a.kat==='schulden'?'Schuldenzahlung':'Ausgabe'},${a.datum},"${a.beschr||''}",,,, ${a.betrag},${a.kat},\n`;});D.mit.forEach(m=>{c+=`Schicht,${m.datum},"${m.pos}",,,, ${m.ausgezahlt},,${m.name},${m.stunden.toFixed(1)}\n`;});const b=new Blob([c],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='restaurant-'+today()+'.csv';a.click();toast('CSV exportiert');}
 
-function renderAll(){window.renderBankIncome?.();renderEin();renderAus();renderDebt();renderMit();renderGehalt();renderDashboard();updateMetrics();renderSettings();renderRechnungen();renderLieferanten();checkOverdue();renderTagesabschluss();renderMonat();}
+function renderAll(){window.renderPrivateOutflows?.();window.renderBankIncome?.();renderEin();renderAus();renderDebt();renderMit();renderGehalt();renderDashboard();updateMetrics();renderSettings();renderRechnungen();renderLieferanten();checkOverdue();renderTagesabschluss();renderMonat();}
 
 // ══════════════════════════════════════════════
 //  BOOT
@@ -1652,7 +1667,7 @@ if (rFaellig) rFaellig.value = today();
 function renderTagesabschluss() {
   const t = today();
   const einH = D.ein.filter(e => e.datum === t);
-  const ausH = D.aus.filter(a => a.datum === t);
+  const ausH = businessExpenses(D.aus.filter(a => a.datum === t));
   const mitH = D.mit.filter(m => m.datum === t);
   const tBar = einH.reduce((s,e) => s+e.bar, 0);
   const tKarte = einH.reduce((s,e) => s+e.karte, 0);
@@ -1663,7 +1678,8 @@ function renderTagesabschluss() {
   const tGehalt = ausH.filter(a=>a.kat==='personal').reduce((s,a)=>s+a.betrag,0);
   const tPersonal = tLohn+tGehalt;
   const tBank=bankSum(D.bank.filter(r=>r.datum===t));
-  const tErg = tEin+tBank-tAus-tLohn;
+  const tOperating=tEin+tBank-tAus-tLohn,tPrivate=privateSum(t);
+  const tErg = tOperating-tPrivate;
   const now = new Date();
   const el_date = document.getElementById('ta-date');
   if(el_date) el_date.textContent = now.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
@@ -1676,7 +1692,7 @@ function renderTagesabschluss() {
   const el_tip = document.getElementById('ta-tip'); if(el_tip) el_tip.textContent=eur(tTip,true);
   const aw = document.getElementById('ta-ausgaben-wrap');
   if(aw) aw.innerHTML = ausH.some(a=>a.kat!=='schulden') ? ausH.filter(a=>a.kat!=='schulden').map(a => { const k=KAT[a.kat]||KAT.sonstiges; return `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${k.icon} ${esc(a.beschr||k.label)}</span><strong class="amtr">${eur(a.betrag)}</strong></div></div>`; }).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Ausgaben gesamt</span><strong class="amtr">${eur(tAus-debtSum(ausH))}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Keine Ausgaben heute</div>';
-  if(aw) aw.innerHTML+=`<div class="totals-card">${bankSummary(tBank)+debtSummary(tEin+tBank,tAus,tLohn,ausH)}</div>`;
+  if(aw) aw.innerHTML+=`<div class="totals-card">${bankSummary(tBank)+debtSummary(tEin+tBank,tAus,tLohn,ausH)+privateSummaryRows(tOperating,tPrivate)}</div>`;
   const pw = document.getElementById('ta-personal-wrap');
   if(pw) pw.innerHTML = mitH.length ? mitH.map(m => `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${esc(m.name)} (${esc(m.von)}–${esc(m.bis)})</span><strong class="amtr">${eur(m.ausgezahlt)}</strong></div></div>`).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Schichtlohnkosten</span><strong class="amtr">${eur(tLohn)}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Kein Personal heute</div>';
   const ev = document.getElementById('ta-erg-val');
@@ -1692,7 +1708,7 @@ const fmtFull = s => { if(!s)return'—'; const[y,mo,d]=s.split('-'); return esc
 
 function renderMonat() {
   const months = new Set();
-  [...D.ein,...D.aus,...D.mit,...D.bank].forEach(x => { if(x.datum) months.add(x.datum.slice(0,7)); });
+  [...D.ein,...D.aus,...D.mit,...D.bank,...privateItems()].forEach(x => { if(x.datum) months.add(x.datum.slice(0,7)); });
   const now = new Date();
   const currentM = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   months.add(currentM);
@@ -1703,13 +1719,14 @@ function renderMonat() {
   renderBookings('monat');
   const [y,mo] = selectedMonth.split('-');
   const einM = D.ein.filter(e => e.datum && e.datum.startsWith(selectedMonth));
-  const ausM = D.aus.filter(a => a.datum && a.datum.startsWith(selectedMonth));
+  const ausM = businessExpenses(D.aus.filter(a => a.datum && a.datum.startsWith(selectedMonth)));
   const mitM = D.mit.filter(m => m.datum && m.datum.startsWith(selectedMonth));
   const tE = einM.reduce((s,e) => s+e.bar+e.karte+e.tip, 0);
   const tA = ausM.reduce((s,a) => s+a.betrag, 0);
   const tL = mitM.reduce((s,m) => s+m.ausgezahlt, 0);
   const tBank=bankSum(D.bank.filter(r=>r.datum.startsWith(selectedMonth)));
-  const gew = tE+tBank-tA-tL;
+  const operating=tE+tBank-tA-tL,tPrivate=privateSum(selectedMonth);
+  const gew = operating-tPrivate;
   const weeks = [1,2,3,4,5];
   const weekData = weeks.map(w => {
     const start = new Date(parseInt(y),parseInt(mo)-1,(w-1)*7+1);
@@ -1720,7 +1737,7 @@ function renderMonat() {
   const wg = document.getElementById('week-grid');
   if(wg) wg.innerHTML = weekData.length ? weekData.map(w => `<div class="week-card"><div class="week-lbl">Woche ${w.w}</div><div class="week-val ${w.total>0?'cg':'ct'}">${eur(w.total,true)}</div><div class="week-sub">${w.count} Tage</div></div>`).join('') : '<div style="grid-column:1/-1;padding:14px 0;font-size:13px;color:var(--text2)">Keine Daten</div>';
   const mc = document.getElementById('monat-cards');
-  if(mc) mc.innerHTML = `<div class="totals-card"><div class="t-row"><span>Restaurant-Einnahmen inkl. Trinkgeld</span><strong class="amtg">${eur(tE)}</strong></div>${bankSummary(tBank)}<div class="t-row"><span>Gesamteinnahmen</span><strong>${eur(tE+tBank)}</strong></div><div class="t-row"><span>Betriebsausgaben</span><strong class="amtr">${eur(tA-debtSum(ausM))}</strong></div><div class="t-row"><span>Lohnkosten</span><strong class="amtr">${eur(tL)}</strong></div><div class="t-row"><span>Betriebsergebnis vor Schulden</span><strong>${eur(gew+debtSum(ausM))}</strong></div><div class="t-row"><span>Schuldenzahlungen</span><strong class="amtr">${eur(debtSum(ausM))}</strong></div><div class="t-row"><span style="font-weight:700">Ergebnis nach Schuldenzahlungen</span><strong class="${gew>=0?'amtg':'amtr'}" style="font-size:16px">${eur(gew)}</strong></div>${tE+tBank>0?`<div class="t-row"><span>Marge</span><strong>${Math.round(gew/(tE+tBank)*100)}%</strong></div>`:''}</div>`;
+  if(mc) mc.innerHTML = `<div class="totals-card"><div class="t-row"><span>Restaurant-Einnahmen inkl. Trinkgeld</span><strong class="amtg">${eur(tE)}</strong></div>${bankSummary(tBank)}<div class="t-row"><span>Gesamteinnahmen</span><strong>${eur(tE+tBank)}</strong></div><div class="t-row"><span>Betriebsausgaben</span><strong class="amtr">${eur(tA-debtSum(ausM))}</strong></div><div class="t-row"><span>Lohnkosten</span><strong class="amtr">${eur(tL)}</strong></div><div class="t-row"><span>Betriebsergebnis vor Schulden</span><strong>${eur(operating+debtSum(ausM))}</strong></div><div class="t-row"><span>Schuldenzahlungen</span><strong class="amtr">${eur(debtSum(ausM))}</strong></div><div class="t-row"><span>Ergebnis nach Schulden, vor Privat</span><strong>${eur(operating)}</strong></div><div class="t-row"><span>Private Ausgaben / Entnahmen</span><strong class="amtr">${eur(tPrivate)}</strong></div><div class="t-row"><span style="font-weight:700">Ergebnis nach privaten Ausgaben</span><strong class="${gew>=0?'amtg':'amtr'}" style="font-size:16px">${eur(gew)}</strong></div>${tE+tBank>0?`<div class="t-row"><span>Betriebsmarge</span><strong>${Math.round(operating/(tE+tBank)*100)}%</strong></div>`:''}</div>`;
   const byDay = {}; einM.forEach(e => { byDay[e.datum]=(byDay[e.datum]||0)+e.bar+e.karte+e.tip; });
   const days = Object.keys(byDay).sort(); const maxD = Math.max(...days.map(d=>byDay[d]),1);
   const mc2 = document.getElementById('monat-chart');
@@ -1828,16 +1845,16 @@ function exportTagesPDF() {
   const doc = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   const rname = D.settings.rname||'Mein Restaurant';
   const t = today();
-  const einH=D.ein.filter(e=>e.datum===t), ausH=D.aus.filter(a=>a.datum===t), mitH=D.mit.filter(m=>m.datum===t);
+  const einH=D.ein.filter(e=>e.datum===t), ausH=businessExpenses(D.aus.filter(a=>a.datum===t)), mitH=D.mit.filter(m=>m.datum===t);
   const tBar=einH.reduce((s,e)=>s+e.bar,0), tKarte=einH.reduce((s,e)=>s+e.karte,0), tTip=einH.reduce((s,e)=>s+e.tip,0);
-  const tEin=tBar+tKarte+tTip, tAus=ausH.reduce((s,a)=>s+a.betrag,0), tLohn=mitH.reduce((s,m)=>s+m.ausgezahlt,0), tBank=bankSum(D.bank.filter(r=>r.datum===t)), tErg=tEin+tBank-tAus-tLohn;
+  const tEin=tBar+tKarte+tTip, tAus=ausH.reduce((s,a)=>s+a.betrag,0), tLohn=mitH.reduce((s,m)=>s+m.ausgezahlt,0), tBank=bankSum(D.bank.filter(r=>r.datum===t)), tOperating=tEin+tBank-tAus-tLohn,tPrivate=privateSum(t),tErg=tOperating-tPrivate;
   doc.setFillColor(10,10,10); doc.rect(0,0,210,40,'F');
   doc.setTextColor(34,197,94); doc.setFontSize(18); doc.setFont('helvetica','bold');
   doc.text('Tagesabschluss · '+rname,20,18);
   doc.setTextColor(180,180,180); doc.setFontSize(9); doc.setFont('helvetica','normal');
   doc.text(new Date().toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}),20,28);
   let y=52;
-  const rows=[['Einnahmen Bar',eur(tBar),[34,197,94]],['Einnahmen Karte',eur(tKarte),[59,130,246]],['Trinkgeld',eur(tTip),[245,158,11]],['Restaurant-Einnahmen',eur(tEin),[34,197,94]],['Sonstige betriebliche Einnahmen',eur(tBank),[34,197,94]],['Betriebsausgaben',eur(tAus-debtSum(ausH)),[239,68,68]],['Schuldenzahlungen',eur(debtSum(ausH)),[245,158,11]],['Lohnkosten',eur(tLohn),[239,68,68]],['Ergebnis nach Schuldenzahlungen',eur(tErg),tErg>=0?[34,197,94]:[239,68,68]]];
+  const rows=[['Einnahmen Bar',eur(tBar),[34,197,94]],['Einnahmen Karte',eur(tKarte),[59,130,246]],['Trinkgeld',eur(tTip),[245,158,11]],['Restaurant-Einnahmen',eur(tEin),[34,197,94]],['Sonstige betriebliche Einnahmen',eur(tBank),[34,197,94]],['Betriebsausgaben',eur(tAus-debtSum(ausH)),[239,68,68]],['Schuldenzahlungen',eur(debtSum(ausH)),[245,158,11]],['Lohnkosten',eur(tLohn),[239,68,68]],['Ergebnis vor privaten Ausgaben',eur(tOperating),[34,197,94]],['Private Ausgaben / Entnahmen',eur(tPrivate),[239,68,68]],['Ergebnis nach privaten Ausgaben',eur(tErg),tErg>=0?[34,197,94]:[239,68,68]]];
   rows.forEach((r,i) => {
     doc.setFillColor(i===3||i===rows.length-1?15:20,20,20); doc.rect(14,y-4,182,10,'F');
     doc.setTextColor(200,200,200); doc.setFontSize(i===rows.length-1?10:9); doc.setFont('helvetica',i===3||i===rows.length-1?'bold':'normal');
@@ -1857,13 +1874,15 @@ function exportPDF() {
   const doc = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   const rname = D.settings.rname||'Mein Restaurant';
   const tE=D.ein.reduce((s,e)=>s+e.bar+e.karte+e.tip,0);
-  const tA=D.aus.reduce((s,a)=>s+a.betrag,0);
+  const businessOut=businessExpenses(D.aus);
+  const tA=businessOut.reduce((s,a)=>s+a.betrag,0);
   const tL=D.mit.reduce((s,m)=>s+m.ausgezahlt,0);
   const tBank=bankSum(D.bank);
-  const gew=tE+tBank-tA-tL;
-  const fP=tE>0?Math.round(D.aus.filter(a=>a.kat==='lebensmittel').reduce((s,a)=>s+a.betrag,0)/tE*100):0;
+  const operating=tE+tBank-tA-tL,tPrivate=privateSum();
+  const gew=operating-tPrivate;
+  const fP=tE>0?Math.round(businessOut.filter(a=>a.kat==='lebensmittel').reduce((s,a)=>s+a.betrag,0)/tE*100):0;
   const lP=tE>0?Math.round(tL/tE*100):0;
-  const mg=tE+tBank>0?Math.round(gew/(tE+tBank)*100):0;
+  const mg=tE+tBank>0?Math.round(operating/(tE+tBank)*100):0;
   let y=20;
   doc.setFillColor(10,10,10); doc.rect(0,0,210,40,'F');
   doc.setTextColor(34,197,94); doc.setFontSize(20); doc.setFont('helvetica','bold');
@@ -1878,9 +1897,9 @@ function exportPDF() {
   doc.setFontSize(22); doc.setFont('helvetica','bold');
   doc.text(eur(gew),20,y+14);
   doc.setTextColor(120,120,120); doc.setFontSize(9);
-  doc.text('Marge: '+mg+'%  |  Warenkosten: '+fP+'%  |  Personalkosten: '+lP+'%',110,y+14);
+  doc.text('Betriebsmarge: '+mg+'%  |  Warenkosten: '+fP+'%  |  Personalkosten: '+lP+'%',190,y+14,{align:'right'});
   y+=42;
-  const kpis=[['Restaurant inkl. Trinkgeld',eur(tE),'g'],['Sonstige betriebliche Einnahmen',eur(tBank),'g'],['Gesamteinnahmen',eur(tE+tBank),'g'],['Betriebsausgaben',eur(tA-debtSum(D.aus)),'r'],['Schuldenzahlungen',eur(debtSum(D.aus)),'r'],['Vor Schuldenzahlungen',eur(gew+debtSum(D.aus)),'g'],['Lohnkosten',eur(tL),'r'],['Nach Schuldenzahlungen',eur(gew),gew>=0?'g':'r'],['Warenkosten %',fP+'%',fP<=30?'g':fP<=40?'a':'r'],['Personalkosten %',lP+'%',lP<=35?'g':lP<=45?'a':'r']];
+  const kpis=[['Restaurant inkl. Trinkgeld',eur(tE),'g'],['Sonstige betriebliche Einnahmen',eur(tBank),'g'],['Gesamteinnahmen',eur(tE+tBank),'g'],['Betriebsausgaben',eur(tA-debtSum(businessOut)),'r'],['Schuldenzahlungen',eur(debtSum(businessOut)),'r'],['Vor Schuldenzahlungen',eur(operating+debtSum(businessOut)),'g'],['Lohnkosten',eur(tL),'r'],['Vor privaten Ausgaben',eur(operating),'g'],['Private Ausgaben / Entnahmen',eur(tPrivate),'r'],['Nach privaten Ausgaben',eur(gew),gew>=0?'g':'r'],['Warenkosten %',fP+'%',fP<=30?'g':fP<=40?'a':'r'],['Personalkosten %',lP+'%',lP<=35?'g':lP<=45?'a':'r']];
   doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(180,180,180);
   doc.text('KENNZAHLEN',14,y); y+=6;
   kpis.forEach((kpi,i) => {
@@ -1920,7 +1939,7 @@ function exportPDF() {
   if(y>240){doc.addPage();y=20;}
   doc.setFontSize(10);doc.setFont('helvetica','bold');
   doc.text('BETRIEBSAUSGABEN / SCHULDENZAHLUNGEN',14,y); y+=6;
-  D.aus.slice(0,25).forEach(a => {
+  businessOut.slice(0,25).forEach(a => {
     if(y>265){doc.addPage();y=20;}
     const k=KAT[a.kat]||KAT.sonstiges;
     doc.setFillColor(20,20,20); doc.rect(14,y-4,182,10,'F');

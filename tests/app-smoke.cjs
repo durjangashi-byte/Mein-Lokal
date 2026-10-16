@@ -97,6 +97,17 @@ assert.equal(globalThis.LOKAL_TABLES.bank.name,'sonstige_einnahmen');
 assert.equal(globalThis.LokalSync.normalize('bank',{id:8,betrag:'16.24',qonto_transaction_id:'source'}).betrag,16.24);
 assert.equal(globalThis.LokalSync.normalize('bank',{id:8,qonto_transaction_id:'source'}).qonto_transaction_id,'source');
 console.log('PASS bank income period/result separation, cent totals, month-only bank entries, salary/debt handling and immutable restaurant data');
+
+// Private source withdrawals reduce the final result, preserving the operating result and avoiding linked duplicates.
+run(`D.ein=[{id:1,datum:'2026-10-01',bar:800,karte:200,tip:0,gaeste:0,notiz:''}];D.aus=[{id:2,datum:'2026-10-01',kat:'lebensmittel',betrag:100,beschr:'Food'},{id:3,datum:'2026-10-01',kat:'personal',betrag:40,beschr:'Salary'},{id:4,datum:'2026-10-01',kat:'schulden',betrag:25,beschr:'Debt'},{id:5,datum:'2026-10-01',kat:'sonstiges',betrag:50,beschr:'Previously imported private'}];D.mit=[{id:6,datum:'2026-10-01',ausgezahlt:80,name:'Shift',stunden:4,lohn:20,pos:'Service',von:'10:00',bis:'14:00'}];D.bank=[];D.privat=[{id:'p1',amount:50,side:'debit',classification:'privat',status:'completed',settled_at:'2026-10-01T12:00:00Z',label:'Private A',imported_kind:'aus',imported_id:5},{id:'p2',amount:20,side:'debit',classification:'privat',status:'completed',settled_at:'2026-09-30T22:30:00Z',label:'Private B',ignored:true},{id:'p3',amount:700,side:'credit',classification:'privat',status:'completed',settled_at:'2026-10-01T12:00:00Z'},{id:'p4',amount:600,side:'debit',classification:'privat',status:'declined',settled_at:'2026-10-01T12:00:00Z'},{id:'p5',amount:15,side:'debit',classification:'privat',status:'completed',settled_at:'2026-09-01T12:00:00Z'}];dashboardPeriod='2026-10';selectedMonth='2026-10';renderAll()`);
+assert.equal(run("privateSum('2026-10')"),70);assert.equal(run('privateSum()'),85);
+assert.equal(run('qontoBookingDate(D.privat[1])'),'2026-10-01');
+assert.match(els.get('dh-val').textContent,/685,00/);assert.match(els.get('debt-breakdown').innerHTML,/755,00/);assert.match(els.get('debt-breakdown').innerHTML,/70,00/);
+assert.match(els.get('monat-cards').innerHTML,/685,00/);assert.match(els.get('monat-cards').innerHTML,/Private Ausgaben/);
+fill('dashboard-booking-query','');fill('dashboard-booking-kind','privat');run("renderBookings('dashboard')");assert.match(els.get('dashboard-booking-count').textContent,/2 von 7/);
+assert.equal(run('D.aus.length'),4); // Linked source rows were neither changed nor removed.
+run("dashboardPeriod='2026-09';selectedMonth='2026-09';renderAll()");assert.match(els.get('dh-val').textContent,/-15,00/);assert.match(els.get('month-tabs').innerHTML,/2026-09/);
+console.log('PASS private result/operating result separation, month and Berlin date, completed debits only, debt/salary preservation and linked import deduplication');
 console.log('PASS individual booking search, period isolation, all rows without caps, debts/shifts separated, escaped text, read-only drill-down, boot, five create/edit/delete flows, period totals, invoice paid preservation, edit conflicts/cancel, durable UPDATE queue and double-submit guard, invalid inputs, legacy categories, import');
 })().catch(e=>{console.error(e);process.exitCode=1});
 

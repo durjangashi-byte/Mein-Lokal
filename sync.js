@@ -87,6 +87,16 @@
       for(const date of ['datum','faellig'])if(date in result && !/^\d{4}-\d{2}-\d{2}$/.test(result[date]))result[date]='';
       return result;
     }
+    async readPrivate() {
+      const rows=[];
+      for(let offset=0;;offset+=1000) {
+        const result=await this.client.from('qonto_transactions').select('id,amount,side,status,classification,private_category,label,reference,settled_at,emitted_at,imported_kind,imported_id').order('id').range(offset,offset+999);
+        if(result.error)throw result.error;
+        rows.push(...result.data.filter(r=>r.classification==='privat'&&r.side==='debit'&&r.status==='completed'));
+        if(result.data.length<1000)break;
+      }
+      if(!this.stopped)this.data.privat=rows;
+    }
     async read(key) {
       const spec=tables[key], rows=[];
       for(let offset=0;;offset+=1000) {
@@ -113,9 +123,9 @@
         try { await this.write(op); if(!this.stopped)this.storage.removeItem(op.key); }
         catch(e) { blocked.add(record); errors.push(`${tables[op.table].name}: ${e.message||e}`); }
       }
-      const results=await Promise.allSettled(Object.keys(tables).map(async key=>{
+      const results=await Promise.allSettled([this.readPrivate().catch(e=>{throw new Error('Private Qonto-Ausgaben: '+(e.message||e));}),...Object.keys(tables).map(async key=>{
         try { await this.read(key); } catch(e) {throw new Error(`${tables[key].name}: ${e.message||e}`);}
-      }));
+      })]);
       if(this.stopped) return;
       results.forEach(r=>{if(r.status==='rejected')errors.push(r.reason.message);});
       this.loaded=results.every(r=>r.status==='fulfilled');
@@ -142,6 +152,7 @@
       if(this.channel||this.stopped)return;
       this.channel=this.client.channel('restaurant-changes-'+crypto.randomUUID());
       for(const spec of Object.values(tables)) this.channel.on('postgres_changes',{event:'*',schema:'public',table:spec.name},()=>this.sync());
+      this.channel.on('postgres_changes',{event:'*',schema:'public',table:'qonto_transactions'},()=>this.sync());
       this.channel.subscribe(status=>{
         if(this.stopped)return;
         this.live=status==='SUBSCRIBED';
