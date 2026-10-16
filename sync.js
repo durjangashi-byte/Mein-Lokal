@@ -92,7 +92,7 @@
       for(let offset=0;;offset+=1000) {
         const result=await this.client.from('qonto_transactions').select('id,amount,side,status,classification,private_category,label,reference,settled_at,emitted_at,imported_kind,imported_id').order('id').range(offset,offset+999);
         if(result.error)throw result.error;
-        rows.push(...result.data.filter(r=>r.classification==='privat'&&r.side==='debit'&&r.status==='completed'));
+        rows.push(...result.data.filter(r=>r.classification==='privat'&&['debit','credit'].includes(r.side)&&r.status==='completed'));
         if(result.data.length<1000)break;
       }
       if(!this.stopped)this.data.privat=rows;

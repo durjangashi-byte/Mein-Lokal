@@ -88,8 +88,15 @@ PG_TEST_MODULE=/tmp/ml-db-test/node_modules/@electric-sql/pglite node tests/bank
 
 ## Private Ausgaben / Entnahmen
 
-Als privat markierte, abgeschlossene Qonto-Ausgänge werden beim normalen App-Abgleich vollständig und ohne 300-Zeilen-Grenze geladen. Cockpit, Tagesabschluss, Monat und PDF zeigen das Ergebnis vor Privat, private Ausgaben separat und das Ergebnis nach Privat. Restaurantumsatz, Betriebsausgaben, Personal und Schulden bleiben getrennt. Privat markierte Gutschriften oder offene/fehlgeschlagene Zahlungen zählen nicht als private Ausgabe; Privatentnahmen verändern die Betriebsmarge nicht. Der Zeitraum folgt dem Buchungsdatum in Europe/Berlin und den bestehenden Monatsfiltern.
+Als privat markierte, abgeschlossene Qonto-Ausgänge werden beim normalen App-Abgleich vollständig und ohne 300-Zeilen-Grenze geladen. Cockpit, Tagesabschluss, Monat und PDF zeigen das Ergebnis vor Privat, private Ausgaben separat und das Ergebnis nach Privat. Restaurantumsatz, Betriebsausgaben, Personal und Schulden bleiben getrennt. Privat markierte Gutschriften zählen separat als Privateinlagen; offene/fehlgeschlagene Zahlungen zählen nicht; Privatentnahmen verändern die Betriebsmarge nicht. Der Zeitraum folgt dem Buchungsdatum in Europe/Berlin und den bestehenden Monatsfiltern.
 
 Die Einzelbuchungssuche enthält eine eigene Eintragsart Privat; im Bankbereich sind die privaten Positionen und Kategorien des im Cockpit ausgewählten Zeitraums sichtbar. Bereits mit einer Ausgabe verknüpfte private Qonto-Ausgänge werden nur als Privatentnahme abgezogen. Es werden keine zusätzlichen Ausgaben angelegt oder vorhandene Buchungen umgeschrieben. Privatdaten im JSON-Backup sind eine lesbare Momentaufnahme; Wiederherstellung ändert keine Qonto-Klassifizierungen.
 
 `node tests/private-sync.cjs` prüft den ausschließlich lesenden Bankabgleich einschließlich mehr als 1.000 Zeilen, Statusfilter und Sitzungswechseln.
+
+
+## Übersicht mit und ohne private Buchungen
+
+Die zwei großen Ergebniskarten zeigen **Ohne private Buchungen** und **Mit privaten Buchungen**. Private Gutschriften/Einlagen erhöhen nur das zweite Ergebnis, private Ausgänge/Entnahmen vermindern es. Beim ersten Öffnen dieser Version wird **Gesamt · alle Monate** eingestellt, damit auch ältere private Eingänge und Ausgänge enthalten sind; anschließend bleibt die gewählte Monatsauswahl gespeichert.
+
+Es werden alle vorhandenen, ausdrücklich privat klassifizierten abgeschlossenen Qonto-Bewegungen beider Richtungen gelesen, unabhängig vom Alter. Private Quellverknüpfungen verhindern doppelten Ansatz in Geschäftseinnahmen und Geschäftsausgaben. Klassifizierungen und Finanzbuchungen bleiben unverändert. Nicht zugeordnete Buchungen werden nicht anhand von Namen als privat geraten. Monats-/Tagesauswertung und PDF/CSV berücksichtigen beide privaten Zahlungsrichtungen.
