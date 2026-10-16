@@ -1,0 +1,22 @@
+/* Sonstige Bankeinnahmen – getrennt von Restaurant-Tagesumsatz */
+(function(){
+const money=n=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(Number(n)||0);
+const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let entries=[];
+function root(){return document.getElementById('p-einnahmen');}
+function panel(){let p=document.getElementById('sonstige-einnahmen-panel');if(!p&&root()){p=document.createElement('section');p.id='sonstige-einnahmen-panel';p.style.cssText='margin:20px 0;padding:18px;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:#171717;color:#fff';root().appendChild(p);}return p;}
+async function refresh(){
+const p=panel();if(!p)return;
+if(typeof SB==='undefined'||!SB){p.innerHTML='<h3>Sonstige Bankeinnahmen</h3><p>Bitte anmelden, um Bankeinnahmen zu laden.</p>';return;}
+const {data,error}=await SB.from('sonstige_einnahmen').select('id,datum,betrag,kategorie,beschreibung,quelle').order('datum',{ascending:false});
+if(error){p.innerHTML='<h3>Sonstige Bankeinnahmen</h3><p>'+safe(error.message)+'</p>';return;}
+entries=data||[];
+p.innerHTML='<h3 style="margin:0 0 6px">Sonstige Bankeinnahmen</h3><p style="opacity:.7;margin:0 0 12px">Überweisungen, Cashback und weitere betriebliche Einnahmen – nicht im Tagesumsatz enthalten.</p><div style="font-size:22px;font-weight:700;margin-bottom:14px">'+money(entries.reduce((s,x)=>s+Number(x.betrag),0))+' <small style="font-size:12px;opacity:.6">Gesamt</small></div><form id="sonstige-income-form" style="display:grid;gap:8px;margin-bottom:16px"><input type="hidden" name="id"><input type="date" name="datum" required style="padding:10px;border-radius:8px"><input type="number" name="betrag" step="0.01" min="0.01" placeholder="Betrag (€)" required style="padding:10px;border-radius:8px"><select name="kategorie" style="padding:10px;border-radius:8px"><option value="bankueberweisung">Banküberweisung</option><option value="cashback">Cashback</option><option value="sonstiges">Sonstige Einnahme</option></select><input name="beschreibung" placeholder="Beschreibung" required style="padding:10px;border-radius:8px"><button type="submit" style="padding:10px;border-radius:8px">Speichern</button><button type="reset" style="padding:8px;border-radius:8px">Zurücksetzen</button></form><div>'+entries.map(x=>'<div style="display:flex;gap:10px;justify-content:space-between;align-items:center;border-top:1px solid #333;padding:12px 0"><div><small>'+safe(x.datum)+' · '+safe(x.kategorie)+'</small><div>'+safe(x.beschreibung)+'</div><b>'+money(x.betrag)+'</b></div><div><button type="button" data-edit="'+x.id+'">Bearbeiten</button> <button type="button" data-delete="'+x.id+'">Löschen</button></div></div>').join('')+'</div>';
+p.querySelector('form').onsubmit=async e=>{e.preventDefault();const f=e.currentTarget;const row={datum:f.datum.value,betrag:Number(f.betrag.value),kategorie:f.kategorie.value,beschreibung:f.beschreibung.value};const id=f.elements.namedItem('id').value;const res=id?await SB.from('sonstige_einnahmen').update(row).eq('id',id):await SB.from('sonstige_einnahmen').insert(row);if(res.error)alert(res.error.message);else refresh();};
+p.onclick=async e=>{const edit=e.target.closest('[data-edit]'),del=e.target.closest('[data-delete]');if(edit){const x=entries.find(v=>String(v.id)===edit.dataset.edit),f=p.querySelector('form');if(!x)return;for(const k of ['id','datum','betrag','kategorie','beschreibung'])f.elements.namedItem(k).value=x[k];f.scrollIntoView({behavior:'smooth',block:'center'});}if(del){if(!confirm('Diese sonstige Einnahme wirklich löschen?'))return;const {error}=await SB.from('sonstige_einnahmen').delete().eq('id',del.dataset.delete);if(error)alert(error.message);else refresh();}};
+}
+document.addEventListener('DOMContentLoaded',()=>{panel();refresh();});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
+window.refreshSonstigeEinnahmen=refresh;
+setInterval(()=>{if(typeof SB!=='undefined'&&SB&&document.getElementById('p-einnahmen')?.offsetParent)refresh();},60000);
+})();
