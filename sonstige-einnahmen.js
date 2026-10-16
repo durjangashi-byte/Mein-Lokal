@@ -35,7 +35,7 @@
   const datum=value('bank-date'),betrag=Number(value('bank-amount')),kategorie=value('bank-category'),beschreibung=value('bank-description').trim();
   if(!/^\d{4}-\d{2}-\d{2}$/.test(datum)||!Number.isFinite(betrag)||betrag<=0||Math.abs(betrag*100-Math.round(betrag*100))>0.00001||!categories[kategorie]||!beschreibung){toast('Bitte Datum, Beschreibung und einen positiven Betrag mit höchstens zwei Nachkommastellen eingeben.','r');return;}
   if(/zahlungen[ -]vor[ -]ort|angeforderte zahlungen|kartenauszahlung|kartenabrechnung|card payout|card settlement/i.test(beschreibung)){toast('Kartenauszahlungen dürfen nicht erneut als Einnahme erfasst werden.','r');return;}
-  if(draft){const current=D.bank.find(r=>r.id===draft.id);if(!current||JSON.stringify(current)!==JSON.stringify(draft)){toast('Eintrag inzwischen geändert. Bitte erneut öffnen.','r');return;}}
+  if(draft){const current=D.bank.find(r=>r.id===draft.id);if(!current||['id','datum','betrag','kategorie','beschreibung','quelle','qonto_transaction_id'].some(key=>current[key]!==draft[key])){toast('Eintrag inzwischen geändert. Bitte erneut öffnen.','r');return;}}
   if(!draft&&D.bank.some(r=>r.datum===datum&&Math.round(r.betrag*100)===Math.round(betrag*100)&&r.beschreibung.toLocaleLowerCase('de')===beschreibung.toLocaleLowerCase('de'))){toast('Diese Einnahme ist bereits vorhanden.','r');return;}
   busy=true;document.getElementById('bank-save').disabled=true;
   try{const row={...(draft||{id:newId(),quelle:'manuell',qonto_transaction_id:null}),datum,betrag:Math.round(betrag*100)/100,kategorie,beschreibung};if(await persistChange(draft?'update':'insert','bank',row)){reset();savedToast();}}finally{busy=false;document.getElementById('bank-save').disabled=false;}
