@@ -68,6 +68,13 @@ run("editEntry('rec',D.rec.at(-1).id)");assert.equal(els.get('r-payment-status')
 fill('r-beschr','Future paid');fill('r-betrag','15');fill('r-zahlungsdatum','2099-01-01');const invoiceCount=run('D.rec.length');await run('addRechnung()');assert.equal(run('D.rec.length'),invoiceCount);run("cancelEdit('rec')");
 run("editEntry('rec',D.rec.at(-1).id);D.rec.at(-1).bezahlt=true");fill('r-notiz','Stale edit');await run('addRechnung()');assert.notEqual(run('D.rec.at(-1).notiz'),'Stale edit');run("cancelEdit('rec')");
 run('D.rec='+invoiceSnapshot);run('renderAll()');assert.equal(els.get('r-payment-status').value,'bezahlt');assert.equal(els.get('r-due-date-field').hidden,true);assert.equal(els.get('r-paid-date-field').hidden,false);
+// Existing expense editor stays available, while new entries use the central invoice form.
+run("switchTab('ausgaben')");assert.equal(els.get('legacy-expense-editor').hidden,true);run('openExpenseForm()');assert.equal(els.get('legacy-expense-editor').hidden,true);
+run("editEntry('aus',D.aus[0].id)");assert.equal(els.get('legacy-expense-editor').hidden,false);run("cancelEdit('aus')");assert.equal(els.get('legacy-expense-editor').hidden,true);
+const beforeDuplicate=run('D.rec.length');ctx.confirm=()=>false;fill('r-beschr','Repeated manual expense');fill('r-betrag',String(run('D.aus[0].betrag')));fill('r-zahlungsdatum',run('D.aus[0].datum'));await run('addRechnung()');assert.equal(run('D.rec.length'),beforeDuplicate);run("cancelEdit('rec')");ctx.confirm=()=>true;
+// Incomplete cache requires explicit acknowledgement; queued paid invoices are checked before generated expenses exist.
+const priorEngine=run('syncEngine');ctx.confirm=()=>false;run("syncEngine={loaded:false,error:'offline',lastSync:null,pending:()=>[]}");assert.equal(run("confirmExpenseCreation(56,'2026-10-17')"),false);
+let duplicateWarnings=[];ctx.confirm=message=>{duplicateWarnings.push(message);return duplicateWarnings.length===1;};run("syncEngine={loaded:true,error:'',lastSync:new Date(),pending:()=>[{table:'rec',id:9999,row:{bezahlt:true,betrag:56,bezahlt_am:'2026-10-17',beschr:'Pending paid receipt'}}]}");assert.equal(run("confirmExpenseCreation(56,'2026-10-17')"),false);assert.equal(duplicateWarnings.length,2);assert.match(duplicateWarnings[1],/Pending paid receipt/);ctx.restoreEngine=priorEngine;run('syncEngine=restoreEngine');delete ctx.restoreEngine;ctx.confirm=()=>true;
 console.log('PASS paid-by-default invoice, optional due date, immutable existing payment status and stale edit protection');
 
 // New payment UI: amount correction before payment, idempotent local submit, snooze and series actions.

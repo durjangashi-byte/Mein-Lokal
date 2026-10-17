@@ -14,7 +14,20 @@
  const importing=new Set();
  let loadVersion=0;
  const current=(client,user)=>SB===client&&authUser===user&&!!user;
- function duplicate(t){const d=dateQ(t.settled_at||t.emitted_at),a=Number(t.amount);return t.side==='debit'?D.aus.some(x=>x.datum===d&&Math.abs(Number(x.betrag)-a)<.01):false}
+ function matchingExpenses(t){
+  if(t.side!=='debit')return [];
+  const day=Date.parse(bookingDate(t)+'T12:00:00Z'),cents=Math.round(Number(t.amount)*100);
+  if(!Number.isFinite(day)||!Number.isSafeInteger(cents)||cents<=0)return [];
+  const linked=new Set([...bankRows,...(D.privat||[])].filter(q=>q.id!==t.id&&q.imported_kind==='aus'&&q.imported_id!=null).map(q=>Number(q.imported_id)));
+  const words=String(t.label||'').toLocaleLowerCase('de-DE').match(/[a-zäöüß0-9]{3,}/g)||[];
+  const score=x=>words.filter(word=>String(x.beschr||'').toLocaleLowerCase('de-DE').includes(word)).length;
+  return (D.aus||[]).filter(x=>![...String(x.beschr||'').matchAll(/\[Qonto:([^\]]+)\]/gi)].some(m=>m[1].toLowerCase()!==String(t.id).toLowerCase())&&!linked.has(x.id)&&Number.isSafeInteger(x.id)&&Math.round(Number(x.betrag)*100)===cents&&Math.abs(Date.parse(x.datum+'T12:00:00Z')-day)<=7*86400000).sort((a,b)=>score(b)-score(a)||Math.abs(Date.parse(a.datum)-day)-Math.abs(Date.parse(b.datum)-day)||a.id-b.id);
+ }
+ const callQ=(name,...args)=>escQ(name+'('+args.map(x=>JSON.stringify(x)).join(',')+')');
+ function matchProposal(t){
+  const matches=matchingExpenses(t);if(!matches.length)return '';
+  return '<div class="qonto-matches"><p class="summary-note">Mögliche vorhandene Buchung · gleicher Betrag, Datum bis zu 7 Tage abweichend. Eine Verknüpfung erstellt keine weitere Ausgabe.</p>'+matches.map(a=>'<div class="payment-card"><p style="overflow-wrap:anywhere">'+escQ(a.datum)+' · '+escQ(a.beschr||'Ausgabe')+' · '+eurQ(a.betrag)+'</p><button type="button" class="edit-btn" onclick="'+callQ('qontoLink',t.id,a.id)+'">Mit dieser Ausgabe verknüpfen</button></div>').join('')+'</div>';
+ }
  function isCardPayout(t){
   if(t?.side!=='credit')return false;
   const text=[t.label,t.reference,t.raw?.label,t.raw?.reference].filter(Boolean).join(' ').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ');
@@ -80,10 +93,10 @@
   bankRows=data;window.renderQontoHistory();
   window.renderPrivateOutflows();
   renderCardReconciliation(data||[]);
-  const open=(data||[]).filter(t=>!t.imported_kind&&!t.imported_id&&!t.ignored&&classification(t)!=='privat'&&!isCardPayout(t)&&!(D.bank||[]).some(r=>r.qonto_transaction_id===t.id));
+  const open=(data||[]).filter(t=>!t.imported_kind&&!t.imported_id&&!t.ignored&&classification(t)!=='privat'&&!isCardPayout(t)&&!internalTransfer(t)&&!(D.bank||[]).some(r=>r.qonto_transaction_id===t.id));
   document.getElementById('qonto-summary').innerHTML='<div class="totals-card"><div class="t-row"><span>Bankbewegungen geladen</span><strong>'+data.length+'</strong></div><div class="t-row"><span>Noch zu prüfen</span><strong>'+open.length+'</strong></div></div>';
   if(!open.length){list.innerHTML='<div class="empty"><p>Alles geprüft ✓</p></div>';return}
-  list.innerHTML=open.map(t=>{const dup=duplicate(t),debit=t.side==='debit',label=t.label||t.reference||'Bankbewegung';return '<div class="payment-card"><div class="payment-top"><h3>'+escQ(label)+'</h3><strong class="'+(debit?'amtr':'amtg')+'">'+(debit?'-':'+')+eurQ(t.amount)+'</strong></div><p>'+escQ(dateQ(t.settled_at||t.emitted_at))+' · '+(debit?'Ausgang':'Eingang')+(dup?' · ⚠️ möglicher Doppeleintrag':'')+'</p>'+(t.reference?'<p>'+escQ(t.reference)+'</p>':'')+'<div class="payment-actions">'+(isCardPayout(t)?'<span class="summary-note">Kartenauszahlung · bereits im Tagesumsatz erfasst</span>':debit?'<button class="edit-btn" onclick="qontoImport(\''+escQ(t.id)+'\',\'aus\')">Als Ausgabe übernehmen</button>':'<button class="edit-btn" onclick="qontoImport(\''+escQ(t.id)+'\',\'sonstige\')">Als sonstige Einnahme übernehmen</button>')+'<button class="edit-btn" onclick="qontoClassify(\''+escQ(t.id)+'\',\'betrieblich\')">Betrieblich</button><button class="edit-btn" onclick="qontoClassify(\''+escQ(t.id)+'\',\'privat\')">Privat</button><button class="edit-btn" onclick="qontoIgnore(\''+escQ(t.id)+'\')">Ignorieren</button></div></div>'}).join('');
+  list.innerHTML=open.map(t=>{const matches=matchingExpenses(t),debit=t.side==='debit',label=t.label||t.reference||'Bankbewegung';return '<div class="payment-card"><div class="payment-top"><h3 style="overflow-wrap:anywhere">'+escQ(label)+'</h3><strong class="'+(debit?'amtr':'amtg')+'">'+(debit?'-':'+')+eurQ(t.amount)+'</strong></div><p>'+escQ(bookingDate(t))+' · '+(debit?'Ausgang':'Eingang')+(matches.length?' · mögliche vorhandene Ausgabe':'')+'</p>'+(t.reference?'<p style="overflow-wrap:anywhere">'+escQ(t.reference)+'</p>':'')+matchProposal(t)+'<div class="payment-actions">'+(debit?'<button type="button" class="edit-btn" onclick="'+callQ('qontoImport',t.id,'aus',matches.length>0)+'">'+(matches.length?'Separate Ausgabe neu buchen':'Als Ausgabe übernehmen')+'</button>':'<button type="button" class="edit-btn" onclick="'+callQ('qontoImport',t.id,'sonstige')+'">Als sonstige Einnahme übernehmen</button>')+'<button type="button" class="edit-btn" onclick="'+callQ('qontoClassify',t.id,'betrieblich')+'">Betrieblich</button><button type="button" class="edit-btn" onclick="'+callQ('qontoClassify',t.id,'privat')+'">Privat</button><button type="button" class="edit-btn" onclick="'+callQ('qontoIgnore',t.id)+'">Ignorieren</button></div></div>'}).join('');
  }
  window.qontoSync=async function(){
   const b=document.getElementById('qonto-sync-btn'),s=document.getElementById('qonto-status');if(!SB||!authUser||b?.disabled)return;
@@ -98,7 +111,14 @@
    await load();
   }catch(e){if(current(client,user)&&s)s.textContent=e.message||String(e)}finally{if(b)b.disabled=false}
  };
- window.qontoImport=async function(id,kind){
+ window.qontoLink=async function(id,expenseId){
+  if(!SB||!authUser||importing.has(id))return;
+  const t=bankRows.find(q=>q.id===id),a=t&&matchingExpenses(t).find(x=>x.id===expenseId);
+  if(!a){toast('Vorschlag nicht mehr aktuell. Bitte Bankbewegungen neu laden.','a');return;}
+  if(!confirm('Qonto: '+(t.label||'Bankbewegung')+' · '+bookingDate(t)+' · '+eurQ(t.amount)+'\nMit vorhandener Ausgabe verknüpfen: '+(a.beschr||'Ausgabe')+' · '+a.datum+' · '+eurQ(a.betrag)+'?\nEs wird keine zusätzliche Ausgabe angelegt.'))return;
+  await window.qontoImport(id,'aus',false,expenseId);
+ };
+ window.qontoImport=async function(id,kind,allowNew=false,expenseId=null){
   if(!SB||!authUser||importing.has(id))return;
   const client=SB,user=authUser;importing.add(id);
   try{
@@ -107,6 +127,7 @@
    if(error)throw error;
    if(!t)return;
    if(t.imported_kind||t.imported_id||t.ignored||classification(t)==='privat'){toast('Diese Bankbewegung kann nicht erneut übernommen werden.','a');return;}
+   if(internalTransfer(t)){toast('Interne Umbuchungen bleiben ergebnisneutral.','a');return;}
    if(isCardPayout(t)){toast('Kartenauszahlungen sind bereits im Tagesumsatz erfasst.','a');return;}
    if(t.side==='credit'){
     const {error:rpcError}=await client.rpc('lokal_import_qonto_income',{p_transaction_id:id});
@@ -117,38 +138,42 @@
     savedToast('Sonstige Bankeinnahme übernommen');await load();return;
    }
    if(t.side!=='debit'||kind!=='aus')return;
-   if(duplicate(t)&&!confirm('Es gibt bereits einen Eintrag mit gleichem Datum und Betrag. Trotzdem übernehmen?'))return;
-   const datum=dateQ(t.settled_at||t.emitted_at)||today(), amount=Number(t.amount), desc=(t.label||t.reference||'Qonto').slice(0,180);
-   const row={id:newId(),datum,kat:suggested(t),beschr:desc,betrag:amount,rechnung_id:null};
-   if(!await persistChange('insert','aus',row)||!current(client,user))return;
-   const {error:u}=await client.from('qonto_transactions').update({imported_kind:'aus',imported_id:row.id,updated_at:new Date().toISOString()}).eq('id',id);
+   if(expenseId===null&&matchingExpenses(t).length&&!allowNew){toast('Bitte eine vorhandene Ausgabe verknüpfen oder ausdrücklich separat neu buchen.','a');await load();return;}
+   if(expenseId===null&&allowNew&&!confirm('Trotz möglicher vorhandener Buchung eine separate neue Ausgabe über '+eurQ(t.amount)+' anlegen? Diese zusätzliche Ausgabe verringert das Ergebnis erneut.'))return;
+   if(syncEngine?.pending?.()?.length){await syncEngine.sync();if(!current(client,user))return;if(syncEngine.pending().length)throw new Error('Bitte ausstehende Änderungen zuerst synchronisieren.');}
+   const {error:rpcError}=await client.rpc('lokal_import_qonto_expense',{p_transaction_id:id,p_expense_id:expenseId,p_allow_new:allowNew===true});
    if(!current(client,user))return;
-   if(u){toast('Buchung übernommen, Bankstatus konnte nicht markiert werden.','a');return;}
-   savedToast('Qonto-Buchung übernommen');await load();
-  }catch(e){if(current(client,user))toast(e.message||String(e),'r');}finally{importing.delete(id);}
+   if(rpcError)throw rpcError;
+   await syncEngine?.sync();if(!current(client,user))return;
+   savedToast(expenseId===null?'Qonto-Ausgabe gebucht':'Mit vorhandener Ausgabe verknüpft');await load();
+  }catch(e){if(current(client,user)){toast(e.message||String(e),'r');await load();}}finally{importing.delete(id);}
  };
  window.qontoClassify=async function(id,kind){
-  if(!SB||!authUser||!['privat','betrieblich'].includes(kind))return;
-  const client=SB,user=authUser,patch={classification:kind,updated_at:new Date().toISOString()};
-  const {data:t,error:readError}=await client.from('qonto_transactions').select('*').eq('id',id).single();
-  if(!current(client,user))return;
-  if(readError){toast(readError.message,'r');return;}
-  if(!t||t.imported_kind||t.imported_id||t.ignored)return;
-  patch.private_category=kind==='privat'?privateCat(t):null;
-  const {error}=await client.from('qonto_transactions').update(patch).eq('id',id);
-  if(!current(client,user))return;
-  if(error)toast(error.message,'r');else{savedToast(kind==='privat'?'Als privat markiert':'Als betrieblich markiert');await syncEngine?.sync();if(current(client,user))await load();}
+  if(!SB||!authUser||importing.has(id)||!['privat','betrieblich'].includes(kind))return;
+  const client=SB,user=authUser;importing.add(id);
+  try{
+   const {data:t,error:readError}=await client.from('qonto_transactions').select('*').eq('id',id).single();
+   if(!current(client,user))return;if(readError)throw readError;
+   if(!t||t.imported_kind||t.imported_id||t.ignored||internalTransfer(t))return;
+   const patch={classification:kind,private_category:kind==='privat'?privateCat(t):null,updated_at:new Date().toISOString()};
+   const {data,error}=await client.from('qonto_transactions').update(patch).eq('id',id).is('imported_kind',null).is('imported_id',null).eq('ignored',false).select('id');
+   if(!current(client,user))return;if(error)throw error;
+   if(!data?.length)toast('Bankbewegung wurde inzwischen geändert oder übernommen. Bitte neu prüfen.','a');else savedToast(kind==='privat'?'Als privat markiert':'Als betrieblich markiert');
+   await syncEngine?.sync();if(current(client,user))await load();
+  }catch(e){if(current(client,user))toast(e.message||String(e),'r');}finally{importing.delete(id);}
  };
  window.qontoIgnore=async function(id){
-  if(!SB||!authUser)return;
-  const client=SB,user=authUser;
-  const {data:t,error:readError}=await client.from('qonto_transactions').select('*').eq('id',id).single();
-  if(!current(client,user))return;
-  if(readError){toast(readError.message,'r');return;}
-  if(!t||t.imported_kind||t.imported_id)return;
-  const {error}=await client.from('qonto_transactions').update({ignored:true,updated_at:new Date().toISOString()}).eq('id',id);
-  if(!current(client,user))return;
-  if(error)toast(error.message,'r');else await load();
+  if(!SB||!authUser||importing.has(id))return;
+  const client=SB,user=authUser;importing.add(id);
+  try{
+   const {data:t,error:readError}=await client.from('qonto_transactions').select('*').eq('id',id).single();
+   if(!current(client,user))return;if(readError)throw readError;
+   if(!t||t.imported_kind||t.imported_id)return;
+   const {data,error}=await client.from('qonto_transactions').update({ignored:true,updated_at:new Date().toISOString()}).eq('id',id).is('imported_kind',null).is('imported_id',null).eq('ignored',false).select('id');
+   if(!current(client,user))return;if(error)throw error;
+   if(!data?.length)toast('Bankbewegung wurde inzwischen geändert oder übernommen. Bitte neu prüfen.','a');
+   await load();
+  }catch(e){if(current(client,user))toast(e.message||String(e),'r');}finally{importing.delete(id);}
  };
  const oldSwitch=window.switchTab;
  const hook=()=>{install();window.renderPrivateOutflows();const orig=window.switchTab;if(typeof orig==='function'&&!orig.__qonto){const wrapped=function(name){const r=orig.apply(this,arguments);if(name==='bank')load();return r};wrapped.__qonto=true;window.switchTab=wrapped}};
