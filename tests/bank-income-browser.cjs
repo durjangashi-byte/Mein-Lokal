@@ -49,6 +49,7 @@ async function waitFor(fn,message){for(let i=0;i<100;i++){if(await fn())return;a
    }
    unexpected.push(method+' '+url.hostname+url.pathname);return route.abort();
   });
+  data.qonto_transactions.push({id:'open-bank-entry',amount:12,side:'debit',status:'completed',classification:'unklar',label:'Open bank fixture',settled_at:date+'T12:00:00Z'},{id:'internal-bank-entry',amount:137,side:'credit',status:'completed',classification:'betrieblich',ignored:true,label:'Internal bank fixture',raw:{lokal_internal_transfer:true},settled_at:date+'T12:00:00Z'},{id:'card-bank-entry',amount:200,side:'credit',status:'completed',classification:'betrieblich',label:'Angeforderte Zahlungen',settled_at:date+'T12:00:00Z'});
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));page.on('dialog',dialog=>dialog.accept());
   const nav=async name=>{if(viewport.width<500){if(name==='monat'){await page.locator('#ni-mehr').click();await page.locator('#p-mehr [onclick="switchTab(\'monat\')"]').click();}else await page.locator('#ni-'+(name==='einnahmen'?'buchungen':name)).click();}else await page.locator('#sni-'+name).first().click();};
   await page.goto(base);await page.locator('#auth-email').fill(owner.email);await page.locator('#auth-password').fill('local-test-password');await page.locator('button[type="submit"]').filter({hasText:'Mit E-Mail und Passwort anmelden'}).click();
@@ -76,6 +77,11 @@ async function waitFor(fn,message){for(let i=0;i<100;i++){if(await fn())return;a
   const overflow=await page.locator('#sonstige-einnahmen-panel').evaluate(el=>({width:el.clientWidth,scroll:el.scrollWidth,right:el.getBoundingClientRect().right,viewport:innerWidth}));assert.ok(overflow.scroll<=overflow.width+1&&overflow.right<=overflow.viewport+1,'Bank panel horizontal overflow: '+JSON.stringify(overflow));
   await page.locator('#bank-list .payment-card').filter({hasText:'Browser Bank edited'}).getByRole('button',{name:'Löschen'}).click();await waitFor(()=>!data.sonstige_einnahmen.some(r=>r.beschreibung==='Browser Bank edited'),'bank delete did not reach mock');await page.waitForFunction(()=>syncEngine.pending().length===0);
   await nav('dashboard');assert.match(await page.locator('#dh-val').innerText(),/925/);assert.deepEqual(errors,[],'browser page errors');assert.deepEqual(unexpected,[],'unmocked external requests');assert.deepEqual(new Set(writes.map(w=>w.method)),new Set(['POST','PATCH','DELETE']));
+  await page.evaluate(()=>switchTab('bank'));await page.waitForFunction(()=>document.getElementById('qonto-history')?.textContent.includes('5 / 5'));
+  assert.equal(await page.locator('#qonto-history .payment-card').count(),5);assert.match(await page.locator('#qonto-history').innerText(),/ergebnisneutral/);assert.match(await page.locator('#qonto-history').innerText(),/Zuordnung offen/);assert.doesNotMatch(await page.locator('#qonto-list').innerText(),/Angeforderte Zahlungen/);
+  await page.locator('#qonto-history-query').fill('Open bank');assert.equal(await page.locator('#qonto-history .payment-card').count(),1);await page.locator('#p-bank').getByRole('button',{name:'Alle Monate',exact:true}).click();
+  await page.locator('#qonto-history-month').fill(previous);await page.locator('#qonto-history-month').press('Tab');assert.equal(await page.locator('#qonto-history .payment-card').count(),1);assert.match(await page.locator('#qonto-history').innerText(),/Old private credit/);
+  const bankOverflow=await page.locator('#p-bank').evaluate(el=>({width:el.clientWidth,scroll:el.scrollWidth}));assert.ok(bankOverflow.scroll<=bankOverflow.width+1,'Bank history overflow');assert.deepEqual(errors,[]);
   console.log('PASS WebKit '+viewport.width+'x'+viewport.height+' real SDK login, bank CRUD/search/month, dashboard/month totals, reload sync, no overflow/page errors/external access');await context.close();
  }
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}

@@ -2,6 +2,8 @@
 (function(){
  const escQ=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const dateQ=t=>t?String(t).slice(0,10):'';
+ const bookingDate=t=>typeof qontoBookingDate==='function'?qontoBookingDate(t):dateQ(t.settled_at||t.emitted_at);
+ let bankRows=[];
  const eurQ=n=>Number(n||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
  function suggested(t){return t?.raw?.suggested_category||'sonstiges'}
  const PRIVATE_CATS=['Geliehen / Geldtransfer','Shopping','Essen privat','Familie','Versicherung','Mobilfunk','Tabakwaren','Online / Abos','Sonstiges privat'];
@@ -35,13 +37,24 @@
   const el=document.getElementById('qonto-card-check');if(!el)return;
   const rows=cardReconciliation(data), matched=rows.filter(x=>x.chosen).length;
   el.innerHTML='<div class="sec-hd">Kartenabgleich</div><div class="totals-card"><div class="t-row"><span>Qonto-Auszahlungen abgeglichen</span><strong>'+matched+' / '+rows.length+'</strong></div></div><div class="card">'+rows.slice().reverse().map(x=>{const p=x.p;return '<div class="setting-row"><div><div class="setting-lbl">'+escQ(dateQ(p.settled_at))+' · '+eurQ(p.amount)+'</div><div class="setting-sub">'+(x.chosen?'✓ passt zu '+x.chosen.map(e=>escQ(e.datum)+' · Karte '+eurQ(e.karte)).join(' + '):'Noch keine passende Kartenerfassung')+'</div></div><strong class="'+(x.chosen?'amtg':'ca')+'">'+(x.chosen?'✓':'Prüfen')+'</strong></div>'}).join('')+'</div>';
- } function install(){
+ } function internalTransfer(t){return t?.raw?.lokal_internal_transfer===true}
+ function bankStatus(t){return internalTransfer(t)?'Interne Umbuchung · ergebnisneutral':isCardPayout(t)?'Kartenauszahlung · im Tagesumsatz enthalten':classification(t)==='privat'?'Privat':t.imported_kind||t.imported_id?'Bereits gebucht':t.ignored?'Ignoriert':classification(t)==='betrieblich'?'Betrieblich · noch zu übernehmen':'Zuordnung offen'}
+ window.resetQontoBank=function(){bankRows=[];loadVersion++;for(const id of ['qonto-list','qonto-history','qonto-summary','qonto-card-check','qonto-private'])document.getElementById(id)?.replaceChildren();};
+ window.resetQontoHistory=function(){document.getElementById('qonto-history-month').value='';document.getElementById('qonto-history-query').value='';window.renderQontoHistory()};
+ window.renderQontoHistory=function(){
+  const target=document.getElementById('qonto-history');if(!target)return;
+  const query=(document.getElementById('qonto-history-query')?.value||'').trim().toLocaleLowerCase('de-DE'),month=document.getElementById('qonto-history-month')?.value||'';
+  const rows=bankRows.filter(t=>(!month||bookingDate(t).startsWith(month))&&(!query||[t.label,t.reference,t.bank_account_id,bookingDate(t),bankStatus(t),eurQ(t.amount),String(t.amount)].join(' ').toLocaleLowerCase('de-DE').includes(query)));
+  const total=side=>rows.filter(t=>t.side===side).reduce((sum,t)=>sum+Math.round(Number(t.amount)*100),0)/100;
+  target.innerHTML='<p class="summary-note">'+rows.length+' / '+bankRows.length+' Bankbewegungen · Eingänge '+eurQ(total('credit'))+' · Ausgänge '+eurQ(total('debit'))+'. Bankbewegungen sind keine zusätzliche Umsatzberechnung. Offene Zuordnungen fließen nach ihrer Prüfung ins passende Ergebnis ein.</p>'+rows.map(t=>'<div class="payment-card"><div class="payment-top"><h3 style="overflow-wrap:anywhere">'+escQ(t.label||t.reference||'Bankbewegung')+'</h3><strong class="'+(t.side==='credit'?'amtg':'amtr')+'">'+(t.side==='credit'?'+':'−')+eurQ(t.amount)+'</strong></div><p>'+escQ(bookingDate(t))+' · '+escQ(bankStatus(t))+'</p>'+(t.reference?'<p style="overflow-wrap:anywhere">'+escQ(t.reference)+'</p>':'')+'</div>').join('');
+ };
+ function install(){
   const more=document.querySelector('#p-mehr .more-menu'); if(!more||document.getElementById('p-bank'))return;
   const btn=document.createElement('button');btn.type='button';btn.className='more-link';btn.onclick=()=>switchTab('bank');
   btn.innerHTML='<span>🏦</span><span><strong>Bank · Qonto</strong><small>Kontobewegungen synchronisieren und übernehmen</small></span><span class="more-arrow">›</span>';
   more.insertBefore(btn,more.lastElementChild);
   const panel=document.createElement('div');panel.className='panel';panel.id='p-bank';
-  panel.innerHTML='<div class="sec-hd">Bank · Qonto</div><div class="card"><div class="card-hd">🏦 Qonto Verbindung</div><div style="padding:14px 16px"><p class="summary-note" id="qonto-status">Bereit. Zugangsdaten werden ausschließlich serverseitig gespeichert.</p></div><button class="btn-primary" id="qonto-sync-btn" onclick="qontoSync()">Jetzt synchronisieren</button></div><div id="qonto-summary"></div><div class="sec-hd">Noch nicht übernommene Bankbewegungen</div><div id="qonto-list"><div class="empty"><p>Noch nicht geladen</p></div></div>';
+  panel.innerHTML='<div class="sec-hd">Bank · Qonto</div><div class="card"><div class="card-hd">🏦 Qonto Verbindung</div><div style="padding:14px 16px"><p class="summary-note" id="qonto-status">Bereit. Zugangsdaten werden ausschließlich serverseitig gespeichert.</p></div><button class="btn-primary" id="qonto-sync-btn" onclick="qontoSync()">Jetzt synchronisieren</button></div><div id="qonto-summary"></div><div class="sec-hd">Noch nicht übernommene Bankbewegungen</div><div id="qonto-list"><div class="empty"><p>Noch nicht geladen</p></div></div><div class="sec-hd">Alle Bankbewegungen</div><div class="booking-tools"><div class="field"><label for="qonto-history-query">Bankbewegungen durchsuchen</label><input id="qonto-history-query" type="search" placeholder="Empfänger, Datum, Betrag, Zuordnung …" oninput="renderQontoHistory()"></div><div class="field"><label for="qonto-history-month">Monat</label><input id="qonto-history-month" type="month" onchange="renderQontoHistory()"></div><button type="button" class="edit-btn" onclick="resetQontoHistory()">Alle Monate</button></div><div id="qonto-history"></div>';
   panel.innerHTML=panel.innerHTML.replace('<div id="qonto-summary"></div>','<div id="qonto-summary"></div><div id="qonto-card-check"></div><div id="qonto-private"></div>');
   document.querySelector('.content')?.appendChild(panel);
  }
@@ -54,12 +67,20 @@
  async function load(){
   if(!SB||!authUser)return;
   const client=SB,user=authUser,version=++loadVersion;
-  const {data,error}=await client.from('qonto_transactions').select('*').order('settled_at',{ascending:false}).limit(300);
+  const data=[];let error;
+  for(let offset=0;;offset+=1000){
+   const result=await client.from('qonto_transactions').select('*').order('id').range(offset,offset+999);
+   if(!current(client,user)||version!==loadVersion)return;
+   if(result.error){error=result.error;break}
+   data.push(...(result.data||[]));if((result.data||[]).length<1000)break;
+  }
   const list=document.getElementById('qonto-list');if(!list||!current(client,user)||version!==loadVersion)return;
   if(error){list.innerHTML='<div class="empty"><p>'+escQ(error.message)+'</p></div>';return}
+  data.sort((a,b)=>String(b.settled_at||b.emitted_at||'').localeCompare(String(a.settled_at||a.emitted_at||'')));
+  bankRows=data;window.renderQontoHistory();
   window.renderPrivateOutflows();
   renderCardReconciliation(data||[]);
-  const open=(data||[]).filter(t=>!t.imported_kind&&!t.imported_id&&!t.ignored&&classification(t)!=='privat'&&!(D.bank||[]).some(r=>r.qonto_transaction_id===t.id));
+  const open=(data||[]).filter(t=>!t.imported_kind&&!t.imported_id&&!t.ignored&&classification(t)!=='privat'&&!isCardPayout(t)&&!(D.bank||[]).some(r=>r.qonto_transaction_id===t.id));
   document.getElementById('qonto-summary').innerHTML='<div class="totals-card"><div class="t-row"><span>Bankbewegungen geladen</span><strong>'+data.length+'</strong></div><div class="t-row"><span>Noch zu prüfen</span><strong>'+open.length+'</strong></div></div>';
   if(!open.length){list.innerHTML='<div class="empty"><p>Alles geprüft ✓</p></div>';return}
   list.innerHTML=open.map(t=>{const dup=duplicate(t),debit=t.side==='debit',label=t.label||t.reference||'Bankbewegung';return '<div class="payment-card"><div class="payment-top"><h3>'+escQ(label)+'</h3><strong class="'+(debit?'amtr':'amtg')+'">'+(debit?'-':'+')+eurQ(t.amount)+'</strong></div><p>'+escQ(dateQ(t.settled_at||t.emitted_at))+' · '+(debit?'Ausgang':'Eingang')+(dup?' · ⚠️ möglicher Doppeleintrag':'')+'</p>'+(t.reference?'<p>'+escQ(t.reference)+'</p>':'')+'<div class="payment-actions">'+(isCardPayout(t)?'<span class="summary-note">Kartenauszahlung · bereits im Tagesumsatz erfasst</span>':debit?'<button class="edit-btn" onclick="qontoImport(\''+escQ(t.id)+'\',\'aus\')">Als Ausgabe übernehmen</button>':'<button class="edit-btn" onclick="qontoImport(\''+escQ(t.id)+'\',\'sonstige\')">Als sonstige Einnahme übernehmen</button>')+'<button class="edit-btn" onclick="qontoClassify(\''+escQ(t.id)+'\',\'betrieblich\')">Betrieblich</button><button class="edit-btn" onclick="qontoClassify(\''+escQ(t.id)+'\',\'privat\')">Privat</button><button class="edit-btn" onclick="qontoIgnore(\''+escQ(t.id)+'\')">Ignorieren</button></div></div>'}).join('');
