@@ -618,14 +618,14 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
       </button>
       <button class="snav-item" id="sni-ausgaben" onclick="switchTab('ausgaben')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-        Ausgaben
+        Gebuchte Ausgaben
       </button>
       <button class="snav-item" id="sni-schulden" onclick="switchTab('schulden')">💳 Schuldenzahlungen</button>
       <button class="snav-item" id="sni-personal" onclick="switchTab('personal')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Personal
       </button>
-      <button class="snav-item" id="sni-rechnungen" onclick="switchTab('rechnungen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Rechnungen & Zahlungen</button>
+      <button class="snav-item" id="sni-rechnungen" onclick="switchTab('rechnungen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Ausgaben & Rechnungen</button>
       <button class="snav-item" id="sni-einstellungen" onclick="switchTab('einstellungen')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         Einstellungen
@@ -672,7 +672,7 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
       <!-- DASHBOARD -->
       <div class="panel active" id="p-dashboard">
         <div class="dashboard-vnext-head"><div><div class="dashboard-vnext-kicker">Bobo's Bistro · Finanzen</div><div class="dashboard-vnext-title">Cockpit</div></div><button class="hbtn" onclick="loadFromSupabase()">↻ Sync</button></div>
-        <div id="ios-wrap"></div>
+        <div class="period-card"><button type="button" class="btn-primary" onclick="openExpenseForm()">＋ Ausgabe erfassen</button></div><div id="ios-wrap"></div>
         <div class="period-card"><label for="dashboard-period">Zeitraum der Übersicht</label><select id="dashboard-period" onchange="dashboardPeriod=this.value;localStorage.setItem('rv_dashboard_period',dashboardPeriod);renderDashboard();updateMetrics()"></select><div class="summary-note">Einnahmen inklusive erfasstem Trinkgeld. Private Qonto-Eingänge und -Ausgänge werden getrennt ausgewiesen. Beide Ergebnisse folgen dem gewählten Zeitraum; „Gesamt“ umfasst alle vorhandenen Monate. Ausgaben und Schichten nach Datum. Offene Rechnungen werden separat angezeigt und nicht nochmals als Kosten abgezogen.</div></div>
         <div class="sync-banner" role="status" aria-live="polite"><strong id="save-status">Daten werden geladen…</strong><small id="save-detail"></small><button type="button" onclick="loadFromSupabase()">Jetzt abgleichen</button></div>
         <div id="overdue-wrap"></div>
@@ -735,7 +735,7 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
         </div>
       </div>
 
-<div class="panel" id="p-mehr"><div class="sec-hd">Weitere Bereiche</div><div class="more-menu"><button class="more-link" onclick="switchTab('schulden')"><span>💳</span><span><strong>Schuldenzahlungen</strong><small>Rückzahlungen separat erfassen</small></span><span class="more-arrow">›</span></button><button type="button" class="more-link" onclick="switchTab('personal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><strong>Personal & Schichten</strong><small>Arbeitszeiten und Personalkosten</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('tagesabschluss')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span><strong>Tagesabschluss</strong><small>Einnahmen und Kosten von heute</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('monat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span><strong>Monatsauswertung</strong><small>Wochenvergleich und Monatsdetails</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('rechnungen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span><strong>Rechnungen & Zahlungen</strong><small>Offene, fällige und bezahlte Rechnungen</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('einstellungen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span><strong>Einstellungen</strong><small>Konto, Face ID, Verbindung und Vorgaben</small></span><span class="more-arrow" aria-hidden="true">›</span></button></div></div>
+<div class="panel" id="p-mehr"><div class="sec-hd">Weitere Bereiche</div><div class="more-menu"><button class="more-link" onclick="switchTab('schulden')"><span>💳</span><span><strong>Schuldenzahlungen</strong><small>Rückzahlungen separat erfassen</small></span><span class="more-arrow">›</span></button><button type="button" class="more-link" onclick="switchTab('personal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><strong>Personal & Schichten</strong><small>Arbeitszeiten und Personalkosten</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('tagesabschluss')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span><strong>Tagesabschluss</strong><small>Einnahmen und Kosten von heute</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('monat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span><strong>Monatsauswertung</strong><small>Wochenvergleich und Monatsdetails</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('rechnungen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span><strong>Ausgaben & Rechnungen</strong><small>Ausgabe erfassen oder später bezahlen</small></span><span class="more-arrow" aria-hidden="true">›</span></button><button type="button" class="more-link" onclick="switchTab('einstellungen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span><strong>Einstellungen</strong><small>Konto, Face ID, Verbindung und Vorgaben</small></span><span class="more-arrow" aria-hidden="true">›</span></button></div></div>
       <!-- EINNAHMEN -->
       <div class="panel" id="p-einnahmen">
         <div style="padding:14px 14px 0">
@@ -768,9 +768,10 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
 
       <!-- AUSGABEN -->
       <div class="panel" id="p-ausgaben">
-        <div style="padding:14px 14px 0">
+        <div class="period-card"><button type="button" class="btn-primary" onclick="openExpenseForm()">＋ Ausgabe erfassen</button><p class="summary-note">Einkauf und Rechnung über dasselbe Formular erfassen – bereits bezahlt oder mit Zahlungsziel.</p></div>
+        <div id="legacy-expense-editor" hidden style="padding:14px 14px 0">
           <div class="card">
-            <div class="card-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Ausgabe eintragen</div>
+            <div class="card-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Bestehende Ausgabe bearbeiten</div>
             <div class="field"><label>Datum</label><input type="date" id="a-datum"></div>
             <div class="field"><label>Kategorie</label>
               <select id="a-kat">
@@ -884,8 +885,9 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
       </div>
       <!-- RECHNUNGEN -->
       <div class="panel" id="p-rechnungen">
+        <div class="period-card"><button type="button" class="edit-btn" onclick="switchTab('ausgaben')">Alle gebuchten Ausgaben ansehen</button><p class="summary-note">Ein Formular für Einkäufe, Rechnungen und spätere Zahlungen.</p></div>
         <div style="padding:14px 14px 0"><div class="card">
-          <div class="card-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Ausgabe oder Zahlung eintragen</div>
+          <div class="card-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Ausgabe erfassen</div>
           <div class="field"><label>Beschreibung</label><input type="text" id="r-beschr" placeholder="z.B. Metro Lieferung"></div>
           <div class="field"><label for="r-payment-status">Zahlung</label><select id="r-payment-status" onchange="updatePaymentForm()"><option value="bezahlt">Bereits bezahlt</option><option value="offen">Später bezahlen · Zahlungsziel</option></select><p class="summary-note" id="r-payment-hint">Wird direkt als bezahlt gespeichert und einmal als Ausgabe gebucht.</p></div>
           <div class="field-row"><div class="field"><label for="r-betrag">Betrag (€)</label><input type="number" id="r-betrag" placeholder="0,00" inputmode="decimal" min="0" step="0.01"></div><div class="field" id="r-paid-date-field"><label for="r-zahlungsdatum">Bezahlt am</label><input type="date" id="r-zahlungsdatum"></div><div class="field" id="r-due-date-field" hidden><label for="r-faellig">Zahlungsziel · fällig am</label><input type="date" id="r-faellig"></div></div>
@@ -1011,7 +1013,7 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
       <button class="nav-item" id="ni-rechnungen" onclick="switchTab('rechnungen')">
         <div class="nav-bar"></div>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2z"/><path d="M9 7h6M9 11h6"/></svg>
-        Rechnungen
+        Ausgaben
       </button>
       <button type="button" class="nav-item" id="ni-mehr" onclick="switchTab('mehr')"><div class="nav-bar"></div><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>Mehr</button>
     </nav>
@@ -1032,7 +1034,7 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
 <script src="sync.js?v=10"></script>
 <script src="auth.js?v=1"></script>
 <script src="receipts.js?v=1"></script>
-<script src="qonto.js?v=7"></script>
+<script src="qonto.js?v=8"></script>
 <script>
 // ══════════════════════════════════════════════
 //  SUPABASE CONFIG  (filled via Settings UI)
@@ -1198,6 +1200,7 @@ function editEntry(key,id){
  const row=D[key]?.find(r=>r.id===id),spec=formSpecs[key];if(!row||!spec)return;
  edits[key]={id,original:{...row}};
  for(const field of spec.fields){const el=document.getElementById(spec.prefix+'-'+field);if(el){if(el.tagName==='SELECT'&&!Array.from(el.options).some(o=>o.value===String(row[field]??''))){const opt=document.createElement('option');opt.value=row[field]??'';opt.textContent=row[field]??'';el.appendChild(opt);}el.value=row[field]??'';}}
+ if(key==='aus')document.getElementById('legacy-expense-editor').hidden=false;
  if(key==='ein')document.getElementById('e-bar').value=Math.round((Number(row.bar||0)+Number(row.karte||0))*100)/100;
  document.getElementById('save-'+key).textContent='Änderungen speichern';
  const hint=document.getElementById('edit-hint-'+key);hint.hidden=false;hint.textContent='Du bearbeitest einen bestehenden Eintrag.';
@@ -1206,7 +1209,7 @@ function editEntry(key,id){
  switchTab(spec.tab);document.getElementById(spec.prefix+'-'+spec.fields[0])?.scrollIntoView?.({behavior:'smooth',block:'center'});
 }
 function cancelEdit(key){
- delete edits[key];const spec=formSpecs[key];
+ delete edits[key];if(key==='aus')document.getElementById('legacy-expense-editor').hidden=true;const spec=formSpecs[key];
  for(const field of spec.fields){const el=document.getElementById(spec.prefix+'-'+field);if(!el)continue;
  if(field==='datum'||field==='faellig')el.value=today();else if(field==='von')el.value='08:00';else if(field==='bis')el.value='16:00';else if(field==='lohn')el.value='14';else if(el.tagName!=='SELECT')el.value='';}
  if(key==='rec'){document.getElementById('r-wiederholung').disabled=false;document.getElementById('r-betrag').disabled=false;document.getElementById('r-kat').disabled=false;document.getElementById('r-wiederholung').value='einmalig';document.getElementById('r-provider').value='';}
@@ -1761,6 +1764,7 @@ function renderMonat() {
 function addDays(dateStr, n) { const d=new Date(dateStr+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().split('T')[0]; }
 
 const repeatLabels={einmalig:'Einmalig',woechentlich:'Wöchentlich',monatlich:'Monatlich',vierteljaehrlich:'Vierteljährlich',jaehrlich:'Jährlich'};
+function openExpenseForm(){if(edits.rec){if(!confirm('Bearbeitung abbrechen und eine neue Ausgabe erfassen?'))return;cancelEdit('rec');}switchTab('rechnungen');document.getElementById('r-beschr')?.scrollIntoView?.({behavior:'smooth',block:'center'});document.getElementById('r-beschr')?.focus?.();}
 function updatePaymentForm(){
  const edit=edits.rec,paid=document.getElementById('r-payment-status').value!=='offen';
  document.getElementById('r-payment-status').disabled=!!edit;
@@ -1771,6 +1775,16 @@ function updatePaymentForm(){
  document.getElementById('r-payment-hint').textContent=edit?(paid?'Bereits gebucht. Für eine Zahlungskorrektur bitte die Zahlung in der Liste zurücknehmen.':'Bleibt offen. Zum Bezahlen die Zahlung in der Liste als erledigt markieren.'):paid?'Wird direkt als bezahlt gespeichert und einmal als Ausgabe gebucht.':'Bleibt bis zur Zahlung offen. Die Ausgabe wird erst beim Bezahlen gebucht.';
  document.getElementById('save-rec').textContent=edit?'Änderungen speichern':paid?'Als bezahlt speichern':'Mit Zahlungsziel speichern';
 }
+function confirmExpenseCreation(betrag,paymentDate){
+ let pending=[];try{pending=syncEngine?.pending?.()||[];}catch(e){toast('Wartende Änderungen konnten nicht geprüft werden. Bitte zuerst den Abgleich prüfen.','r');return false;}
+ const stale=syncEngine&&(!syncEngine.loaded||syncEngine.error||pending.length||!syncEngine.lastSync||Date.now()-new Date(syncEngine.lastSync).getTime()>60000||typeof navigator!=='undefined'&&navigator.onLine===false);
+ if(stale&&!confirm('Der aktuelle Datenabgleich ist noch nicht vollständig verfügbar. Die Prüfung auf doppelte Ausgaben ist eingeschränkt. Trotzdem speichern?'))return false;
+ const candidates=D.aus.map(a=>({date:a.datum,amount:a.betrag,description:a.beschr}));
+ const invoiceIds=new Set();for(const r of D.rec){if(r.bezahlt&&!D.aus.some(a=>a.rechnung_id===r.id)){invoiceIds.add(r.id);candidates.push({date:r.bezahlt_am||r.faellig,amount:r.betrag,description:r.beschr||'Bezahlte Rechnung'});}}
+ for(const op of pending){if(op.table==='rec'&&op.row.bezahlt&&!invoiceIds.has(op.id)&&!D.aus.some(a=>a.rechnung_id===op.id)){invoiceIds.add(op.id);candidates.push({date:op.row.bezahlt_am||op.row.faellig,amount:op.row.betrag,description:op.row.beschr||'Zahlung wartet auf Abgleich'});}}
+ const matches=candidates.filter(a=>Math.round(Number(a.amount)*100)===Math.round(betrag*100)&&Math.abs(Date.parse(a.date+'T12:00:00Z')-Date.parse(paymentDate+'T12:00:00Z'))<=7*86400000);
+ return !matches.length||confirm('Es gibt bereits Ausgaben oder bezahlte Rechnungen mit gleichem Betrag in der Nähe dieses Datums:\n'+matches.map(a=>a.date+' · '+(a.description||'Ausgabe')+' · '+eur(a.amount)).join('\n')+'\nTrotzdem eine separate neue Ausgabe anlegen?');
+}
 async function addRechnung(){
  const val=id=>String(document.getElementById(id).value).trim();
  const edit=edits.rec,paid=edit?edit.original.bezahlt:val('r-payment-status')!=='offen',paymentDate=val('r-zahlungsdatum')||today();
@@ -1779,6 +1793,7 @@ async function addRechnung(){
  const folgebetrag=val('r-folgebetrag')?Number(val('r-folgebetrag')):null;
  if(!validNumbers(betrag,...(folgebetrag===null?[]:[folgebetrag])))return;
  if(!beschr||betrag<=0||folgebetrag===0){toast('Bitte Beschreibung und einen positiven Betrag eingeben.','r');return;}
+ if(!edit&&paid&&!confirmExpenseCreation(betrag,paymentDate))return;
  const row={id:newId(),beschr,betrag,faellig,notiz,bezahlt:paid,kat:val('r-kat')||'sonstiges',anbieter:val('r-anbieter'),kontakt:val('r-kontakt'),kundennummer:val('r-kundennummer'),wiederholung:val('r-wiederholung')||'einmalig',anker:faellig,folgebetrag};
  if(!edit)row.bezahlt_am=paid?paymentDate:null;
  if(!await commitForm('rec',row))return;

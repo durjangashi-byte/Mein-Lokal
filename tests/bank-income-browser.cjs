@@ -16,9 +16,9 @@ async function waitFor(fn,message){for(let i=0;i<100;i++){if(await fn())return;a
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
  let browser;
  try{
- browser=await webkit.launch({headless:true});
  for(const viewport of [{width:390,height:844},{width:1440,height:1000}]){
-  const context=await browser.newContext({viewport,isMobile:viewport.width<500,hasTouch:viewport.width<500,serviceWorkers:'block'}),data=fixtures(),errors=[],unexpected=[],writes=[];
+  browser=await webkit.launch({headless:true});
+  const context=await browser.newContext({viewport,isMobile:viewport.width<500,hasTouch:viewport.width<500,serviceWorkers:'block'}),data=fixtures(),errors=[],unexpected=[],writes=[],bankRpcs=[];
   if(context.routeWebSocket)await context.routeWebSocket('**/*',ws=>ws.close());
   await context.route('**/*',async route=>{
    const request=route.request(),url=new URL(request.url()),method=request.method();
@@ -33,8 +33,17 @@ async function waitFor(fn,message){for(let i=0;i<100;i++){if(await fn())return;a
     if(url.pathname==='/auth/v1/user')return json(owner);
     if(url.pathname.startsWith('/auth/v1/logout'))return json({});
     if(url.pathname.startsWith('/rest/v1/')){
-     const table=url.pathname.slice('/rest/v1/'.length);if(!Object.hasOwn(data,table)){unexpected.push(method+' '+url.pathname);return json({message:'Unknown mocked table'},400);}
-     const idFilter=url.searchParams.get('id'),id=idFilter?.startsWith('eq.')?Number(idFilter.slice(3)):null;
+     const table=url.pathname.slice('/rest/v1/'.length);
+     if(table==='rpc/lokal_import_qonto_expense'){
+      const args=request.postDataJSON();bankRpcs.push(args);const q=data.qonto_transactions.find(t=>t.id===args.p_transaction_id);if(!q||q.side!=='debit'||q.classification==='privat'||q.ignored)return json({message:'Invalid bank source'},400);
+      if(q.imported_kind==='aus')return json(q.imported_id);
+      let expense=data.ausgaben.find(a=>a.id===args.p_expense_id);
+      if(args.p_expense_id&&!expense)return json({message:'Missing expense'},400);
+      if(!expense){expense={id:9000+data.ausgaben.length,datum:q.settled_at.slice(0,10),kat:'sonstiges',beschr:q.label,betrag:q.amount,rechnung_id:null};data.ausgaben.push(expense);}
+      q.imported_kind='aus';q.imported_id=expense.id;return json(expense.id);
+     }
+     if(!Object.hasOwn(data,table)){unexpected.push(method+' '+url.pathname);return json({message:'Unknown mocked table'},400);}
+     const idFilter=url.searchParams.get('id'),id=idFilter?.startsWith('eq.')?(table==='qonto_transactions'?idFilter.slice(3):Number(idFilter.slice(3))):null;
      if(method==='GET'){
       let rows=data[table].filter(r=>id===null||r.id===id);const start=Number(url.searchParams.get('offset')||0),limit=Number(url.searchParams.get('limit')||1000);rows=rows.slice(start,start+limit);
       if(url.searchParams.get('select')==='id')rows=rows.map(r=>({id:r.id}));
@@ -82,7 +91,8 @@ async function waitFor(fn,message){for(let i=0;i<100;i++){if(await fn())return;a
   await page.locator('#qonto-history-query').fill('Open bank');assert.equal(await page.locator('#qonto-history .payment-card').count(),1);await page.locator('#p-bank').getByRole('button',{name:'Alle Monate',exact:true}).click();
   await page.locator('#qonto-history-month').fill(previous);await page.locator('#qonto-history-month').press('Tab');assert.equal(await page.locator('#qonto-history .payment-card').count(),1);assert.match(await page.locator('#qonto-history').innerText(),/Old private credit/);
   const bankOverflow=await page.locator('#p-bank').evaluate(el=>({width:el.clientWidth,scroll:el.scrollWidth}));assert.ok(bankOverflow.scroll<=bankOverflow.width+1,'Bank history overflow');assert.deepEqual(errors,[]);
-  await page.evaluate(()=>switchTab('rechnungen'));assert.equal(await page.locator('#r-payment-status').inputValue(),'bezahlt');assert.equal(await page.locator('#r-due-date-field').isVisible(),false);assert.equal(await page.locator('#r-paid-date-field').isVisible(),true);
+  await nav('dashboard');await page.locator('#p-dashboard').getByRole('button',{name:'＋ Ausgabe erfassen',exact:true}).click();assert.equal(await page.locator('#p-rechnungen').evaluate(el=>el.classList.contains('active')),true);
+  await page.evaluate(()=>switchTab('ausgaben'));assert.equal(await page.locator('#legacy-expense-editor').isVisible(),false);await page.locator('#p-ausgaben').getByRole('button',{name:'＋ Ausgabe erfassen',exact:true}).click();assert.equal(await page.locator('#r-payment-status').inputValue(),'bezahlt');assert.equal(await page.locator('#r-due-date-field').isVisible(),false);assert.equal(await page.locator('#r-paid-date-field').isVisible(),true);
   await page.locator('#r-beschr').fill('Lidl already paid');await page.locator('#r-betrag').fill('19.90');await page.locator('#r-kat').selectOption('lebensmittel');await page.locator('#r-zahlungsdatum').fill(date);
   await page.evaluate(()=>Promise.all([addRechnung(),addRechnung()]));await page.waitForFunction(()=>syncEngine.pending().length===0);
   const paidInvoice=data.rechnungen.find(r=>r.beschr==='Lidl already paid');assert.ok(paidInvoice?.bezahlt);assert.equal(paidInvoice.bezahlt_am,date);assert.equal(data.rechnungen.filter(r=>r.beschr==='Lidl already paid').length,1);assert.equal(data.ausgaben.filter(a=>a.rechnung_id===paidInvoice.id).length,1);assert.match(await page.locator('#lst-rechnungen-bezahlt').innerText(),/Lidl already paid/);assert.doesNotMatch(await page.locator('#lst-rechnungen-offen').innerText(),/Lidl already paid/);
@@ -91,7 +101,13 @@ async function waitFor(fn,message){for(let i=0;i<100;i++){if(await fn())return;a
   await page.locator('#lst-rechnungen-offen .payment-card').filter({hasText:'Pay supplier later'}).getByRole('button',{name:'Bearbeiten',exact:true}).click();assert.equal(await page.locator('#r-payment-status').inputValue(),'offen');assert.equal(await page.locator('#r-payment-status').isDisabled(),true);await page.locator('#r-beschr').fill('Supplier still open');await page.locator('#save-rec').click();await page.waitForFunction(()=>syncEngine.pending().length===0);assert.equal(laterInvoice.bezahlt,false);assert.equal(data.ausgaben.filter(a=>a.rechnung_id===laterInvoice.id).length,0);
   await page.reload();await page.waitForFunction(()=>!document.body.classList.contains('auth-locked')&&syncEngine?.loaded===true);await page.evaluate(()=>switchTab('rechnungen'));assert.match(await page.locator('#lst-rechnungen-bezahlt').innerText(),/Lidl already paid/);assert.match(await page.locator('#lst-rechnungen-offen').innerText(),/Supplier still open/);
   const invoiceOverflow=await page.locator('#p-rechnungen').evaluate(el=>({width:el.clientWidth,scroll:el.scrollWidth}));assert.ok(invoiceOverflow.scroll<=invoiceOverflow.width+1,'Invoice page overflow');assert.deepEqual(errors,[]);assert.deepEqual(unexpected,[]);
-  console.log('PASS WebKit '+viewport.width+'x'+viewport.height+' real SDK login, bank CRUD/search/month, dashboard/month totals, reload sync, no overflow/page errors/external access');await context.close();
+  const bankExpense=data.ausgaben.find(a=>a.rechnung_id===paidInvoice.id),expenseBefore=JSON.stringify(bankExpense),countBefore=data.ausgaben.length;
+  const balanceBefore=await page.locator('#dh-val').textContent();data.qonto_transactions.push({id:'bank-lidl',amount:19.90,side:'debit',status:'completed',classification:'betrieblich',label:'Lidl card purchase',settled_at:date+'T12:00:00Z'});
+  await page.evaluate(()=>switchTab('bank'));await page.waitForFunction(()=>document.getElementById('qonto-list').textContent.includes('Lidl card purchase'));
+  const bankCard=page.locator('#qonto-list > .payment-card').filter({hasText:'Lidl card purchase'});assert.match(await bankCard.innerText(),/Lidl already paid/);await bankCard.getByRole('button',{name:'Mit dieser Ausgabe verknüpfen',exact:true}).click();await page.waitForFunction(()=>!document.getElementById('qonto-list').textContent.includes('Lidl card purchase'));
+  assert.equal(bankRpcs.length,1);assert.equal(bankRpcs[0].p_expense_id,bankExpense.id);assert.equal(data.ausgaben.length,countBefore);assert.equal(JSON.stringify(bankExpense),expenseBefore);assert.equal(data.qonto_transactions.find(q=>q.id==='bank-lidl').imported_id,bankExpense.id);
+  await nav('dashboard');assert.equal(await page.locator('#dh-val').textContent(),balanceBefore);assert.deepEqual(errors,[]);assert.deepEqual(unexpected,[]);
+  console.log('PASS WebKit '+viewport.width+'x'+viewport.height+' real SDK login, bank CRUD/search/month, dashboard/month totals, reload sync, no overflow/page errors/external access');await context.close();await browser.close();browser=null;
  }
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

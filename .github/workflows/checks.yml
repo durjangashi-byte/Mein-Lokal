@@ -29,3 +29,7 @@ jobs:
         env:
           PG_TEST_MODULE: ${{ runner.temp }}/bank-db/node_modules/@electric-sql/pglite
         run: node tests/bank-income-db.cjs
+      - name: Qonto expense matching SQL and permissions
+        env:
+          PG_TEST_MODULE: ${{ runner.temp }}/bank-db/node_modules/@electric-sql/pglite
+        run: node tests/qonto-expense-db.cjs
