@@ -1032,7 +1032,7 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
 <script src="sync.js?v=10"></script>
 <script src="auth.js?v=1"></script>
 <script src="receipts.js?v=1"></script>
-<script src="qonto.js?v=6"></script>
+<script src="qonto.js?v=7"></script>
 <script>
 // ══════════════════════════════════════════════
 //  SUPABASE CONFIG  (filled via Settings UI)
@@ -1046,6 +1046,7 @@ function authMessage(message) {
 }
 function lockApp() {
   window.resetBankIncome?.();
+  window.resetQontoBank?.();
   document.getElementById('qonto-private')?.replaceChildren();
   if(typeof D!=='undefined'){D.bank=[];D.privat=[];}
   const sonstigeDash=document.getElementById('dashboard-sonstige-income');if(sonstigeDash)sonstigeDash.textContent='';
