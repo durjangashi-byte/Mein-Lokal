@@ -885,9 +885,10 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
       <!-- RECHNUNGEN -->
       <div class="panel" id="p-rechnungen">
         <div style="padding:14px 14px 0"><div class="card">
-          <div class="card-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Zahlung eintragen</div>
+          <div class="card-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Ausgabe oder Zahlung eintragen</div>
           <div class="field"><label>Beschreibung</label><input type="text" id="r-beschr" placeholder="z.B. Metro Lieferung"></div>
-          <div class="field-row"><div class="field"><label>Betrag (€)</label><input type="number" id="r-betrag" placeholder="0,00" inputmode="decimal" min="0" step="0.01"></div><div class="field"><label>Fällig am</label><input type="date" id="r-faellig"></div></div>
+          <div class="field"><label for="r-payment-status">Zahlung</label><select id="r-payment-status" onchange="updatePaymentForm()"><option value="bezahlt">Bereits bezahlt</option><option value="offen">Später bezahlen · Zahlungsziel</option></select><p class="summary-note" id="r-payment-hint">Wird direkt als bezahlt gespeichert und einmal als Ausgabe gebucht.</p></div>
+          <div class="field-row"><div class="field"><label for="r-betrag">Betrag (€)</label><input type="number" id="r-betrag" placeholder="0,00" inputmode="decimal" min="0" step="0.01"></div><div class="field" id="r-paid-date-field"><label for="r-zahlungsdatum">Bezahlt am</label><input type="date" id="r-zahlungsdatum"></div><div class="field" id="r-due-date-field" hidden><label for="r-faellig">Zahlungsziel · fällig am</label><input type="date" id="r-faellig"></div></div>
 <div class="field"><label>Ausgabenkategorie</label><select id="r-kat"><option value="lebensmittel">🥩 Lebensmittel / Wareneinkauf</option>
                 <option value="getraenke">🍷 Getränke</option>
                 <option value="personal">👥 Lohn & Gehalt</option>
@@ -906,14 +907,13 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
                 <option value="fahrzeug">🚗 Fahrzeug / Fahrtkosten</option>
                 <option value="reinigung">🧹 Reinigung / Verbrauch</option>
                 <option value="sonstiges" selected>📦 Sonstiges</option></select></div>
-          <div class="field"><label>Wiederholung</label><select id="r-wiederholung"><option value="einmalig">Einmalig</option><option value="woechentlich">Wöchentlich</option><option value="monatlich">Monatlich</option><option value="vierteljaehrlich">Vierteljährlich</option><option value="jaehrlich">Jährlich</option></select></div>
-          <div class="field"><label>Betrag für Folgetermine (€, optional)</label><input type="number" id="r-folgebetrag" inputmode="decimal" min="0" step="0.01" placeholder="Wie diese Zahlung"></div>
-          <details style="margin:0 16px 14px"><summary style="padding:10px 0;cursor:pointer">Anbieter & Zusatzinfos (optional)</summary>
+          <details id="r-repeat-details" style="margin:0 16px 14px"><summary style="padding:10px 0;cursor:pointer">Wiederkehrende Zahlung (optional)</summary><div class="field"><label>Wiederholung</label><select id="r-wiederholung"><option value="einmalig">Einmalig</option><option value="woechentlich">Wöchentlich</option><option value="monatlich">Monatlich</option><option value="vierteljaehrlich">Vierteljährlich</option><option value="jaehrlich">Jährlich</option></select></div>
+          <div class="field"><label>Betrag für Folgetermine (€, optional)</label><input type="number" id="r-folgebetrag" inputmode="decimal" min="0" step="0.01" placeholder="Wie diese Zahlung"></div></details>
+          <details style="margin:0 16px 14px"><summary style="padding:10px 0;cursor:pointer">Anbieter, Notiz & Zusatzinfos (optional)</summary>
             <div class="field"><label>Anbieter-Vorlage verwenden</label><select id="r-provider" onchange="useProvider(this.value)"><option value="">Keine Vorlage</option></select></div>
             <div class="field"><label>Anbieter</label><input id="r-anbieter" type="text" placeholder="z.B. Internetanbieter"></div><div class="field"><label>Kontakt</label><input id="r-kontakt" type="text"></div><div class="field"><label>Kunden- / Vertragsnummer</label><input id="r-kundennummer" type="text"></div>
-          </details>
-          <div class="field"><label>Notiz</label><input type="text" id="r-notiz" placeholder="z.B. Rechnungsnr. 2024-001"></div>
-          <div class="form-hint" id="edit-hint-rec" hidden></div><button id="save-rec" class="btn-primary" onclick="addRechnung()">Speichern</button><button type="button" class="btn-secondary" id="cancel-rec" onclick="cancelEdit('rec')" hidden>Bearbeiten abbrechen</button>
+          <div class="field"><label>Notiz</label><input type="text" id="r-notiz" placeholder="z.B. Rechnungsnr. 2024-001"></div></details>
+          <div class="form-hint" id="edit-hint-rec" hidden></div><button id="save-rec" class="btn-primary" onclick="addRechnung()">Als bezahlt speichern</button><button type="button" class="btn-secondary" id="cancel-rec" onclick="cancelEdit('rec')" hidden>Bearbeiten abbrechen</button>
         </div></div>
         <div class="period-card"><strong>Erinnerungen um 9 Uhr</strong><p class="summary-note">Auf dem iPhone: App über Safari zum Home-Bildschirm hinzufügen und von dort öffnen. Danach Mitteilungen aktivieren. Auch überfällige Zahlungen bleiben sichtbar.</p><button class="edit-btn" onclick="enablePaymentPush()">Mitteilungen aktivieren</button> <button class="edit-btn" onclick="testPaymentPush()">Test senden</button> <button class="edit-btn" onclick="disablePaymentPush()">Auf diesem Gerät ausschalten</button><div id="push-status" class="summary-note" role="status"></div></div>
         <div id="payment-summary"></div><div class="field"><label>Zahlungen suchen</label><input id="r-search" type="search" placeholder="Beschreibung, Anbieter, Kundennummer" oninput="renderRechnungen()"></div>
@@ -1202,7 +1202,7 @@ function editEntry(key,id){
  document.getElementById('save-'+key).textContent='Änderungen speichern';
  const hint=document.getElementById('edit-hint-'+key);hint.hidden=false;hint.textContent='Du bearbeitest einen bestehenden Eintrag.';
  document.getElementById('cancel-'+key).hidden=false;
- if(key==='rec'){document.getElementById('r-wiederholung').disabled=!!row.serie_id;document.getElementById('r-betrag').disabled=!!row.bezahlt;document.getElementById('r-kat').disabled=!!row.bezahlt;}
+ if(key==='rec'){document.getElementById('r-wiederholung').disabled=!!row.serie_id;document.getElementById('r-betrag').disabled=!!row.bezahlt;document.getElementById('r-kat').disabled=!!row.bezahlt;document.getElementById('r-payment-status').value=row.bezahlt?'bezahlt':'offen';document.getElementById('r-zahlungsdatum').value=row.bezahlt_am||row.faellig||today();document.getElementById('r-repeat-details').open=(row.wiederholung||'einmalig')!=='einmalig';updatePaymentForm();}
  switchTab(spec.tab);document.getElementById(spec.prefix+'-'+spec.fields[0])?.scrollIntoView?.({behavior:'smooth',block:'center'});
 }
 function cancelEdit(key){
@@ -1211,6 +1211,7 @@ function cancelEdit(key){
  if(field==='datum'||field==='faellig')el.value=today();else if(field==='von')el.value='08:00';else if(field==='bis')el.value='16:00';else if(field==='lohn')el.value='14';else if(el.tagName!=='SELECT')el.value='';}
  if(key==='rec'){document.getElementById('r-wiederholung').disabled=false;document.getElementById('r-betrag').disabled=false;document.getElementById('r-kat').disabled=false;document.getElementById('r-wiederholung').value='einmalig';document.getElementById('r-provider').value='';}
  document.getElementById('save-'+key).textContent='Speichern';document.getElementById('edit-hint-'+key).hidden=true;document.getElementById('cancel-'+key).hidden=true;
+ if(key==='rec'){document.getElementById('r-payment-status').value='bezahlt';document.getElementById('r-zahlungsdatum').value=today();document.getElementById('r-faellig').value='';document.getElementById('r-repeat-details').open=false;updatePaymentForm();}
 }
 async function commitForm(key,row){
  if(formBusy.has(key))return false;
@@ -1220,6 +1221,7 @@ async function commitForm(key,row){
   if(!current){toast('Eintrag wurde gelöscht. Bitte Bearbeiten abbrechen.','r');return false;}
   if(spec.fields.some(f=>current[f]!==edit.original[f])){toast('Eintrag wurde inzwischen geändert. Bitte Bearbeiten neu öffnen.','r');return false;}
   row={...row,id:edit.id};if(key==='rec'){
+   if(current.bezahlt!==edit.original.bezahlt||current.bezahlt_am!==edit.original.bezahlt_am){toast('Zahlungsstatus wurde inzwischen geändert. Bitte Bearbeiten neu öffnen.','r');return false;}
    if(current.bezahlt&&(row.betrag!==current.betrag||row.kat!==current.kat)){toast('Zuerst Zahlung zurücknehmen, dann Betrag oder Kategorie korrigieren.','r');return false;}
    delete row.bezahlt;if(current.serie_id)delete row.wiederholung;
    if(!current.serie_id)row.anker=row.faellig;
@@ -1233,7 +1235,7 @@ async function commitForm(key,row){
  }finally{formBusy.delete(key);btn.disabled=false;}
 }
 function validNumbers(...values){if(values.some(v=>!Number.isFinite(v)||v<0)){toast('Bitte gültige, nicht negative Beträge und Zahlen eingeben.','r');return false;}return true;}
-function prepareQuickForm(tab){const key=Object.keys(formSpecs).find(k=>formSpecs[k].tab===tab);if(!key||edits[key])return;const spec=formSpecs[key];for(const field of ['datum','faellig']){const el=document.getElementById(spec.prefix+'-'+field);if(el&&!el.value)el.value=today();}if((key==='aus'||key==='lief')&&!quickInitialized.has(key)){quickInitialized.add(key);const kat=localStorage.getItem('rv_last_'+key+'_kat');if(kat&&Object.prototype.hasOwnProperty.call(KAT,kat)&&kat!=='schulden')document.getElementById(spec.prefix+'-kat').value=kat;}}
+function prepareQuickForm(tab){const key=Object.keys(formSpecs).find(k=>formSpecs[k].tab===tab);if(!key||edits[key])return;const spec=formSpecs[key];for(const field of ['datum','faellig']){const el=document.getElementById(spec.prefix+'-'+field);if(el&&!el.value&&!(key==='rec'&&field==='faellig'))el.value=today();}if((key==='aus'||key==='lief')&&!quickInitialized.has(key)){quickInitialized.add(key);const kat=localStorage.getItem('rv_last_'+key+'_kat');if(kat&&Object.prototype.hasOwnProperty.call(KAT,kat)&&kat!=='schulden')document.getElementById(spec.prefix+'-kat').value=kat;}}
 const eur = (n,s=false) => { const v=Math.round(n*100)/100; return s?Math.round(v).toLocaleString('de-DE')+'€':v.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; };
 const fmt = s => { if(!s)return'—'; const[y,mo,d]=s.split('-'); return esc(['So','Mo','Di','Mi','Do','Fr','Sa'][new Date(s).getDay()]+' '+d+'.'+mo+'.'); };
 const staffCol = name => ['#a855f7','#22c55e','#3b82f6','#f59e0b','#14b8a6','#ef4444','#f97316','#06b6d4'][(name||'A').charCodeAt(0)%8];
@@ -1666,7 +1668,9 @@ function switchTab(id) {
 
 // Init new date fields
 const rFaellig = document.getElementById('r-faellig');
-if (rFaellig) rFaellig.value = today();
+if (rFaellig) rFaellig.value = '';
+const rPaymentDate=document.getElementById('r-zahlungsdatum');if(rPaymentDate)rPaymentDate.value=today();
+updatePaymentForm();
 
 // ══════════════════════════════════════════
 // TAGESABSCHLUSS
@@ -1757,17 +1761,30 @@ function renderMonat() {
 function addDays(dateStr, n) { const d=new Date(dateStr+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().split('T')[0]; }
 
 const repeatLabels={einmalig:'Einmalig',woechentlich:'Wöchentlich',monatlich:'Monatlich',vierteljaehrlich:'Vierteljährlich',jaehrlich:'Jährlich'};
+function updatePaymentForm(){
+ const edit=edits.rec,paid=document.getElementById('r-payment-status').value!=='offen';
+ document.getElementById('r-payment-status').disabled=!!edit;
+ document.getElementById('r-paid-date-field').hidden=!paid;
+ document.getElementById('r-due-date-field').hidden=paid;
+ document.getElementById('r-zahlungsdatum').disabled=!!edit;
+ if(!edit&&!paid&&!document.getElementById('r-faellig').value){const provider=D.lief.find(l=>l.id===Number(document.getElementById('r-provider').value));document.getElementById('r-faellig').value=addDays(today(),provider?.zahlungsziel??14);}
+ document.getElementById('r-payment-hint').textContent=edit?(paid?'Bereits gebucht. Für eine Zahlungskorrektur bitte die Zahlung in der Liste zurücknehmen.':'Bleibt offen. Zum Bezahlen die Zahlung in der Liste als erledigt markieren.'):paid?'Wird direkt als bezahlt gespeichert und einmal als Ausgabe gebucht.':'Bleibt bis zur Zahlung offen. Die Ausgabe wird erst beim Bezahlen gebucht.';
+ document.getElementById('save-rec').textContent=edit?'Änderungen speichern':paid?'Als bezahlt speichern':'Mit Zahlungsziel speichern';
+}
 async function addRechnung(){
  const val=id=>String(document.getElementById(id).value).trim();
- const beschr=val('r-beschr'),betrag=Number(val('r-betrag')||0),faellig=val('r-faellig')||today(),notiz=val('r-notiz');
+ const edit=edits.rec,paid=edit?edit.original.bezahlt:val('r-payment-status')!=='offen',paymentDate=val('r-zahlungsdatum')||today();
+ const beschr=val('r-beschr'),betrag=Number(val('r-betrag')||0),faellig=edit?val('r-faellig'):paid?paymentDate:val('r-faellig'),notiz=val('r-notiz');
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(faellig)||!edit&&paid&&(!/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)||paymentDate>today())){toast('Bitte ein gültiges Datum angeben. Eine bezahlte Ausgabe darf nicht in der Zukunft liegen.','r');return;}
  const folgebetrag=val('r-folgebetrag')?Number(val('r-folgebetrag')):null;
  if(!validNumbers(betrag,...(folgebetrag===null?[]:[folgebetrag])))return;
  if(!beschr||betrag<=0||folgebetrag===0){toast('Bitte Beschreibung und einen positiven Betrag eingeben.','r');return;}
- const row={id:newId(),beschr,betrag,faellig,notiz,bezahlt:false,kat:val('r-kat')||'sonstiges',anbieter:val('r-anbieter'),kontakt:val('r-kontakt'),kundennummer:val('r-kundennummer'),wiederholung:val('r-wiederholung')||'einmalig',anker:faellig,folgebetrag};
+ const row={id:newId(),beschr,betrag,faellig,notiz,bezahlt:paid,kat:val('r-kat')||'sonstiges',anbieter:val('r-anbieter'),kontakt:val('r-kontakt'),kundennummer:val('r-kundennummer'),wiederholung:val('r-wiederholung')||'einmalig',anker:faellig,folgebetrag};
+ if(!edit)row.bezahlt_am=paid?paymentDate:null;
  if(!await commitForm('rec',row))return;
- cancelEdit('rec');renderRechnungen();checkOverdue();savedToast('Zahlung gespeichert');
+ cancelEdit('rec');renderRechnungen();checkOverdue();savedToast(edit?'Zahlung aktualisiert':paid?(syncEngine?.pending().length?'Bezahlt auf Gerät gespeichert · Ausgabe folgt nach Abgleich':'Bezahlt gespeichert und als Ausgabe gebucht'):'Offene Zahlung mit Zahlungsziel gespeichert');
 }
-function useProvider(id){const l=D.lief.find(l=>l.id===Number(id));if(!l)return;document.getElementById('r-anbieter').value=l.name;document.getElementById('r-kontakt').value=l.kontakt||'';document.getElementById('r-kat').value=l.kat||'sonstiges';if(!edits.rec)document.getElementById('r-faellig').value=addDays(today(),l.zahlungsziel??14);}
+function useProvider(id){const l=D.lief.find(l=>l.id===Number(id));if(!l)return;document.getElementById('r-anbieter').value=l.name;document.getElementById('r-kontakt').value=l.kontakt||'';document.getElementById('r-kat').value=l.kat||'sonstiges';if(!edits.rec&&document.getElementById('r-payment-status').value==='offen')document.getElementById('r-faellig').value=addDays(today(),l.zahlungsziel??14);}
 function paymentRoot(r){return r.serie_id?D.rec.find(x=>x.id===r.serie_id):r;}
 function openPayment(id){
  const r=D.rec.find(r=>r.id===id);if(!r)return;
@@ -1797,7 +1814,7 @@ function renderRechnungen(){
  const query=(document.getElementById('r-search')?.value||'').trim().toLocaleLowerCase('de-DE'),filter=document.getElementById('r-filter')?.value||'alle';
  const matches=r=>(!query||[r.beschr,r.anbieter,r.kundennummer,r.notiz].join(' ').toLocaleLowerCase('de-DE').includes(query))&&(filter==='alle'||filter==='ueberfaellig'&&r.faellig&&r.faellig<now||filter==='woche'&&r.faellig>=now&&r.faellig<=weekEnd||filter==='monat'&&r.faellig?.startsWith(month));
  const card=r=>{const root=paymentRoot(r),status=r.bezahlt?'Bezahlt':r.faellig&&r.faellig<now?'Überfällig':r.faellig===now?'Heute fällig':'Offen';const k=KAT[r.kat]||KAT.sonstiges;
- return `<div class="payment-card" id="ew${r.id}"><div class="payment-top"><h3>${esc(r.beschr)}</h3><strong class="${r.bezahlt?'amtg':'amtr'}">${eur(r.betrag)}</strong></div><p>${status} · Fällig: ${fmtFull(r.faellig)}${r.bezahlt_am?' · Bezahlt: '+fmtFull(r.bezahlt_am):''} · ${k.label}${root?.pausiert?' · Serie pausiert':''}${r.erinnerung_am&&!r.bezahlt?' · Erinnerung: '+fmtFull(r.erinnerung_am):''}</p>${r.anbieter||r.kontakt||r.kundennummer?`<p>${esc([r.anbieter,r.kontakt,r.kundennummer].filter(Boolean).join(' · '))}</p>`:''}${r.notiz?`<p>${esc(r.notiz)}</p>`:''}<div class="payment-actions"><button class="edit-btn" onclick="openPayment(${r.id})">${r.bezahlt?'Zahlung zurücknehmen':'✓ Erledigt / bezahlt'}</button>${editButton('rec',r.id)}${!r.bezahlt?`<button class="edit-btn" onclick="openSnooze(${r.id})">Später erinnern</button>`:''}${!r.bezahlt&&!r.serie_id&&!D.rec.some(x=>x.serie_id===r.id)?`<button class="edit-btn" onclick="_del('rec',${r.id})">Löschen</button>`:''}</div></div>`;};
+ return `<div class="payment-card" id="ew${r.id}"><div class="payment-top"><h3>${esc(r.beschr)}</h3><strong class="${r.bezahlt?'amtg':'amtr'}">${eur(r.betrag)}</strong></div><p>${status} · ${r.bezahlt?'Bezahlt: '+fmtFull(r.bezahlt_am||r.faellig):'Zahlungsziel: '+fmtFull(r.faellig)} · ${k.label}${root?.pausiert?' · Serie pausiert':''}${r.erinnerung_am&&!r.bezahlt?' · Erinnerung: '+fmtFull(r.erinnerung_am):''}</p>${r.anbieter||r.kontakt||r.kundennummer?`<p>${esc([r.anbieter,r.kontakt,r.kundennummer].filter(Boolean).join(' · '))}</p>`:''}${r.notiz?`<p>${esc(r.notiz)}</p>`:''}<div class="payment-actions"><button class="edit-btn" onclick="openPayment(${r.id})">${r.bezahlt?'Zahlung zurücknehmen':'✓ Erledigt / bezahlt'}</button>${editButton('rec',r.id)}${!r.bezahlt?`<button class="edit-btn" onclick="openSnooze(${r.id})">Später erinnern</button>`:''}${!r.bezahlt&&!r.serie_id&&!D.rec.some(x=>x.serie_id===r.id)?`<button class="edit-btn" onclick="_del('rec',${r.id})">Löschen</button>`:''}</div></div>`;};
  const lst1=document.getElementById('lst-rechnungen-offen');if(lst1)lst1.innerHTML=open.filter(matches).sort((a,b)=>a.faellig.localeCompare(b.faellig)).map(card).join('')||'<div class="summary-note" style="margin:14px">Keine passenden offenen Zahlungen.</div>';
  const lst2=document.getElementById('lst-rechnungen-bezahlt');if(lst2)lst2.innerHTML=D.rec.filter(r=>r.bezahlt&&matches(r)).sort((a,b)=>String(b.bezahlt_am||b.faellig).localeCompare(String(a.bezahlt_am||a.faellig))).map(card).join('')||'<div class="summary-note" style="margin:14px">Keine passenden bezahlten Zahlungen.</div>';
 }

@@ -15,7 +15,7 @@ run("authUser={id:'test-owner'};renderAll()");
 fill('e-bar','100');fill('e-karte','50');fill('e-tip','5');await run('addEinnahme()');assert.equal(run('D.ein.length'),1);
 fill('a-beschr','Test');fill('a-betrag','10');await run('addAusgabe()');assert.equal(run('D.aus.length'),1);
 fill('m-name','Test');fill('m-von','22:00');fill('m-bis','02:00');fill('m-lohn','15');await run('addSchicht()');assert.equal(run('D.mit[0].stunden'),4);assert.equal(run('D.mit[0].ausgezahlt'),60);
-fill('r-beschr','Test');fill('r-betrag','12');await run('addRechnung()');assert.equal(run('D.rec.length'),1);await run('toggleBezahlt(D.rec[0].id)');assert.equal(run('D.rec[0].bezahlt'),true);
+fill('r-beschr','Test');fill('r-betrag','12');await run('addRechnung()');assert.equal(run('D.rec.length'),1);assert.equal(run('D.rec[0].bezahlt'),true);assert.equal(run('D.rec[0].bezahlt_am'),run('today()'));
 fill('l-name','Test');await run('addLieferant()');assert.equal(run('D.lief.length'),1);
 for(const id of ['lst-ein','lst-aus','lst-mit','lst-rechnungen-bezahlt','lst-lieferanten','monat-cards'])assert.ok(els.get(id).innerHTML,'render '+id);
 assert.match(els.get('m-erg').textContent,/35/);
@@ -59,6 +59,16 @@ assert.equal(run('JSON.stringify(D)'),beforeSearch);
 run("resetBookingSearch('dashboard');resetBookingSearch('monat');D.aus=Array.from({length:125},(_,i)=>({id:200+i,datum:'2026-10-08',kat:'sonstiges',beschr:'Gleiche Beschreibung',betrag:1}));renderBookings('dashboard')");
 assert.equal((els.get('dashboard-bookings').innerHTML.match(/class="booking-entry"/g)||[]).length,127);
 run('Object.assign(D,'+original+')');run("dashboardPeriod=today().slice(0,7);selectedMonth=dashboardPeriod;renderAll()");
+
+// New invoices default paid; deferred invoices and edits preserve their status.
+const invoiceSnapshot=run('JSON.stringify(D.rec)');
+fill('r-beschr','Later invoice');fill('r-betrag','22');fill('r-payment-status','offen');run('updatePaymentForm()');fill('r-faellig','2026-12-20');await run('addRechnung()');
+assert.equal(run('D.rec.at(-1).bezahlt'),false);assert.equal(run('D.rec.at(-1).faellig'),'2026-12-20');assert.equal(run('D.rec.at(-1).bezahlt_am'),null);
+run("editEntry('rec',D.rec.at(-1).id)");assert.equal(els.get('r-payment-status').value,'offen');assert.equal(els.get('r-payment-status').disabled,true);fill('r-notiz','Still open');await run('addRechnung()');assert.equal(run('D.rec.at(-1).bezahlt'),false);
+fill('r-beschr','Future paid');fill('r-betrag','15');fill('r-zahlungsdatum','2099-01-01');const invoiceCount=run('D.rec.length');await run('addRechnung()');assert.equal(run('D.rec.length'),invoiceCount);run("cancelEdit('rec')");
+run("editEntry('rec',D.rec.at(-1).id);D.rec.at(-1).bezahlt=true");fill('r-notiz','Stale edit');await run('addRechnung()');assert.notEqual(run('D.rec.at(-1).notiz'),'Stale edit');run("cancelEdit('rec')");
+run('D.rec='+invoiceSnapshot);run('renderAll()');assert.equal(els.get('r-payment-status').value,'bezahlt');assert.equal(els.get('r-due-date-field').hidden,true);assert.equal(els.get('r-paid-date-field').hidden,false);
+console.log('PASS paid-by-default invoice, optional due date, immutable existing payment status and stale edit protection');
 
 // New payment UI: amount correction before payment, idempotent local submit, snooze and series actions.
 await run('reversePayment(D.rec[0].id)');
