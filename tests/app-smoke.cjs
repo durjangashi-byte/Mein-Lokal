@@ -2,6 +2,7 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 require('../sync.js');
 const html=fs.readFileSync(require('node:path').join(__dirname,'../index.html'),'utf8');
+assert.doesNotMatch(html,/user-scalable=no|maximum-scale=1/);assert.match(html,/<title>Mein Lokal<\/title>/);assert.doesNotMatch(html,/font-size:\s?(9|10|11)px/);
 const els=new Map([...html.matchAll(/id="([^"]+)"/g)].map(m=>[m[1],{value:'',style:{},classList:{add(){},remove(){}},textContent:'',innerHTML:'',replaceChildren(){this.innerHTML=''}}]));
 for(const m of html.matchAll(/<select[^>]*id="([^"]+)"[^>]*>([\s\S]*?)<\/select>/g)){const el=els.get(m[1]);el.tagName='SELECT';el.options=[...m[2].matchAll(/<option(?: value="([^"]*)")?[^>]*>([^<]*)/g)].map(o=>({value:o[1]??o[2]}));el.value=el.options[0]?.value||'';el.appendChild=opt=>el.options.push(opt);}
 const store=new Map([['rv_dual_results_v1','1'],['rv_dashboard_period',new Date().toISOString().slice(0,7)],['rv_sb_url',''],['rv_sb_key','']]);
