@@ -13,6 +13,7 @@ assert.equal(run('authUser'),null);
 assert.equal(await run("persistChange('insert','ein',{id:1})"),false);
 run("authUser={id:'test-owner'};renderAll()");
 fill('e-bar','100');fill('e-karte','50');fill('e-tip','5');await run('addEinnahme()');assert.equal(run('D.ein.length'),1);
+assert.equal(els.has('e-gaeste'),false);assert.equal(run('D.ein[0].gaeste'),0);
 fill('a-beschr','Test');fill('a-betrag','10');await run('addAusgabe()');assert.equal(run('D.aus.length'),1);
 fill('m-name','Test');fill('m-von','22:00');fill('m-bis','02:00');fill('m-lohn','15');await run('addSchicht()');assert.equal(run('D.mit[0].stunden'),4);assert.equal(run('D.mit[0].ausgezahlt'),60);
 fill('r-beschr','Test');fill('r-betrag','12');await run('addRechnung()');assert.equal(run('D.rec.length'),1);assert.equal(run('D.rec[0].bezahlt'),true);assert.equal(run('D.rec[0].bezahlt_am'),run('today()'));

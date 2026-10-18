@@ -796,7 +796,6 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
             </div>
             <div class="field-row">
               <div class="field"><label>Trinkgeld zusätzlich (€)</label><input type="number" id="e-tip" placeholder="0,00" inputmode="decimal" min="0" step="0.01"></div>
-              <div class="field"><label>Gäste</label><input type="number" id="e-gaeste" placeholder="0" inputmode="numeric" min="0"></div>
             </div>
             <div class="summary-note">Gesamtumsatz enthält Bar- und Kartenzahlungen, ohne Trinkgeld. Bar wird automatisch als Gesamtumsatz minus Karte berechnet.</div>
             <div class="field"><label>Tagesnotiz</label><input type="text" id="e-notiz" placeholder="z.B. Fußballabend, sehr voll"></div>
@@ -1236,7 +1235,7 @@ function businessIncome(rows,key='ein'){const sources=privateItems().filter(r=>r
 function privateSummaryRows(operating,amount,income=0){return `<div class="t-row"><span>Ergebnis ohne private Buchungen</span><strong>${eur(operating)}</strong></div><div class="t-row"><span>Private Einnahmen / Einlagen</span><strong class="amtg">${eur(income)}</strong></div><div class="t-row"><span>Private Ausgaben / Entnahmen</span><strong class="amtr">${eur(amount)}</strong></div><div class="t-row"><span>Ergebnis mit privaten Buchungen</span><strong>${eur(operating+income-amount)}</strong></div>`;}
 function periodData(){const match=r=>!dashboardPeriod||r.datum?.startsWith(dashboardPeriod);return {bank:businessIncome(D.bank.filter(match),'bank'),ein:businessIncome(D.ein.filter(match)),aus:businessExpenses(D.aus.filter(match)),mit:D.mit.filter(match)};}
 const formSpecs={
- ein:{tab:'einnahmen',prefix:'e',fields:['datum','bar','karte','tip','gaeste','notiz']},
+ ein:{tab:'einnahmen',prefix:'e',fields:['datum','bar','karte','tip','notiz']},
  aus:{tab:'ausgaben',prefix:'a',fields:['datum','kat','beschr','betrag']},
  mit:{tab:'personal',prefix:'m',fields:['name','pos','datum','von','bis','lohn']},
  rec:{tab:'rechnungen',prefix:'r',fields:['beschr','betrag','faellig','notiz','kat','anbieter','kontakt','kundennummer','wiederholung','folgebetrag']},
@@ -1402,16 +1401,15 @@ async function addEinnahme() {
   const gesamt=Number(document.getElementById('e-bar').value||0);
   const karte=Number(document.getElementById('e-karte').value||0);
   const tip=Number(document.getElementById('e-tip').value||0);
-  const gaeste=Number(document.getElementById('e-gaeste').value||0);
+  const gaeste=edits.ein?Number(edits.ein.original.gaeste||0):0; // Gästezahl wird nicht mehr erfasst; Altwerte bleiben erhalten
   const notiz=document.getElementById('e-notiz').value.trim();
-  if(!validNumbers(gesamt,karte,tip,gaeste))return;
+  if(!validNumbers(gesamt,karte,tip))return;
   if(karte>gesamt){toast('Der Kartenbetrag darf den Gesamtumsatz nicht übersteigen.','r');return;}
   const bar=Math.round((gesamt-karte)*100)/100;
-  if(!Number.isInteger(gaeste)){toast('Bitte eine ganze Gästezahl eingeben.','r');return;}
   if(!bar&&!karte&&!tip){toast('Bitte mindestens einen Einnahmebetrag eingeben.','r');return;}
   const row={id:newId(),datum,bar,karte,tip,gaeste,notiz};
   if(!await commitForm('ein',row))return;
-  ['e-bar','e-karte','e-tip','e-gaeste','e-notiz'].forEach(id=>document.getElementById(id).value='');
+  ['e-bar','e-karte','e-tip','e-notiz'].forEach(id=>document.getElementById(id).value='');
   savedToast('Einnahme gespeichert');
 }
 
@@ -1437,7 +1435,7 @@ function renderEin() {
   if(!entries.length){lst.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><p>Keine passenden Einnahmen</p></div>';tot.innerHTML='<div class="totals-card"><div class="t-row"><span>Gefilterte Einnahmen inkl. Trinkgeld</span><strong class="amtg">'+eur(0)+'</strong></div></div>';return;}
   const tE=entries.reduce((s,e)=>s+e.bar+e.karte+e.tip,0),tB=entries.reduce((s,e)=>s+e.bar,0),tK=entries.reduce((s,e)=>s+e.karte,0),tT=entries.reduce((s,e)=>s+e.tip,0);
   tot.innerHTML=`<div class="totals-card"><div class="t-row"><span>Gefilterte Einnahmen inkl. Trinkgeld</span><strong class="amtg">${eur(tE)}</strong></div><div class="t-row"><span>Bar / Karte / Trinkgeld</span><strong style="font-size:12px;color:var(--text2)">${eur(tB,true)} / ${eur(tK,true)} / ${eur(tT,true)}</strong></div></div>`;
-  lst.innerHTML=entries.map(e=>`<div class="entry-wrap" id="ew${e.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${e.id})" ontouchmove="tm(event,${e.id})" ontouchend="te(event,${e.id},'ein')"><div class="entry-icon" style="background:rgba(34,197,94,0.1)">💶</div><div class="entry-body"><div class="entry-date">${fmt(e.datum)}${e.gaeste?' · '+e.gaeste+' Gäste':''}</div><div class="entry-main">${e.bar?`<span class="badge b-bar">Bar ${eur(e.bar)}</span> `:''}${e.karte?`<span class="badge b-karte">Karte ${eur(e.karte)}</span>`:''}${e.tip?` <span style="font-size:10px;color:var(--amber)">+${eur(e.tip)} TG</span>`:''}</div>${e.notiz?`<div class="entry-sub">${esc(e.notiz)}</div>`:''}</div><div class="entry-right"><div class="entry-amt amtg">${eur(e.bar+e.karte+e.tip)}</div>${editButton('ein',e.id)}<button class="del-btn" onclick="delEntry('ein',${e.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>`).join('');
+  lst.innerHTML=entries.map(e=>`<div class="entry-wrap" id="ew${e.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${e.id})" ontouchmove="tm(event,${e.id})" ontouchend="te(event,${e.id},'ein')"><div class="entry-icon" style="background:rgba(34,197,94,0.1)">💶</div><div class="entry-body"><div class="entry-date">${fmt(e.datum)}</div><div class="entry-main">${e.bar?`<span class="badge b-bar">Bar ${eur(e.bar)}</span> `:''}${e.karte?`<span class="badge b-karte">Karte ${eur(e.karte)}</span>`:''}${e.tip?` <span style="font-size:10px;color:var(--amber)">+${eur(e.tip)} TG</span>`:''}</div>${e.notiz?`<div class="entry-sub">${esc(e.notiz)}</div>`:''}</div><div class="entry-right"><div class="entry-amt amtg">${eur(e.bar+e.karte+e.tip)}</div>${editButton('ein',e.id)}<button class="del-btn" onclick="delEntry('ein',${e.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>`).join('');
 }
 
 // ══════════════════════════════════════════════
@@ -1593,7 +1591,7 @@ function renderBookings(scope){
   if(!entries.length)return '';
   return `<div class="booking-group"><h3>${label} · ${entries.length} · ${eur(entries.reduce((sum,e)=>sum+bookingAmount(e),0))}</h3>${entries.map(entry=>{
    const {key,row}=entry,token=key+':'+row.id;
-   const detail=key==='ein'?`Bar: ${eur(row.bar||0)} · Karte: ${eur(row.karte||0)} · Trinkgeld: ${eur(row.tip||0)} · Gäste: ${Number(row.gaeste||0)}`:key==='mit'?`${esc(row.von||'')}–${esc(row.bis||'')} · ${Number(row.stunden||0)} Stunden · Stundensatz: ${eur(row.lohn||0)}`:`Kategorie: ${esc(bookingCategory(entry))}${row.rechnung_id?' · Aus bezahlter Rechnung gebucht':''}`;
+   const detail=key==='ein'?`Bar: ${eur(row.bar||0)} · Karte: ${eur(row.karte||0)} · Trinkgeld: ${eur(row.tip||0)}`:key==='mit'?`${esc(row.von||'')}–${esc(row.bis||'')} · ${Number(row.stunden||0)} Stunden · Stundensatz: ${eur(row.lohn||0)}`:`Kategorie: ${esc(bookingCategory(entry))}${row.rechnung_id?' · Aus bezahlter Rechnung gebucht':''}`;
    return `<details class="booking-entry" data-booking="${esc(token)}"${query||open.has(token)?' open':''}><summary><span class="booking-title">${esc(bookingTitle(entry))}<small>${fmt(row.datum)} · ${esc(bookingCategory(entry))}</small></span><strong>${eur(bookingAmount(entry))}</strong></summary><div class="booking-detail"><p>Datum: ${esc(row.datum||'—')}</p><p>${detail}</p>${row.notiz?`<p>${esc(row.notiz)}</p>`:''}${editButton(key,row.id)}${key==='aus'?receiptButton(row.id):''}</div></details>`;
   }).join('')}</div>`;
  }).join('')||'<p class="summary-note">Keine passenden Einzelbuchungen. Suche oder Zeitraum ändern.</p>';
@@ -1751,7 +1749,7 @@ function renderTagesabschluss() {
   const el_total = document.getElementById('ta-total');
   if(el_total) el_total.textContent = eur(tEin);
   const el_sub = document.getElementById('ta-sub');
-  if(el_sub) el_sub.textContent = einH.length ? einH.length+' Eintrag'+( einH.length>1?'e':'')+( einH.reduce((s,e)=>s+e.gaeste,0)>0?' · '+einH.reduce((s,e)=>s+e.gaeste,0)+' Gäste':'') : 'Noch keine Einnahmen für heute';
+  if(el_sub) el_sub.textContent = einH.length ? einH.length+' Eintrag'+( einH.length>1?'e':'') : 'Noch keine Einnahmen für heute';
   const el_bar = document.getElementById('ta-bar'); if(el_bar) el_bar.textContent=eur(tBar,true);
   const el_karte = document.getElementById('ta-karte'); if(el_karte) el_karte.textContent=eur(tKarte,true);
   const el_tip = document.getElementById('ta-tip'); if(el_tip) el_tip.textContent=eur(tTip,true);
