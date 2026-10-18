@@ -1,3 +1,10 @@
+## 2026-10-18 – Gästefeld entfernt
+
+- Eingabefeld „Gäste“ aus dem Einnahmen-Formular entfernt, da die Gästezahl nicht erfasst werden kann.
+- Gästeanzeige in Liste, Tagesübersicht und Einzelbuchung entfernt.
+- Datenbankspalte `gaeste` und Sync-Format unverändert: neue Einträge speichern 0, beim Bearbeiten alter Einträge bleibt ein vorhandener Wert erhalten. Keine Migration, keine Änderung an Geschäftsdaten.
+- Smoke-Test prüft, dass das Feld fehlt und neue Einnahmen mit 0 Gästen gespeichert werden.
+
 ## 2026-10-17 – Zwei Ergebnisse und vollständige Privathistorie
 
 - Zwei gut sichtbare Ergebniskarten: ohne private Buchungen und mit privaten Buchungen.
