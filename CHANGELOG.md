@@ -1,3 +1,11 @@
+## 2026-10-18 – Lesbarkeit und Name
+
+- Mindestschriftgröße 12 px (bisher teils 9–11 px), Standard-Kleintext 13 px; Layout und Farben sonst unverändert.
+- Kontrast der grauen Neben- und Hinweistexte erhöht (mind. 4,5:1 auf allen Hintergründen).
+- Zoomen auf dem Handy wieder erlaubt. Eingabefelder auf Mobilgeräten mit 16 px, damit iOS beim Antippen nicht automatisch hineinzoomt.
+- Seiten- und Home-Bildschirm-Titel „Mein Lokal“ statt „Mein Restaurant“.
+- Keine Änderung an Daten, Sync, Berechnungen oder Abläufen.
+
 ## 2026-10-18 – Gästefeld entfernt
 
 - Eingabefeld „Gäste“ aus dem Einnahmen-Formular entfernt, da die Gästezahl nicht erfasst werden kann.
