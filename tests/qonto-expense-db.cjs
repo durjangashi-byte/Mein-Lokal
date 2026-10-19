@@ -24,9 +24,9 @@ const owner='11111111-1111-4111-8111-111111111111',foreign='22222222-2222-4222-8
  create sequence public.lokal_payment_ids start 8000000000000000 maxvalue 9007199254740991;
  grant usage on sequence public.lokal_payment_ids to authenticated;
  create table public.qonto_transactions(id text primary key,user_id uuid not null,amount numeric,side text,status text,label text,reference text,settled_at timestamptz,emitted_at timestamptz,classification text,private_category text,ignored boolean,raw jsonb,imported_kind text,imported_id bigint,updated_at timestamptz default now());
- create table public.rechnungen(id bigint primary key,beschr text,betrag double precision,bezahlt boolean);
- create table public.ausgaben(id bigint primary key,datum text,betrag double precision,kat text,beschr text,rechnung_id bigint references public.rechnungen(id));
- create table public.einnahmen(id bigint primary key,datum text,bar double precision,karte double precision,tip double precision);
+ create table public.rechnungen(id bigint primary key,beschr text,betrag numeric(12,2),bezahlt boolean);
+ create table public.ausgaben(id bigint primary key,datum text,betrag numeric(12,2),kat text,beschr text,rechnung_id bigint references public.rechnungen(id));
+ create table public.einnahmen(id bigint primary key,datum text,bar numeric(12,2),karte numeric(12,2),tip numeric(12,2));
  create table public.sonstige_einnahmen(id bigint primary key,datum date,betrag numeric,qonto_transaction_id text references public.qonto_transactions(id));
  alter table qonto_transactions enable row level security;alter table ausgaben enable row level security;alter table rechnungen enable row level security;alter table einnahmen enable row level security;alter table sonstige_einnahmen enable row level security;
  create policy own_qonto on qonto_transactions to authenticated using(user_id=auth.uid() and auth.jwt()->'app_metadata'->>'lokal_access'='owner' and coalesce(auth.jwt()->>'is_anonymous','false')='false') with check(user_id=auth.uid() and auth.jwt()->'app_metadata'->>'lokal_access'='owner' and coalesce(auth.jwt()->>'is_anonymous','false')='false');
