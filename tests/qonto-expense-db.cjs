@@ -68,7 +68,7 @@ const owner='11111111-1111-4111-8111-111111111111',foreign='22222222-2222-4222-8
   await source('plus7',{amount:75.23});await expense(15,{betrag:75.23,datum:'2026-10-08'});assert.equal(await rpc('plus7',15),15);
   await source('outside',{amount:76.23});await expense(16,{betrag:76.23,datum:'2026-09-23'});await denied(()=>rpc('outside',16),/sieben Tagen/);await query('update ausgaben set datum=$1 where id=16',['2026-10-09']);await denied(()=>rpc('outside',16),/sieben Tagen/);
   await query('update ausgaben set datum=$1 where id=16',['2026-02-30']);await denied(()=>rpc('outside',16),/Ausgabedatum ist ungültig/);
-  await query('update ausgaben set datum=$1,betrag=$2 where id=16',['2026-10-01',76.231]);await denied(()=>rpc('outside',16),/Centbetrag/);await query('update ausgaben set betrag=$1 where id=16',[76.24]);await denied(()=>rpc('outside',16),/Centbetrag/);
+  await query('update ausgaben set datum=$1,betrag=$2 where id=16',['2026-10-01',76.231]);assert.equal(Number((await snapshot('ausgaben',16)).betrag),76.23,'numeric(12,2) speichert nur ganze Cent');await query('update ausgaben set betrag=$1 where id=16',[76.24]);await denied(()=>rpc('outside',16),/Centbetrag/);
   await denied(()=>rpc('outside',999999),/Ausgabe fehlt/);
  });
  await test('existing paid-invoice expense links without any mutation of invoice or expense',async()=>{
