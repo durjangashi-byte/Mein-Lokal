@@ -904,16 +904,12 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
         <div id="tot-mit"></div><div id="lst-mit"></div>
         <div style="padding:14px 14px 0">
           <div class="card">
-            <div class="card-hd">💶 Lohn / Gehalt eintragen</div>
-            <div class="field"><label>Mitarbeiter</label><input type="text" id="g-name" placeholder="z.B. Anna Müller"></div>
-            <div class="field-row">
-              <div class="field"><label>Monatsbetrag (€)</label><input type="number" id="g-betrag" placeholder="0,00" inputmode="decimal" min="0.01" step="0.01"></div>
-              <div class="field"><label>Erste Fälligkeit</label><input type="date" id="g-faellig"></div>
-            </div>
-            <div class="field"><label>Art</label><select id="g-art"><option value="monatlich">Monatsgehalt – jeden Monat</option><option value="einmalig">Einmalige Lohnzahlung</option></select></div>
-            <div class="field"><label>Notiz (optional)</label><input type="text" id="g-notiz" placeholder="z.B. Gehalt Oktober"></div>
-            <button type="button" class="btn-primary" onclick="addGehalt()">Gehalt speichern</button>
-            <div class="summary-note">Monatsgehälter werden als wiederkehrende Zahlung vorgemerkt. Erst bei „Bezahlt“ werden sie als Personalkosten in den Ausgaben gebucht.</div>
+            <div class="card-hd">💶 Festgehalt – Vorlagen</div>
+            <div id="g-vorlagen"></div>
+            <div class="field"><label for="g-name">Mitarbeiter</label><input type="text" id="g-name" placeholder="z.B. Anna Müller"></div>
+            <div class="field"><label for="g-betrag">Monatsgehalt (€)</label><input type="number" id="g-betrag" placeholder="0,00" inputmode="decimal" min="0.01" step="0.01"></div>
+            <button type="button" class="btn-primary" onclick="addGehaltVorlage()">Vorlage speichern</button>
+            <div class="summary-note">Die Vorlage merkt sich nur Name und Betrag, gebucht wird dabei nichts. Erst wenn du bei einer Vorlage auf „Auszahlen“ tippst, wird das Gehalt als Personalkosten gebucht.</div>
           </div>
         </div>
         <div class="sec-hd">Lohn & Gehalt</div>
@@ -1208,9 +1204,9 @@ function readLocal(key,fallback) {
     return value&&typeof value==='object'&&!Array.isArray(value)?value:fallback;}
   catch {authMessage('Lokale Daten konnten nicht gelesen werden. Die Originaldatei bleibt erhalten; Cloud-Daten werden geladen.');return fallback;}
 }
-const D = {privat:[],bank:[],ein:[],aus:[],mit:[],rec:[],lief:[],staff:readLocal('rv3_staff',[]),settings:readLocal('rv3_set',{ziel:0,tage:14,plaetze:40})};
+const D = {privat:[],bank:[],ein:[],aus:[],mit:[],rec:[],lief:[],staff:readLocal('rv3_staff',[]),gvorl:readLocal('rv3_gvorl',[]),settings:readLocal('rv3_set',{ziel:0,tage:14,plaetze:40})};
 const saveLocal = k => {
-  const m={privat:'rv3_privat',bank:'rv3_bank',ein:'rv3_ein',aus:'rv3_aus',mit:'rv3_mit',staff:'rv3_staff',settings:'rv3_set',rec:'rv3_rec',lief:'rv3_lief'};
+  const m={privat:'rv3_privat',bank:'rv3_bank',ein:'rv3_ein',aus:'rv3_aus',mit:'rv3_mit',staff:'rv3_staff',gvorl:'rv3_gvorl',settings:'rv3_set',rec:'rv3_rec',lief:'rv3_lief'};
   const storageKey=key=>(LOKAL_TABLES[key]||key==='privat')&&authUser?'rv5:'+SB_URL+':'+authUser.id+':'+key:m[key];
   if(k) localStorage.setItem(storageKey(k),JSON.stringify(D[k]));
   else Object.keys(m).forEach(kk=>localStorage.setItem(storageKey(kk),JSON.stringify(D[kk])));
@@ -1476,26 +1472,43 @@ function renderAus() {
 // ══════════════════════════════════════════════
 //  PERSONAL
 // ══════════════════════════════════════════════
-async function addGehalt(){
+function addGehaltVorlage(){
   const name=document.getElementById('g-name').value.trim();
-  const betrag=Number(document.getElementById('g-betrag').value||0);
-  const faellig=document.getElementById('g-faellig').value||today();
-  const wiederholung=document.getElementById('g-art').value||'monatlich';
-  const notiz=document.getElementById('g-notiz').value.trim();
+  const betrag=Math.round(Number(document.getElementById('g-betrag').value||0)*100)/100;
   if(!name||!validNumbers(betrag)||betrag<=0){toast('Bitte Mitarbeiter und einen positiven Betrag eingeben.','r');return;}
-  const row={id:newId(),beschr:'Gehalt – '+name,betrag,faellig,notiz,bezahlt:false,kat:'personal',anbieter:name,kontakt:'',kundennummer:'',wiederholung,anker:faellig,folgebetrag:null};
-  if(!await persistChange('insert','rec',row))return;
-  ['g-name','g-betrag','g-notiz'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('g-faellig').value=today();document.getElementById('g-art').value='monatlich';
-  renderGehalt();renderRechnungen();checkOverdue();savedToast('Gehalt vorgemerkt');
+  const vorhanden=D.gvorl.find(v=>v.name.toLowerCase()===name.toLowerCase());
+  if(vorhanden)vorhanden.betrag=betrag;else D.gvorl.push({name,betrag});
+  saveLocal('gvorl');
+  ['g-name','g-betrag'].forEach(id=>document.getElementById(id).value='');
+  renderGehalt();savedToast(vorhanden?'Vorlage aktualisiert':'Vorlage gespeichert');
+}
+function delGehaltVorlage(i){const v=D.gvorl[i];if(!v)return;D.gvorl.splice(i,1);saveLocal('gvorl');renderGehalt();toast('Vorlage gelöscht','r');}
+function openGehaltAuszahlen(i){
+  const v=D.gvorl[i];if(!v)return;
+  document.getElementById('modal-inner').innerHTML=`<div class="modal-hd"><div class="modal-title">Gehalt auszahlen</div><div class="modal-sub">${esc(v.name)} · wird als Personalkosten gebucht</div></div><div class="modal-body"><div class="modal-field"><label for="mi-gbetrag">Betrag (€)</label><input type="number" id="mi-gbetrag" value="${Number(v.betrag)}" inputmode="decimal" min="0.01" step="0.01"></div><div class="modal-field"><label for="mi-gdatum">Datum</label><input type="date" id="mi-gdatum" value="${today()}"></div><div class="modal-field"><label for="mi-gnotiz">Notiz (optional)</label><input type="text" id="mi-gnotiz" placeholder="z.B. Gehalt November"></div></div><div class="modal-actions"><button class="m-btn primary" onclick="bucheGehalt(${i})">Als bezahlt buchen</button><button class="m-btn secondary" onclick="closeModal()">Abbrechen</button></div>`;
+  document.getElementById('modal-bg').classList.add('show');
+}
+async function bucheGehalt(i){
+  const v=D.gvorl[i];if(!v)return;
+  const betrag=Math.round(Number(document.getElementById('mi-gbetrag').value||0)*100)/100;
+  const datum=document.getElementById('mi-gdatum').value||today();
+  const notiz=document.getElementById('mi-gnotiz').value.trim();
+  if(!validNumbers(betrag)||betrag<=0){toast('Bitte einen positiven Betrag eingeben.','r');return;}
+  const row={id:newId(),datum,kat:'personal',beschr:'Gehalt – '+v.name+(notiz?' ('+notiz+')':''),betrag};
+  if(!await persistChange('insert','aus',row))return;
+  closeModal();renderAll();savedToast('Gehalt gebucht');
 }
 function renderGehalt(){
-  const rows=D.rec.filter(r=>r.kat==='personal').sort((a,b)=>(a.faellig||'').localeCompare(b.faellig||''));
-  const paid=D.aus.filter(a=>a.kat==='personal');
+  const vw=document.getElementById('g-vorlagen');
+  if(vw)vw.innerHTML=D.gvorl.length?D.gvorl.map((v,i)=>`<div class="staff-item"><div class="staff-avatar" style="background:${staffCol(v.name)}18;color:${staffCol(v.name)}">${esc(v.name.slice(0,2).toUpperCase())}</div><div class="staff-info"><div class="staff-name">${esc(v.name)}</div><div class="staff-meta">${eur(v.betrag)} im Monat</div></div><button type="button" class="edit-btn" onclick="openGehaltAuszahlen(${i})">Auszahlen</button><button type="button" aria-label="Vorlage löschen" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:10px" onclick="delGehaltVorlage(${i})"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`).join(''):'';
+  const offen=D.rec.filter(r=>r.kat==='personal'&&!r.bezahlt).sort((a,b)=>(a.faellig||'').localeCompare(b.faellig||''));
+  const paid=D.aus.filter(a=>a.kat==='personal').sort((a,b)=>(b.datum||'').localeCompare(a.datum||''));
   const tot=document.getElementById('tot-gehalt'),lst=document.getElementById('lst-gehalt');
-  if(tot)tot.innerHTML=`<div class="totals-card"><div class="t-row"><span>Gebuchte Personalkosten</span><strong class="amtr">${eur(paid.reduce((s,a)=>s+a.betrag,0))}</strong></div><div class="t-row"><span>Offene Lohn-/Gehaltszahlungen</span><strong>${eur(rows.filter(r=>!r.bezahlt).reduce((s,r)=>s+r.betrag,0))}</strong></div></div>`;
+  if(tot)tot.innerHTML=`<div class="totals-card"><div class="t-row"><span>Gebuchte Gehälter</span><strong class="amtr">${eur(paid.reduce((s,a)=>s+a.betrag,0))}</strong></div>${offen.length?`<div class="t-row"><span>Noch vorgemerkt</span><strong>${eur(offen.reduce((s,r)=>s+r.betrag,0))}</strong></div>`:''}</div>`;
   if(!lst)return;
-  lst.innerHTML=rows.length?rows.map(r=>`<div class="entry"><div class="entry-icon">👤</div><div class="entry-body"><div class="entry-date">${fmt(r.faellig)} · ${r.wiederholung==='monatlich'?'monatlich':'einmalig'}</div><div class="entry-main">${esc(r.beschr)}</div>${r.notiz?`<div class="entry-sub">${esc(r.notiz)}</div>`:''}</div><div class="entry-right"><div class="entry-amt amtr">${eur(r.betrag)}</div><button class="edit-btn" onclick="openPayment(${r.id})">${r.bezahlt?'Bezahlt':'Als bezahlt'}</button><button class="edit-btn" onclick="switchTab('rechnungen')">Details</button></div></div>`).join(''):'<div class="empty"><p>Noch keine Lohn- oder Gehaltszahlungen</p></div>';
+  const offenHtml=offen.map(r=>`<div class="entry"><div class="entry-icon">⏳</div><div class="entry-body"><div class="entry-date">${fmt(r.faellig)} · noch vorgemerkt</div><div class="entry-main">${esc(r.beschr)}</div></div><div class="entry-right"><div class="entry-amt">${eur(r.betrag)}</div><button class="edit-btn" onclick="openPayment(${r.id})">Als bezahlt</button><button class="edit-btn" onclick="switchTab('rechnungen')">Details</button></div></div>`).join('');
+  const paidHtml=paid.map(a=>`<div class="entry"><div class="entry-icon">👤</div><div class="entry-body"><div class="entry-date">${fmt(a.datum)} · gebucht</div><div class="entry-main">${esc(a.beschr||'Gehalt')}</div></div><div class="entry-right"><div class="entry-amt amtr">${eur(a.betrag)}</div>${a.rechnung_id?`<button class="edit-btn" onclick="switchTab('rechnungen')">Details</button>`:editButton('aus',a.id)}</div></div>`).join('');
+  lst.innerHTML=offenHtml+paidHtml||'<div class="empty"><p>Noch keine Gehälter gebucht</p></div>';
 }
 function renderChips() {
   const w=document.getElementById('chip-wrap'),c=document.getElementById('chips');
@@ -1702,7 +1715,7 @@ function renderDashboard() {
 // ══════════════════════════════════════════════
 //  EXPORT / IMPORT
 // ══════════════════════════════════════════════
-function exportJSON(){const b=new Blob([JSON.stringify({bank:D.bank,ein:D.ein,aus:D.aus,mit:D.mit,rec:D.rec,lief:D.lief,pending:syncEngine?.pending()||[],recovery:JSON.parse(localStorage.getItem('rv4_recovery')||'null'),staff:D.staff,settings:D.settings,privatSnapshot:D.privat,v:3,ts:new Date().toISOString()},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='restaurant-backup-'+today()+'.json';a.click();toast('Backup exportiert');}
+function exportJSON(){const b=new Blob([JSON.stringify({bank:D.bank,ein:D.ein,aus:D.aus,mit:D.mit,rec:D.rec,lief:D.lief,pending:syncEngine?.pending()||[],recovery:JSON.parse(localStorage.getItem('rv4_recovery')||'null'),staff:D.staff,gvorl:D.gvorl,settings:D.settings,privatSnapshot:D.privat,v:3,ts:new Date().toISOString()},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='restaurant-backup-'+today()+'.json';a.click();toast('Backup exportiert');}
 async function importData(x) {
   if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Ungültiges Backup');
   const normalized={};
@@ -1714,6 +1727,7 @@ async function importData(x) {
     if(!D[key].some(r=>r.id===row.id) && !await persistChange('insert',key,row))throw new Error('Import unterbrochen');
   }
   if(Array.isArray(x.staff))D.staff=x.staff;
+  if(Array.isArray(x.gvorl))D.gvorl=x.gvorl;
   if(x.settings && typeof x.settings==='object')D.settings={...D.settings,...x.settings};
   saveLocal();renderAll();savedToast('Backup ergänzt');
 }

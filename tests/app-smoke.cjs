@@ -26,6 +26,14 @@ fill('m-name','Leer');fill('m-betrag','');await run('addSchicht()');assert.equal
 run('renderMit()');assert.match(els.get('lst-mit').innerHTML,/per Endbetrag/);
 const krummId=run('D.mit.find(m=>m.name==="Krumm").id');run("setSchichtMode('zeit')");run(`editEntry('mit',${krummId})`);assert.equal(run('schichtMode'),'betrag');assert.equal(els.get('m-betrag').value,75);fill('m-betrag','84');await run('addSchicht()');assert.equal(run(`D.mit.find(m=>m.id===${krummId}).stunden`),6);assert.equal(run(`D.mit.find(m=>m.id===${krummId}).ausgezahlt`),84);
 run(`D.mit=D.mit.filter(m=>m.name==='Test')`);run("setSchichtMode('zeit')");
+// Fixed salary: saving a template books nothing; only "Auszahlen" creates a personnel expense.
+{const recBefore=run('D.rec.length'),ausBefore=run('D.aus.length');fill('g-name','Shaban');fill('g-betrag','2200');run('addGehaltVorlage()');
+assert.equal(run('D.gvorl.length'),1);assert.equal(run('D.rec.length'),recBefore);assert.equal(run('D.aus.length'),ausBefore);assert.match(els.get('g-vorlagen').innerHTML,/Shaban[\s\S]*Auszahlen/);
+fill('g-name','shaban');fill('g-betrag','2300');run('addGehaltVorlage()');assert.equal(run('D.gvorl.length'),1);assert.equal(run('D.gvorl[0].betrag'),2300);
+for(const id of ['mi-gbetrag','mi-gdatum','mi-gnotiz'])els.set(id,{value:''});run('openGehaltAuszahlen(0)');assert.match(els.get('modal-inner').innerHTML,/Gehalt auszahlen/);
+fill('mi-gbetrag','2300');fill('mi-gdatum','2026-11-25');fill('mi-gnotiz','November');await run('bucheGehalt(0)');
+assert.equal(run('D.rec.length'),recBefore);assert.equal(run('D.aus.length'),ausBefore+1);const g=JSON.parse(run("JSON.stringify(D.aus.find(a=>a.kat==='personal'))"));assert.equal(g.betrag,2300);assert.equal(g.datum,'2026-11-25');assert.match(g.beschr,/Gehalt – Shaban \(November\)/);
+assert.match(els.get('lst-gehalt').innerHTML,/gebucht/);run("D.aus=D.aus.filter(a=>a.kat!=='personal');D.gvorl=[];renderAll()");}
 fill('r-beschr','Test');fill('r-betrag','12');await run('addRechnung()');assert.equal(run('D.rec.length'),1);assert.equal(run('D.rec[0].bezahlt'),true);assert.equal(run('D.rec[0].bezahlt_am'),run('today()'));
 const beforeTabs=run('JSON.stringify(D.rec)');run("selectInvoiceTab('offen')");assert.equal(els.get('invoice-open-panel').hidden,false);assert.equal(els.get('invoice-paid-panel').hidden,true);run("selectInvoiceTab('bezahlt')");assert.equal(els.get('invoice-open-panel').hidden,true);assert.equal(els.get('invoice-paid-panel').hidden,false);run("selectInvoiceTab('alle')");assert.equal(els.get('invoice-open-panel').hidden,false);assert.equal(els.get('invoice-paid-panel').hidden,false);assert.equal(run('JSON.stringify(D.rec)'),beforeTabs);assert.match(els.get('lst-rechnungen-bezahlt').innerHTML,/payment-status paid/);assert.match(els.get('lst-rechnungen-bezahlt').innerHTML,/invoice-amount">−/);
 fill('l-name','Test');await run('addLieferant()');assert.equal(run('D.lief.length'),1);
