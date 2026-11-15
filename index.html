@@ -606,6 +606,7 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
 .invoice-tabs{display:flex;margin:18px 14px 14px;padding:4px;gap:4px;background:#0b1016;border:1px solid var(--border);border-radius:14px}
 .invoice-tabs button{flex:1;min-width:0;min-height:44px;border:0;border-radius:10px;background:transparent;color:var(--text2);font-size:13px;font-weight:650;cursor:pointer}
 .invoice-tabs button[aria-selected="true"]{background:#202a34;color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.16)}
+.mode-switch{margin:0}
 .invoice-tabs span{display:inline-block;font-size:12px;margin-left:4px;opacity:.65;font-variant-numeric:tabular-nums}
 .invoice-tabs button:focus-visible,.invoice-details>summary:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .invoice-list{margin:0 14px 18px;border:1px solid var(--border);border-radius:18px;background:var(--bg1);overflow:hidden}
@@ -876,23 +877,7 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
       <div class="panel" id="p-personal">
         <div style="padding:14px 14px 0">
           <div class="card">
-            <div class="card-hd">💶 Lohn / Gehalt eintragen</div>
-            <div class="field"><label>Mitarbeiter</label><input type="text" id="g-name" placeholder="z.B. Anna Müller"></div>
-            <div class="field-row">
-              <div class="field"><label>Monatsbetrag (€)</label><input type="number" id="g-betrag" placeholder="0,00" inputmode="decimal" min="0.01" step="0.01"></div>
-              <div class="field"><label>Erste Fälligkeit</label><input type="date" id="g-faellig"></div>
-            </div>
-            <div class="field"><label>Art</label><select id="g-art"><option value="monatlich">Monatsgehalt – jeden Monat</option><option value="einmalig">Einmalige Lohnzahlung</option></select></div>
-            <div class="field"><label>Notiz (optional)</label><input type="text" id="g-notiz" placeholder="z.B. Gehalt Oktober"></div>
-            <button type="button" class="btn-primary" onclick="addGehalt()">Gehalt speichern</button>
-            <div class="summary-note">Monatsgehälter werden als wiederkehrende Zahlung vorgemerkt. Erst bei „Bezahlt“ werden sie als Personalkosten in den Ausgaben gebucht.</div>
-          </div>
-        </div>
-        <div class="sec-hd">Lohn & Gehalt</div>
-        <div id="tot-gehalt"></div><div id="lst-gehalt"></div>
-        <div style="padding:14px 14px 0">
-          <div class="card">
-            <div class="card-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Schicht eintragen</div>
+            <div class="card-hd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Tageslohn / Schicht eintragen</div>
             <div id="chip-wrap" style="display:none">
               <div style="padding:9px 16px 3px;font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px">Gespeichertes Personal</div>
               <div class="chips" id="chips"></div>
@@ -902,16 +887,33 @@ body{background:radial-gradient(circle at 50% -15%,rgba(61,220,132,.07),transpar
               <div class="field"><label>Position</label><select id="m-pos"><option>Koch</option><option>Köchin</option><option>Kellner</option><option>Kellnerin</option><option>Barkeeper</option><option>Spüler</option><option>Manager</option></select></div>
             </div>
             <div class="field"><label>Datum</label><input type="date" id="m-datum"></div>
-            <div class="field-row">
-              <div class="field"><label>Von</label><input type="time" id="m-von" value="08:00"></div>
-              <div class="field"><label>Bis</label><input type="time" id="m-bis" value="16:00"></div>
+            <div class="field"><label id="m-mode-label">Lohn erfassen nach</label>
+              <div class="invoice-tabs mode-switch" role="group" aria-labelledby="m-mode-label"><button type="button" id="m-mode-betrag" aria-pressed="false" aria-selected="false" onclick="setSchichtMode('betrag')">Endbetrag</button><button type="button" id="m-mode-zeit" aria-pressed="true" aria-selected="true" onclick="setSchichtMode('zeit')">Uhrzeit</button></div>
             </div>
-            <div class="field"><label>Stundenlohn (€)</label><input type="number" id="m-lohn" value="14" inputmode="decimal" min="0" step="0.5"></div>
+            <div class="field" id="m-betrag-wrap" hidden><label for="m-betrag">Lohn für den Tag (€)</label><input type="number" id="m-betrag" placeholder="z.B. 70" inputmode="decimal" min="0.01" step="0.01" oninput="schichtPreview()"></div>
+            <div class="field-row" id="m-zeit-wrap">
+              <div class="field"><label for="m-von">Von</label><input type="time" id="m-von" value="08:00" oninput="schichtPreview()"></div>
+              <div class="field"><label for="m-bis">Bis</label><input type="time" id="m-bis" value="16:00" oninput="schichtPreview()"></div>
+            </div>
+            <div class="field"><label for="m-lohn">Stundenlohn (€)</label><input type="number" id="m-lohn" value="14" inputmode="decimal" min="0" step="0.5" oninput="schichtPreview()"></div>
+            <div class="form-hint" id="m-preview" role="status" aria-live="polite"></div>
             <div class="form-hint" id="edit-hint-mit" hidden></div><button id="save-mit" class="btn-primary" onclick="addSchicht()">Speichern</button><button type="button" class="btn-secondary" id="cancel-mit" onclick="cancelEdit('mit')" hidden>Bearbeiten abbrechen</button>
           </div>
         </div>
-        <div class="sec-hd">Schichten</div>
+        <div class="sec-hd">Tageslöhne & Schichten</div>
         <div id="tot-mit"></div><div id="lst-mit"></div>
+        <div style="padding:14px 14px 0">
+          <div class="card">
+            <div class="card-hd">💶 Festgehalt – Vorlagen</div>
+            <div id="g-vorlagen"></div>
+            <div class="field"><label for="g-name">Mitarbeiter</label><input type="text" id="g-name" placeholder="z.B. Anna Müller"></div>
+            <div class="field"><label for="g-betrag">Monatsgehalt (€)</label><input type="number" id="g-betrag" placeholder="0,00" inputmode="decimal" min="0.01" step="0.01"></div>
+            <button type="button" class="btn-primary" onclick="addGehaltVorlage()">Vorlage speichern</button>
+            <div class="summary-note">Die Vorlage merkt sich nur Name und Betrag, gebucht wird dabei nichts. Erst wenn du bei einer Vorlage auf „Auszahlen“ tippst, wird das Gehalt als Personalkosten gebucht.</div>
+          </div>
+        </div>
+        <div class="sec-hd">Lohn & Gehalt</div>
+        <div id="tot-gehalt"></div><div id="lst-gehalt"></div>
       </div>
 
       
@@ -1202,9 +1204,9 @@ function readLocal(key,fallback) {
     return value&&typeof value==='object'&&!Array.isArray(value)?value:fallback;}
   catch {authMessage('Lokale Daten konnten nicht gelesen werden. Die Originaldatei bleibt erhalten; Cloud-Daten werden geladen.');return fallback;}
 }
-const D = {privat:[],bank:[],ein:[],aus:[],mit:[],rec:[],lief:[],staff:readLocal('rv3_staff',[]),settings:readLocal('rv3_set',{ziel:0,tage:14,plaetze:40})};
+const D = {privat:[],bank:[],ein:[],aus:[],mit:[],rec:[],lief:[],staff:readLocal('rv3_staff',[]),gvorl:readLocal('rv3_gvorl',[]),settings:readLocal('rv3_set',{ziel:0,tage:14,plaetze:40})};
 const saveLocal = k => {
-  const m={privat:'rv3_privat',bank:'rv3_bank',ein:'rv3_ein',aus:'rv3_aus',mit:'rv3_mit',staff:'rv3_staff',settings:'rv3_set',rec:'rv3_rec',lief:'rv3_lief'};
+  const m={privat:'rv3_privat',bank:'rv3_bank',ein:'rv3_ein',aus:'rv3_aus',mit:'rv3_mit',staff:'rv3_staff',gvorl:'rv3_gvorl',settings:'rv3_set',rec:'rv3_rec',lief:'rv3_lief'};
   const storageKey=key=>(LOKAL_TABLES[key]||key==='privat')&&authUser?'rv5:'+SB_URL+':'+authUser.id+':'+key:m[key];
   if(k) localStorage.setItem(storageKey(k),JSON.stringify(D[k]));
   else Object.keys(m).forEach(kk=>localStorage.setItem(storageKey(kk),JSON.stringify(D[kk])));
@@ -1254,6 +1256,7 @@ function editEntry(key,id){
  for(const field of spec.fields){const el=document.getElementById(spec.prefix+'-'+field);if(el){if(el.tagName==='SELECT'&&!Array.from(el.options).some(o=>o.value===String(row[field]??''))){const opt=document.createElement('option');opt.value=row[field]??'';opt.textContent=row[field]??'';el.appendChild(opt);}el.value=row[field]??'';}}
  if(key==='aus')document.getElementById('legacy-expense-editor').hidden=false;
  if(key==='ein')document.getElementById('e-bar').value=Math.round((Number(row.bar||0)+Number(row.karte||0))*100)/100;
+ if(key==='mit'){document.getElementById('m-betrag').value=row.ausgezahlt??'';setSchichtMode(row.von&&row.bis?'zeit':'betrag');}
  document.getElementById('save-'+key).textContent='Änderungen speichern';
  const hint=document.getElementById('edit-hint-'+key);hint.hidden=false;hint.textContent='Du bearbeitest einen bestehenden Eintrag.';
  document.getElementById('cancel-'+key).hidden=false;
@@ -1264,6 +1267,7 @@ function cancelEdit(key){
  delete edits[key];if(key==='aus')document.getElementById('legacy-expense-editor').hidden=true;const spec=formSpecs[key];
  for(const field of spec.fields){const el=document.getElementById(spec.prefix+'-'+field);if(!el)continue;
  if(field==='datum'||field==='faellig')el.value=today();else if(field==='von')el.value='08:00';else if(field==='bis')el.value='16:00';else if(field==='lohn')el.value='14';else if(el.tagName!=='SELECT')el.value='';}
+ if(key==='mit'){document.getElementById('m-betrag').value='';schichtPreview();}
  if(key==='rec'){document.getElementById('r-wiederholung').disabled=false;document.getElementById('r-betrag').disabled=false;document.getElementById('r-kat').disabled=false;document.getElementById('r-wiederholung').value='einmalig';document.getElementById('r-provider').value='';}
  document.getElementById('save-'+key).textContent='Speichern';document.getElementById('edit-hint-'+key).hidden=true;document.getElementById('cancel-'+key).hidden=true;
  if(key==='rec'){document.getElementById('r-payment-status').value='bezahlt';document.getElementById('r-zahlungsdatum').value=today();document.getElementById('r-faellig').value='';document.getElementById('r-repeat-details').open=false;updatePaymentForm();}
@@ -1468,26 +1472,43 @@ function renderAus() {
 // ══════════════════════════════════════════════
 //  PERSONAL
 // ══════════════════════════════════════════════
-async function addGehalt(){
+function addGehaltVorlage(){
   const name=document.getElementById('g-name').value.trim();
-  const betrag=Number(document.getElementById('g-betrag').value||0);
-  const faellig=document.getElementById('g-faellig').value||today();
-  const wiederholung=document.getElementById('g-art').value||'monatlich';
-  const notiz=document.getElementById('g-notiz').value.trim();
+  const betrag=Math.round(Number(document.getElementById('g-betrag').value||0)*100)/100;
   if(!name||!validNumbers(betrag)||betrag<=0){toast('Bitte Mitarbeiter und einen positiven Betrag eingeben.','r');return;}
-  const row={id:newId(),beschr:'Gehalt – '+name,betrag,faellig,notiz,bezahlt:false,kat:'personal',anbieter:name,kontakt:'',kundennummer:'',wiederholung,anker:faellig,folgebetrag:null};
-  if(!await persistChange('insert','rec',row))return;
-  ['g-name','g-betrag','g-notiz'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('g-faellig').value=today();document.getElementById('g-art').value='monatlich';
-  renderGehalt();renderRechnungen();checkOverdue();savedToast('Gehalt vorgemerkt');
+  const vorhanden=D.gvorl.find(v=>v.name.toLowerCase()===name.toLowerCase());
+  if(vorhanden)vorhanden.betrag=betrag;else D.gvorl.push({name,betrag});
+  saveLocal('gvorl');
+  ['g-name','g-betrag'].forEach(id=>document.getElementById(id).value='');
+  renderGehalt();savedToast(vorhanden?'Vorlage aktualisiert':'Vorlage gespeichert');
+}
+function delGehaltVorlage(i){const v=D.gvorl[i];if(!v)return;D.gvorl.splice(i,1);saveLocal('gvorl');renderGehalt();toast('Vorlage gelöscht','r');}
+function openGehaltAuszahlen(i){
+  const v=D.gvorl[i];if(!v)return;
+  document.getElementById('modal-inner').innerHTML=`<div class="modal-hd"><div class="modal-title">Gehalt auszahlen</div><div class="modal-sub">${esc(v.name)} · wird als Personalkosten gebucht</div></div><div class="modal-body"><div class="modal-field"><label for="mi-gbetrag">Betrag (€)</label><input type="number" id="mi-gbetrag" value="${Number(v.betrag)}" inputmode="decimal" min="0.01" step="0.01"></div><div class="modal-field"><label for="mi-gdatum">Datum</label><input type="date" id="mi-gdatum" value="${today()}"></div><div class="modal-field"><label for="mi-gnotiz">Notiz (optional)</label><input type="text" id="mi-gnotiz" placeholder="z.B. Gehalt November"></div></div><div class="modal-actions"><button class="m-btn primary" onclick="bucheGehalt(${i})">Als bezahlt buchen</button><button class="m-btn secondary" onclick="closeModal()">Abbrechen</button></div>`;
+  document.getElementById('modal-bg').classList.add('show');
+}
+async function bucheGehalt(i){
+  const v=D.gvorl[i];if(!v)return;
+  const betrag=Math.round(Number(document.getElementById('mi-gbetrag').value||0)*100)/100;
+  const datum=document.getElementById('mi-gdatum').value||today();
+  const notiz=document.getElementById('mi-gnotiz').value.trim();
+  if(!validNumbers(betrag)||betrag<=0){toast('Bitte einen positiven Betrag eingeben.','r');return;}
+  const row={id:newId(),datum,kat:'personal',beschr:'Gehalt – '+v.name+(notiz?' ('+notiz+')':''),betrag};
+  if(!await persistChange('insert','aus',row))return;
+  closeModal();renderAll();savedToast('Gehalt gebucht');
 }
 function renderGehalt(){
-  const rows=D.rec.filter(r=>r.kat==='personal').sort((a,b)=>(a.faellig||'').localeCompare(b.faellig||''));
-  const paid=D.aus.filter(a=>a.kat==='personal');
+  const vw=document.getElementById('g-vorlagen');
+  if(vw)vw.innerHTML=D.gvorl.length?D.gvorl.map((v,i)=>`<div class="staff-item"><div class="staff-avatar" style="background:${staffCol(v.name)}18;color:${staffCol(v.name)}">${esc(v.name.slice(0,2).toUpperCase())}</div><div class="staff-info"><div class="staff-name">${esc(v.name)}</div><div class="staff-meta">${eur(v.betrag)} im Monat</div></div><button type="button" class="edit-btn" onclick="openGehaltAuszahlen(${i})">Auszahlen</button><button type="button" aria-label="Vorlage löschen" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:10px" onclick="delGehaltVorlage(${i})"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`).join(''):'';
+  const offen=D.rec.filter(r=>r.kat==='personal'&&!r.bezahlt).sort((a,b)=>(a.faellig||'').localeCompare(b.faellig||''));
+  const paid=D.aus.filter(a=>a.kat==='personal').sort((a,b)=>(b.datum||'').localeCompare(a.datum||''));
   const tot=document.getElementById('tot-gehalt'),lst=document.getElementById('lst-gehalt');
-  if(tot)tot.innerHTML=`<div class="totals-card"><div class="t-row"><span>Gebuchte Personalkosten</span><strong class="amtr">${eur(paid.reduce((s,a)=>s+a.betrag,0))}</strong></div><div class="t-row"><span>Offene Lohn-/Gehaltszahlungen</span><strong>${eur(rows.filter(r=>!r.bezahlt).reduce((s,r)=>s+r.betrag,0))}</strong></div></div>`;
+  if(tot)tot.innerHTML=`<div class="totals-card"><div class="t-row"><span>Gebuchte Gehälter</span><strong class="amtr">${eur(paid.reduce((s,a)=>s+a.betrag,0))}</strong></div>${offen.length?`<div class="t-row"><span>Noch vorgemerkt</span><strong>${eur(offen.reduce((s,r)=>s+r.betrag,0))}</strong></div>`:''}</div>`;
   if(!lst)return;
-  lst.innerHTML=rows.length?rows.map(r=>`<div class="entry"><div class="entry-icon">👤</div><div class="entry-body"><div class="entry-date">${fmt(r.faellig)} · ${r.wiederholung==='monatlich'?'monatlich':'einmalig'}</div><div class="entry-main">${esc(r.beschr)}</div>${r.notiz?`<div class="entry-sub">${esc(r.notiz)}</div>`:''}</div><div class="entry-right"><div class="entry-amt amtr">${eur(r.betrag)}</div><button class="edit-btn" onclick="openPayment(${r.id})">${r.bezahlt?'Bezahlt':'Als bezahlt'}</button><button class="edit-btn" onclick="switchTab('rechnungen')">Details</button></div></div>`).join(''):'<div class="empty"><p>Noch keine Lohn- oder Gehaltszahlungen</p></div>';
+  const offenHtml=offen.map(r=>`<div class="entry"><div class="entry-icon">⏳</div><div class="entry-body"><div class="entry-date">${fmt(r.faellig)} · noch vorgemerkt</div><div class="entry-main">${esc(r.beschr)}</div></div><div class="entry-right"><div class="entry-amt">${eur(r.betrag)}</div><button class="edit-btn" onclick="openPayment(${r.id})">Als bezahlt</button><button class="edit-btn" onclick="switchTab('rechnungen')">Details</button></div></div>`).join('');
+  const paidHtml=paid.map(a=>`<div class="entry"><div class="entry-icon">👤</div><div class="entry-body"><div class="entry-date">${fmt(a.datum)} · gebucht</div><div class="entry-main">${esc(a.beschr||'Gehalt')}</div></div><div class="entry-right"><div class="entry-amt amtr">${eur(a.betrag)}</div>${a.rechnung_id?`<button class="edit-btn" onclick="switchTab('rechnungen')">Details</button>`:editButton('aus',a.id)}</div></div>`).join('');
+  lst.innerHTML=offenHtml+paidHtml||'<div class="empty"><p>Noch keine Gehälter gebucht</p></div>';
 }
 function renderChips() {
   const w=document.getElementById('chip-wrap'),c=document.getElementById('chips');
@@ -1495,35 +1516,74 @@ function renderChips() {
   w.style.display='block';
   c.innerHTML=D.staff.map(s=>`<div class="chip" onclick="fillStaff(${esc(JSON.stringify(s.name))},${esc(JSON.stringify(s.pos))},${Number(s.lohn)||0})"><div class="chip-dot" style="background:${staffCol(s.name)}"></div>${esc(s.name)}</div>`).join('');
 }
-function fillStaff(name,pos,lohn){document.getElementById('m-name').value=name;document.getElementById('m-lohn').value=lohn;const sel=document.getElementById('m-pos');for(let i=0;i<sel.options.length;i++)if(sel.options[i].text===pos){sel.selectedIndex=i;break;}toast(name+' ausgewählt');}
+function fillStaff(name,pos,lohn){document.getElementById('m-name').value=name;document.getElementById('m-lohn').value=lohn;const sel=document.getElementById('m-pos');for(let i=0;i<sel.options.length;i++)if(sel.options[i].text===pos){sel.selectedIndex=i;break;}schichtPreview();toast(name+' ausgewählt');}
 
+let schichtMode=(()=>{try{return localStorage.getItem('rv_schicht_mode')==='betrag'?'betrag':'zeit';}catch(e){return 'zeit';}})();
+function setSchichtMode(mode){
+  schichtMode=mode==='betrag'?'betrag':'zeit';
+  try{localStorage.setItem('rv_schicht_mode',schichtMode);}catch(e){}
+  const b=schichtMode==='betrag';
+  const bw=document.getElementById('m-betrag-wrap'),zw=document.getElementById('m-zeit-wrap');
+  if(bw)bw.hidden=!b;if(zw)zw.hidden=b;
+  for(const [id,on] of [['m-mode-betrag',b],['m-mode-zeit',!b]]){const el=document.getElementById(id);if(el){el.setAttribute?.('aria-pressed',String(on));el.setAttribute?.('aria-selected',String(on));}}
+  if(!b){const v=document.getElementById('m-von'),e=document.getElementById('m-bis');if(v&&!v.value)v.value='08:00';if(e&&!e.value)e.value='16:00';}
+  schichtPreview();
+}
+function schichtWerte(){
+  const lohn=Number(document.getElementById('m-lohn').value||14);
+  if(schichtMode==='betrag'){
+    const betrag=Math.round(Number(document.getElementById('m-betrag').value)*100)/100;
+    if(!(betrag>0)||!(lohn>0))return {lohn,betrag,stunden:NaN};
+    return {lohn,betrag,stunden:Math.round(betrag/lohn*100)/100,von:'',bis:''};
+  }
+  const von=document.getElementById('m-von').value,bis=document.getElementById('m-bis').value;
+  if(!von||!bis)return {lohn,stunden:NaN};
+  const[vh,vm]=von.split(':').map(Number),[bh,bm]=bis.split(':').map(Number);
+  let minutes=(bh*60+bm)-(vh*60+vm);if(minutes<0)minutes+=1440;
+  const stunden=minutes/60;
+  return {lohn,von,bis,stunden,betrag:Math.round(stunden*lohn*100)/100,minutes};
+}
+function stdText(h){return Number(h).toLocaleString('de-DE',{maximumFractionDigits:2})+' Std.';}
+function schichtPreview(){
+  const el=document.getElementById('m-preview');if(!el)return;
+  const w=schichtWerte();
+  if(!(w.stunden>0)){el.hidden=true;el.textContent='';return;}
+  el.hidden=false;
+  el.textContent=schichtMode==='betrag'?`= ${stdText(w.stunden)} bei ${eur(w.lohn)}/Std.`:`= ${stdText(w.stunden)} · ${eur(w.betrag)}`;
+}
 async function addSchicht() {
   const name=document.getElementById('m-name').value.trim();
   const pos=document.getElementById('m-pos').value;
   const datum=document.getElementById('m-datum').value||today();
-  const von=document.getElementById('m-von').value;
-  const bis=document.getElementById('m-bis').value;
-  const lohn=Number(document.getElementById('m-lohn').value||14);
+  const w=schichtWerte(),lohn=w.lohn;
   if(!validNumbers(lohn))return;
   if(!name){toast('Bitte einen Namen eingeben.','r');return;}
-  if(!von||!bis){toast('Bitte Beginn und Ende angeben.','r');return;}
-  const[vh,vm]=von.split(':').map(Number),[bh,bm]=bis.split(':').map(Number);
-  let minutes=(bh*60+bm)-(vh*60+vm);
-  if(minutes<0)minutes+=1440;
-  if(!minutes||!Number.isFinite(minutes)){toast('Bitte unterschiedliche gültige Zeiten angeben.','r');return;}
-  const st=minutes/60;
-  const row={id:newId(),name,pos,datum,von,bis,stunden:st,lohn,ausgezahlt:Math.round(st*lohn*100)/100};
+  let row;
+  if(schichtMode==='betrag'){
+    if(!(lohn>0)){toast('Bitte einen Stundenlohn über 0 € angeben.','r');return;}
+    if(!(w.betrag>0)){toast('Bitte den Lohn für den Tag eingeben.','r');return;}
+    if(!(w.stunden>0)||w.stunden>=10000){toast('Betrag und Stundenlohn ergeben keine gültige Stundenzahl.','r');return;}
+    row={id:newId(),name,pos,datum,von:'',bis:'',stunden:w.stunden,lohn,ausgezahlt:w.betrag};
+  }else{
+    const von=document.getElementById('m-von').value,bis=document.getElementById('m-bis').value;
+    if(!von||!bis){toast('Bitte Beginn und Ende angeben.','r');return;}
+    if(!w.minutes||!Number.isFinite(w.minutes)){toast('Bitte unterschiedliche gültige Zeiten angeben.','r');return;}
+    row={id:newId(),name,pos,datum,von,bis,stunden:w.stunden,lohn,ausgezahlt:w.betrag};
+  }
   if(!await commitForm('mit',row))return;
   document.getElementById('m-name').value='';
+  document.getElementById('m-betrag').value='';
+  schichtPreview();
   savedToast(name+' eingetragen');
 }
+function schichtZeit(m){return m.von&&m.bis?`${esc(m.von)}–${esc(m.bis)}`:'per Endbetrag';}
 
 function renderMit() {
   const lst=document.getElementById('lst-mit'),tot=document.getElementById('tot-mit');
   if(!D.mit.length){lst.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>Noch keine Schichten</p></div>';tot.innerHTML='';return;}
   const tL=D.mit.reduce((s,m)=>s+m.ausgezahlt,0),tH=D.mit.reduce((s,m)=>s+m.stunden,0);
   tot.innerHTML=`<div class="totals-card"><div class="t-row"><span>Lohnkosten gesamt</span><strong class="amtr">${eur(tL)}</strong></div><div class="t-row"><span>Gesamtstunden</span><strong>${tH.toFixed(1)} h</strong></div></div>`;
-  lst.innerHTML=D.mit.map(m=>{const c=staffCol(m.name),ini=m.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);return`<div class="entry-wrap" id="ew${m.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${m.id})" ontouchmove="tm(event,${m.id})" ontouchend="te(event,${m.id},'mit')"><div class="entry-icon" style="background:${c}18;color:${c};font-size:13px;font-weight:800">${esc(ini)}</div><div class="entry-body"><div class="entry-date">${fmt(m.datum)} · ${esc(m.pos)}</div><div class="entry-main">${esc(m.name)}</div><div class="entry-sub">${esc(m.von)}–${esc(m.bis)} · ${m.stunden.toFixed(1)} h · ${eur(m.lohn)}/h</div></div><div class="entry-right"><div class="entry-amt amtr">${eur(m.ausgezahlt)}</div>${editButton('mit',m.id)}<button class="del-btn" onclick="delEntry('mit',${m.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>`}).join('');
+  lst.innerHTML=D.mit.map(m=>{const c=staffCol(m.name),ini=m.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);return`<div class="entry-wrap" id="ew${m.id}"><div class="swipe-bg"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="entry" ontouchstart="ts(event,${m.id})" ontouchmove="tm(event,${m.id})" ontouchend="te(event,${m.id},'mit')"><div class="entry-icon" style="background:${c}18;color:${c};font-size:13px;font-weight:800">${esc(ini)}</div><div class="entry-body"><div class="entry-date">${fmt(m.datum)} · ${esc(m.pos)}</div><div class="entry-main">${esc(m.name)}</div><div class="entry-sub">${schichtZeit(m)} · ${stdText(m.stunden)} · ${eur(m.lohn)}/h</div></div><div class="entry-right"><div class="entry-amt amtr">${eur(m.ausgezahlt)}</div>${editButton('mit',m.id)}<button class="del-btn" onclick="delEntry('mit',${m.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div></div></div>`}).join('');
 }
 
 // ══════════════════════════════════════════════
@@ -1593,7 +1653,7 @@ function renderBookings(scope){
   if(!entries.length)return '';
   return `<div class="booking-group"><h3>${label} · ${entries.length} · ${eur(entries.reduce((sum,e)=>sum+bookingAmount(e),0))}</h3>${entries.map(entry=>{
    const {key,row}=entry,token=key+':'+row.id;
-   const detail=key==='ein'?`Bar: ${eur(row.bar||0)} · Karte: ${eur(row.karte||0)} · Trinkgeld: ${eur(row.tip||0)}`:key==='mit'?`${esc(row.von||'')}–${esc(row.bis||'')} · ${Number(row.stunden||0)} Stunden · Stundensatz: ${eur(row.lohn||0)}`:`Kategorie: ${esc(bookingCategory(entry))}${row.rechnung_id?' · Aus bezahlter Rechnung gebucht':''}`;
+   const detail=key==='ein'?`Bar: ${eur(row.bar||0)} · Karte: ${eur(row.karte||0)} · Trinkgeld: ${eur(row.tip||0)}`:key==='mit'?`${schichtZeit(row)} · ${Number(row.stunden||0).toLocaleString('de-DE',{maximumFractionDigits:2})} Stunden · Stundensatz: ${eur(row.lohn||0)}`:`Kategorie: ${esc(bookingCategory(entry))}${row.rechnung_id?' · Aus bezahlter Rechnung gebucht':''}`;
    return `<details class="booking-entry" data-booking="${esc(token)}"${query||open.has(token)?' open':''}><summary><span class="booking-title">${esc(bookingTitle(entry))}<small>${fmt(row.datum)} · ${esc(bookingCategory(entry))}</small></span><strong>${eur(bookingAmount(entry))}</strong></summary><div class="booking-detail"><p>Datum: ${esc(row.datum||'—')}</p><p>${detail}</p>${row.notiz?`<p>${esc(row.notiz)}</p>`:''}${editButton(key,row.id)}${key==='aus'?receiptButton(row.id):''}</div></details>`;
   }).join('')}</div>`;
  }).join('')||'<p class="summary-note">Keine passenden Einzelbuchungen. Suche oder Zeitraum ändern.</p>';
@@ -1655,7 +1715,7 @@ function renderDashboard() {
 // ══════════════════════════════════════════════
 //  EXPORT / IMPORT
 // ══════════════════════════════════════════════
-function exportJSON(){const b=new Blob([JSON.stringify({bank:D.bank,ein:D.ein,aus:D.aus,mit:D.mit,rec:D.rec,lief:D.lief,pending:syncEngine?.pending()||[],recovery:JSON.parse(localStorage.getItem('rv4_recovery')||'null'),staff:D.staff,settings:D.settings,privatSnapshot:D.privat,v:3,ts:new Date().toISOString()},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='restaurant-backup-'+today()+'.json';a.click();toast('Backup exportiert');}
+function exportJSON(){const b=new Blob([JSON.stringify({bank:D.bank,ein:D.ein,aus:D.aus,mit:D.mit,rec:D.rec,lief:D.lief,pending:syncEngine?.pending()||[],recovery:JSON.parse(localStorage.getItem('rv4_recovery')||'null'),staff:D.staff,gvorl:D.gvorl,settings:D.settings,privatSnapshot:D.privat,v:3,ts:new Date().toISOString()},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='restaurant-backup-'+today()+'.json';a.click();toast('Backup exportiert');}
 async function importData(x) {
   if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Ungültiges Backup');
   const normalized={};
@@ -1667,6 +1727,7 @@ async function importData(x) {
     if(!D[key].some(r=>r.id===row.id) && !await persistChange('insert',key,row))throw new Error('Import unterbrochen');
   }
   if(Array.isArray(x.staff))D.staff=x.staff;
+  if(Array.isArray(x.gvorl))D.gvorl=x.gvorl;
   if(x.settings && typeof x.settings==='object')D.settings={...D.settings,...x.settings};
   saveLocal();renderAll();savedToast('Backup ergänzt');
 }
@@ -1679,7 +1740,7 @@ async function recoverLocal() {
   catch(e){toast('Wiederherstellung: '+e.message,'r');}
 }
 
-function exportCSV(){let c='Typ,Datum,Beschreibung,Bar,Karte,TG,Betrag,Kat,Name,Stunden\n';businessIncome(D.ein).forEach(e=>{c+=`Einnahme,${e.datum},"${e.notiz||''}",${e.bar},${e.karte},${e.tip},${e.bar+e.karte+e.tip},,\n`;});businessIncome(D.bank,'bank').forEach(r=>{c+=`Bankeinnahme,${r.datum},"${r.beschreibung.replace(/"/g,'""')}",,,,${r.betrag},${r.kategorie},\n`;});privateItems().forEach(r=>{c+=`${r.art==='credit'?'Privateinlage':'Privatentnahme'},${r.datum},"${r.beschreibung.replace(/"/g,'""')}",,,,${r.betrag},Privat,\n`;});businessExpenses(D.aus).forEach(a=>{c+=`${a.kat==='schulden'?'Schuldenzahlung':'Ausgabe'},${a.datum},"${a.beschr||''}",,,, ${a.betrag},${a.kat},\n`;});D.mit.forEach(m=>{c+=`Schicht,${m.datum},"${m.pos}",,,, ${m.ausgezahlt},,${m.name},${m.stunden.toFixed(1)}\n`;});const b=new Blob([c],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='restaurant-'+today()+'.csv';a.click();toast('CSV exportiert');}
+function exportCSV(){let c='Typ,Datum,Beschreibung,Bar,Karte,TG,Betrag,Kat,Name,Stunden\n';businessIncome(D.ein).forEach(e=>{c+=`Einnahme,${e.datum},"${e.notiz||''}",${e.bar},${e.karte},${e.tip},${e.bar+e.karte+e.tip},,\n`;});businessIncome(D.bank,'bank').forEach(r=>{c+=`Bankeinnahme,${r.datum},"${r.beschreibung.replace(/"/g,'""')}",,,,${r.betrag},${r.kategorie},\n`;});privateItems().forEach(r=>{c+=`${r.art==='credit'?'Privateinlage':'Privatentnahme'},${r.datum},"${r.beschreibung.replace(/"/g,'""')}",,,,${r.betrag},Privat,\n`;});businessExpenses(D.aus).forEach(a=>{c+=`${a.kat==='schulden'?'Schuldenzahlung':'Ausgabe'},${a.datum},"${a.beschr||''}",,,, ${a.betrag},${a.kat},\n`;});D.mit.forEach(m=>{c+=`Schicht,${m.datum},"${m.pos}",,,, ${m.ausgezahlt},,${m.name},${Number(m.stunden).toFixed(2)}\n`;});const b=new Blob([c],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='restaurant-'+today()+'.csv';a.click();toast('CSV exportiert');}
 
 function renderAll(){window.renderPrivateOutflows?.();window.renderBankIncome?.();renderEin();renderAus();renderDebt();renderMit();renderGehalt();renderDashboard();updateMetrics();renderSettings();renderRechnungen();renderLieferanten();checkOverdue();renderTagesabschluss();renderMonat();}
 
@@ -1713,7 +1774,7 @@ function switchTab(id) {
   else if(id==='monat') renderMonat();
   else if(id==='einnahmen') {}
   else if(id==='ausgaben') {}
-  else if(id==='personal'){renderChips();renderGehalt();const gf=document.getElementById('g-faellig');if(gf&&!gf.value)gf.value=today();}
+  else if(id==='personal'){renderChips();setSchichtMode(schichtMode);renderGehalt();const gf=document.getElementById('g-faellig');if(gf&&!gf.value)gf.value=today();}
   else if(id==='rechnungen') renderRechnungen();
   else if(id==='lieferanten') renderLieferanten();
   else if(id==='einstellungen') renderSettings();
@@ -1759,7 +1820,7 @@ function renderTagesabschluss() {
   if(aw) aw.innerHTML = ausH.some(a=>a.kat!=='schulden') ? ausH.filter(a=>a.kat!=='schulden').map(a => { const k=KAT[a.kat]||KAT.sonstiges; return `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${k.icon} ${esc(a.beschr||k.label)}</span><strong class="amtr">${eur(a.betrag)}</strong></div></div>`; }).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Ausgaben gesamt</span><strong class="amtr">${eur(tAus-debtSum(ausH))}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Keine Ausgaben heute</div>';
   if(aw) aw.innerHTML+=`<div class="totals-card">${bankSummary(tBank)+debtSummary(tEin+tBank,tAus,tLohn,ausH)+privateSummaryRows(tOperating,tPrivate,privateIncomeSum(t))}</div>`;
   const pw = document.getElementById('ta-personal-wrap');
-  if(pw) pw.innerHTML = mitH.length ? mitH.map(m => `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${esc(m.name)} (${esc(m.von)}–${esc(m.bis)})</span><strong class="amtr">${eur(m.ausgezahlt)}</strong></div></div>`).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Schichtlohnkosten</span><strong class="amtr">${eur(tLohn)}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Kein Personal heute</div>';
+  if(pw) pw.innerHTML = mitH.length ? mitH.map(m => `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span>${esc(m.name)} (${schichtZeit(m)})</span><strong class="amtr">${eur(m.ausgezahlt)}</strong></div></div>`).join('') + `<div class="totals-card" style="margin:0 14px 8px"><div class="t-row"><span style="font-weight:600">Schichtlohnkosten</span><strong class="amtr">${eur(tLohn)}</strong></div></div>` : '<div style="padding:8px 14px 0;font-size:13px;color:var(--text2)">Kein Personal heute</div>';
   const ev = document.getElementById('ta-erg-val');
   if(ev) { ev.textContent=eur(tErg); ev.className=tErg>=0?'amtg':'amtr'; }
 }

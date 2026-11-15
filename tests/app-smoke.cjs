@@ -17,6 +17,23 @@ fill('e-bar','100');fill('e-karte','50');fill('e-tip','5');await run('addEinnahm
 assert.equal(els.has('e-gaeste'),false);assert.equal(run('D.ein[0].gaeste'),0);
 fill('a-beschr','Test');fill('a-betrag','10');await run('addAusgabe()');assert.equal(run('D.aus.length'),1);
 fill('m-name','Test');fill('m-von','22:00');fill('m-bis','02:00');fill('m-lohn','15');await run('addSchicht()');assert.equal(run('D.mit[0].stunden'),4);assert.equal(run('D.mit[0].ausgezahlt'),60);
+// Daily wage by final amount: hours are derived from the hourly wage, times stay empty.
+run("setSchichtMode('betrag')");assert.equal(els.get('m-zeit-wrap').hidden,true);assert.equal(els.get('m-betrag-wrap').hidden,false);
+fill('m-name','Betrag');fill('m-lohn','14');fill('m-betrag','70');run('schichtPreview()');assert.match(els.get('m-preview').textContent,/5 Std/);await run('addSchicht()');
+assert.equal(run('D.mit.length'),2);const b=run('JSON.stringify(D.mit.find(m=>m.name==="Betrag"))');assert.deepEqual((({von,bis,stunden,lohn,ausgezahlt})=>({von,bis,stunden,lohn,ausgezahlt}))(JSON.parse(b)),{von:'',bis:'',stunden:5,lohn:14,ausgezahlt:70});
+fill('m-name','Krumm');fill('m-betrag','75');await run('addSchicht()');assert.equal(run('D.mit.find(m=>m.name==="Krumm").stunden'),5.36);assert.equal(run('D.mit.find(m=>m.name==="Krumm").ausgezahlt'),75);
+fill('m-name','Leer');fill('m-betrag','');await run('addSchicht()');assert.equal(run('D.mit.some(m=>m.name==="Leer")'),false);
+run('renderMit()');assert.match(els.get('lst-mit').innerHTML,/per Endbetrag/);
+const krummId=run('D.mit.find(m=>m.name==="Krumm").id');run("setSchichtMode('zeit')");run(`editEntry('mit',${krummId})`);assert.equal(run('schichtMode'),'betrag');assert.equal(els.get('m-betrag').value,75);fill('m-betrag','84');await run('addSchicht()');assert.equal(run(`D.mit.find(m=>m.id===${krummId}).stunden`),6);assert.equal(run(`D.mit.find(m=>m.id===${krummId}).ausgezahlt`),84);
+run(`D.mit=D.mit.filter(m=>m.name==='Test')`);run("setSchichtMode('zeit')");
+// Fixed salary: saving a template books nothing; only "Auszahlen" creates a personnel expense.
+{const recBefore=run('D.rec.length'),ausBefore=run('D.aus.length');fill('g-name','Shaban');fill('g-betrag','2200');run('addGehaltVorlage()');
+assert.equal(run('D.gvorl.length'),1);assert.equal(run('D.rec.length'),recBefore);assert.equal(run('D.aus.length'),ausBefore);assert.match(els.get('g-vorlagen').innerHTML,/Shaban[\s\S]*Auszahlen/);
+fill('g-name','shaban');fill('g-betrag','2300');run('addGehaltVorlage()');assert.equal(run('D.gvorl.length'),1);assert.equal(run('D.gvorl[0].betrag'),2300);
+for(const id of ['mi-gbetrag','mi-gdatum','mi-gnotiz'])els.set(id,{value:''});run('openGehaltAuszahlen(0)');assert.match(els.get('modal-inner').innerHTML,/Gehalt auszahlen/);
+fill('mi-gbetrag','2300');fill('mi-gdatum','2026-11-25');fill('mi-gnotiz','November');await run('bucheGehalt(0)');
+assert.equal(run('D.rec.length'),recBefore);assert.equal(run('D.aus.length'),ausBefore+1);const g=JSON.parse(run("JSON.stringify(D.aus.find(a=>a.kat==='personal'))"));assert.equal(g.betrag,2300);assert.equal(g.datum,'2026-11-25');assert.match(g.beschr,/Gehalt – Shaban \(November\)/);
+assert.match(els.get('lst-gehalt').innerHTML,/gebucht/);run("D.aus=D.aus.filter(a=>a.kat!=='personal');D.gvorl=[];renderAll()");}
 fill('r-beschr','Test');fill('r-betrag','12');await run('addRechnung()');assert.equal(run('D.rec.length'),1);assert.equal(run('D.rec[0].bezahlt'),true);assert.equal(run('D.rec[0].bezahlt_am'),run('today()'));
 const beforeTabs=run('JSON.stringify(D.rec)');run("selectInvoiceTab('offen')");assert.equal(els.get('invoice-open-panel').hidden,false);assert.equal(els.get('invoice-paid-panel').hidden,true);run("selectInvoiceTab('bezahlt')");assert.equal(els.get('invoice-open-panel').hidden,true);assert.equal(els.get('invoice-paid-panel').hidden,false);run("selectInvoiceTab('alle')");assert.equal(els.get('invoice-open-panel').hidden,false);assert.equal(els.get('invoice-paid-panel').hidden,false);assert.equal(run('JSON.stringify(D.rec)'),beforeTabs);assert.match(els.get('lst-rechnungen-bezahlt').innerHTML,/payment-status paid/);assert.match(els.get('lst-rechnungen-bezahlt').innerHTML,/invoice-amount">−/);
 fill('l-name','Test');await run('addLieferant()');assert.equal(run('D.lief.length'),1);
