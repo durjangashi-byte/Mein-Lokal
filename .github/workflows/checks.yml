@@ -18,6 +18,8 @@ jobs:
           node --check sync.js
           node --check qonto.js
           node --check sonstige-einnahmen.js
+          node --check darlehen.js
+          node tests/darlehen.cjs
           node tests/auth.cjs
           node tests/app-smoke.cjs
           node tests/qonto-private.cjs
