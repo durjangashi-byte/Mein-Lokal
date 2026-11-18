@@ -2164,12 +2164,13 @@ async function saveDebt(){
  debtBusy=true;const btn=document.getElementById('save-schulden');btn.disabled=true;
  try{if(await persistChange(debtEdit?'update':'insert','aus',{id:debtEdit?.id??newId(),datum,beschr,betrag,kat:'schulden'})){cancelDebt();savedToast('Schuldenzahlung gespeichert');}}finally{debtBusy=false;btn.disabled=false;}
 }
-function renderDebt(){const rows=D.aus.filter(a=>a.kat==='schulden');document.getElementById('debt-total').innerHTML=`<div class="totals-card"><div class="t-row"><span>Schuldenzahlungen gesamt</span><strong class="amtr">${eur(debtSum(rows))}</strong></div></div>`;document.getElementById('debt-list').innerHTML=rows.map(a=>`<div class="entry-wrap" id="ew${a.id}"><div class="entry"><div class="entry-body"><div class="entry-date">${fmt(a.datum)}</div><div class="entry-main">${esc(a.beschr)}</div></div><div class="entry-right"><strong class="amtr">${eur(a.betrag)}</strong><button class="edit-btn" onclick="editDebt(${a.id})">Bearbeiten</button><button class="edit-btn" onclick="delEntry('aus',${a.id})">Löschen</button></div></div></div>`).join('')||'<div class="empty"><p>Noch keine Schuldenzahlungen</p></div>';}
+function renderDebt(){const rows=D.aus.filter(a=>a.kat==='schulden');window.renderDarlehen?.();document.getElementById('debt-total').innerHTML=`<div class="totals-card"><div class="t-row"><span>Schuldenzahlungen gesamt</span><strong class="amtr">${eur(debtSum(rows))}</strong></div></div>`;document.getElementById('debt-list').innerHTML=rows.map(a=>`<div class="entry-wrap" id="ew${a.id}"><div class="entry"><div class="entry-body"><div class="entry-date">${fmt(a.datum)}</div><div class="entry-main">${esc(a.beschr)}</div></div><div class="entry-right"><strong class="amtr">${eur(a.betrag)}</strong><button class="edit-btn" onclick="editDebt(${a.id})">Bearbeiten</button><button class="edit-btn" onclick="delEntry('aus',${a.id})">Löschen</button></div></div></div>`).join('')||'<div class="empty"><p>Noch keine Schuldenzahlungen</p></div>';}
 
 initSupabase();
 
 </script>
 <script src="sonstige-einnahmen.js?v=3"></script>
+<script src="darlehen.js?v=1"></script>
 </body>
 </html>
 
