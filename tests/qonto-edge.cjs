@@ -3,6 +3,7 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),asse
 const {stripTypeScriptTypes}=require('node:module');
 let code=stripTypeScriptTypes(fs.readFileSync(path.join(__dirname,'../supabase/functions/qonto-sync/index.ts'),'utf8'),{disableExperimentalWarning:true});
 code=code.replace(/^import .*withSupabase.*;\s*/m,'').replace('export default','globalThis.handler=');
+// @supabase/server: jwtClaims is the raw payload, userClaims uses camelCase keys.
 const owner={sub:'owner',app_metadata:{lokal_access:'owner'},is_anonymous:false};
 const tx=(id='test-bank',extra={})=>({id,amount_cents:1234,side:'credit',currency:'EUR',label:'Test',settled_at:'2026-10-01T12:00:00Z',created_at:'2026-10-01T12:00:00Z',...extra});
 const page=(transactions,meta={})=>({transactions,meta:{next_page:null,...meta}});
@@ -15,7 +16,7 @@ function harness(options={}){
   return new Response(JSON.stringify(body),{status:200});
  }});
  vm.runInContext(code,ctx);
- const invoke=(claims=owner,method='POST')=>ctx.handler.fetch(new Request('https://local.test',{method}),{userClaims:claims,supabaseAdmin:{from:table=>{assert.equal(table,'qonto_transactions');return {upsert:async(rows,config)=>{
+ const invoke=(claims=owner,method='POST')=>ctx.handler.fetch(new Request('https://local.test',{method}),{jwtClaims:claims,userClaims:{id:claims.sub,appMetadata:claims.app_metadata,userMetadata:claims.user_metadata},supabaseAdmin:{from:table=>{assert.equal(table,'qonto_transactions');return {upsert:async(rows,config)=>{
   upserts.push({rows,config});if(options.dbError)return {error:{message:'secret DB details'}};
   for(const row of rows){assert.ok(row.id&&row.id!=='undefined');stored.set(row.id,{...(stored.get(row.id)||{}),...row});}
   return {error:null};

@@ -45,8 +45,9 @@ export default {
   fetch: withSupabase({auth:"user"}, async (req,ctx)=>{
     if(req.method==="OPTIONS") return new Response("ok",{headers:cors});
     if(req.method!=="POST") return json({error:"Method not allowed"},405);
-    if(ctx.userClaims?.app_metadata?.lokal_access!=="owner" || ctx.userClaims?.is_anonymous===true) return json({error:"Kein Lokal-Zugriff."},403);
-    const userId=ctx.userClaims?.sub;
+    // jwtClaims is the raw JWT payload (app_metadata, is_anonymous, sub); userClaims uses camelCase keys.
+    if(ctx.jwtClaims?.app_metadata?.lokal_access!=="owner" || ctx.jwtClaims?.is_anonymous===true) return json({error:"Kein Lokal-Zugriff."},403);
+    const userId=ctx.jwtClaims?.sub;
     if(!userId) return json({error:"Nicht angemeldet"},401);
     const login=Deno.env.get("QONTO_LOGIN");
     const secret=Deno.env.get("QONTO_SECRET_KEY");
